@@ -100,7 +100,7 @@ def test_create_existing_user():
 def test_create_user():
     assert len(aaa._users) == 1, repr(aaa._users)
     aaa.create_user('phil', 'user', 'hunter123')
-    assert len(aaa._roles) == 2, repr(aaa._users)
+    assert len(aaa._users) == 2, repr(aaa._users)
     fname = "%s/%s.json" % (aaa._directory, aaa._users_fname)
     with open(fname) as f:
         data = f.read()
