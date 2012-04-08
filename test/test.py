@@ -138,9 +138,38 @@ def test_delete_user():
 
 
 @with_setup(setup_mockedadmin, teardown_dir)
+def test_failing_login():
+    login = aaa.login('phil', 'hunter123')
+    assert login == False, "Login must fail"
+    global cookie_name
+    assert cookie_name == None
+
+@with_setup(setup_mockedadmin, teardown_dir)
 def test_create_and_validate_user():
     aaa.create_user('phil', 'user', 'hunter123')
     login = aaa.login('phil', 'hunter123')
     assert login == True, "Login must succed"
     global cookie_name
     assert cookie_name == 'phil'
+
+@with_setup(setup_mockedadmin, teardown_dir)
+def test_require_failing_username():
+    assert_raises(AuthException, aaa.require, username='no_such_user')
+
+@with_setup(setup_mockedadmin, teardown_dir)
+def test_require_failing_role_fixed():
+    assert_raises(AuthException, aaa.require, role='clown', fixed_role=True)
+
+@with_setup(setup_mockedadmin, teardown_dir)
+def test_require_failing_role():
+    assert_raises(AuthException, aaa.require, role='user')
+
+
+
+
+
+
+
+
+
+

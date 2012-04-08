@@ -26,6 +26,8 @@
 #
 # Roadmap:
 #  - password reset function
+#  - add hooks to provide logging or user-defined functions in case of
+#     login/require failure
 #  - decouple authentication logic from data storage to allow multiple backends
 #    (e.g. a key/value database)
 
@@ -108,16 +110,23 @@ class Cork(object):
         :param redirect: redirect unauthorized users (optional)
         :type redirect: str.
         """
-        raise NotImplementedError
 
+        if fixed_role and role is None:
+            raise AAAException, "A role must be specified if fixed_role " \
+                "has been set"
         if username is not None:
             if username != self.current_user.username:
                 if redirect is None:
-                    raise AuthException, "TODO"
+                    raise AuthException, "Unauthorized access."
                 else:
                     bottle.redirect(redirect)
 
-        if role is not None:
+        if fixed_role and role != self.current_user.role:
+            if redirect is None:
+                raise AuthException, "Unauthorized access."
+            else:
+                bottle.redirect(redirect)
+
             if role != self.current_user.role:
                 pass
                 #TODO
