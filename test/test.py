@@ -105,3 +105,23 @@ def test_create_user():
     with open(fname) as f:
         data = f.read()
         assert 'phil' in data, repr(data)
+
+
+@with_setup(setup_mockedadmin, teardown_dir)
+def test_unauth_delete_user():
+    aaa._roles['admin'] = 10 # lower admin level
+    assert_raises(AuthException, aaa.delete_user, 'phil')
+
+@with_setup(setup_mockedadmin, teardown_dir)
+def test_delete_nonexisting_user():
+    assert_raises(AAAException, aaa.delete_user, 'not_an_user')
+
+@with_setup(setup_mockedadmin, teardown_dir)
+def test_delete_user():
+    assert len(aaa._users) == 1, repr(aaa._users)
+    aaa.delete_user('admin')
+    assert len(aaa._users) == 0, repr(aaa._users)
+    fname = "%s/%s.json" % (aaa._directory, aaa._users_fname)
+    with open(fname) as f:
+        data = f.read()
+        assert 'admin' not in data, repr(data)

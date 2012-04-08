@@ -167,6 +167,8 @@ class Cork(object):
         """
         if self.current_user.level < 100:
             raise AuthException, "The current user is not authorized to "
+        if username not in self._users:
+            raise AAAException, "User does not exists"
         self.user(username).delete()
 
     @property
@@ -301,10 +303,10 @@ class User(object):
     def delete(self):
         """Delete user account"""
         try:
-            self._users.pop(self.username)
+            self._cork._users.pop(self.username)
         except KeyError:
             raise AAAException, "Non existing user."
-        self._save_users()
+        self._cork._save_users()
 
 #TODO: add creation and last access date?
 
