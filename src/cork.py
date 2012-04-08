@@ -67,6 +67,7 @@ class Cork(object):
         fail_redirect=None):
         """Check login credentials for an existing user.
         Optionally redirect the user to another page (tipically /login)
+
         :param username: username
         :type username: str.
         :param password: cleartext password
@@ -101,12 +102,13 @@ class Cork(object):
         If none is specified, any authenticated user will be authorized.
         By default, any role with higher level than `role` will be authorized;
         set fixed_role=True to prevent this.
+
         :param username: username (optional)
         :type username: str.
         :param role: role
         :type role: str.
         :param fixed_role: require user role to match `role` strictly
-        :type fixed_role: Bool (True/False)
+        :type fixed_role: bool.
         :param redirect: redirect unauthorized users (optional)
         :type redirect: str.
         """
@@ -159,6 +161,7 @@ class Cork(object):
 
     def create_role(self, role, level):
         """Create a new role.
+
         :param role: role name
         :type role: str.
         :param level: role level (0=lowest, 100=admin)
@@ -174,6 +177,7 @@ class Cork(object):
 
     def delete_role(self, role):
         """Deleta a role.
+
         :param role: role name
         :type role: str.
         :raises: AuthException on errors
@@ -189,6 +193,7 @@ class Cork(object):
         description=None):
         """Create a new user account.
         This method is available to users with level>=100
+
         :param username: username
         :type username: str.
         :param role: role
@@ -219,6 +224,7 @@ class Cork(object):
     def delete_user(self, username):
         """Delete a user account.
         This method is available to users with level>=100
+
         :param username: username
         :type username: str.
         :raises: Exceptions on errors
@@ -226,12 +232,13 @@ class Cork(object):
         if self.current_user.level < 100:
             raise AuthException, "The current user is not authorized to "
         if username not in self._users:
-            raise AAAException, "User does not exists"
+            raise AAAException, "User does not exist"
         self.user(username).delete()
 
     @property
     def current_user(self):
         """Current autenticated user
+
         :returns: User() instance, if authenticated, None otherwise
         """
         username = self._beaker_session_username
@@ -241,7 +248,8 @@ class Cork(object):
 
     def user(self, username):
         """Existing user
-        :returns: User() instance if the user exists, None otherwise
+
+        :returns: User() instance if the user exist, None otherwise
         """
         if username is not None and username in self._users:
             return User(username, self)
@@ -265,6 +273,7 @@ class Cork(object):
 
     def _loadjson(self, fname, dest):
         """Load JSON file located under self._directory, if needed
+
         :param fname: short file name (without path and .json)
         :type fname: str.
         :param dest: destination
@@ -348,10 +357,10 @@ class User(object):
         """
         username = self.username
         if username not in self._cork._users:
-            raise AAAException, "User does not exists."
+            raise AAAException, "User does not exist."
         if role is not None:
             if role not in self._cork._roles:
-                raise AAAException, "Role does not exists."
+                raise AAAException, "Role does not exist."
             self._cork._users[username]['role'] = role
         if pwd is not None:
             self._cork._users[username]['hash'] = self._hash(username, pwd)

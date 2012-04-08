@@ -34,6 +34,9 @@
         <li class="right" style="margin-right: 10px">
           <a href="genindex.html" title="General Index"
              accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
         <li><a href="#">Cork 0.1 documentation</a> &raquo;</li> 
       </ul>
     </div>  
@@ -50,6 +53,230 @@
 <ul class="simple">
 </ul>
 </div>
+<span class="target" id="module-cork"></span><dl class="exception">
+<dt id="cork.AAAException">
+<em class="property">exception </em><tt class="descclassname">cork.</tt><tt class="descname">AAAException</tt><a class="headerlink" href="#cork.AAAException" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <tt class="xref py py-class docutils literal"><span class="pre">exceptions.Exception</span></tt></p>
+<p>Generic Authentication/Authorization Exception</p>
+<dl class="attribute">
+<dt id="cork.AAAException.args">
+<tt class="descname">args</tt><a class="headerlink" href="#cork.AAAException.args" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="cork.AAAException.message">
+<tt class="descname">message</tt><a class="headerlink" href="#cork.AAAException.message" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="exception">
+<dt id="cork.AuthException">
+<em class="property">exception </em><tt class="descclassname">cork.</tt><tt class="descname">AuthException</tt><a class="headerlink" href="#cork.AuthException" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#cork.AAAException" title="cork.AAAException"><tt class="xref py py-class docutils literal"><span class="pre">cork.AAAException</span></tt></a></p>
+<p>Authentication Exception: incorrect username/password pair</p>
+<dl class="attribute">
+<dt id="cork.AuthException.args">
+<tt class="descname">args</tt><a class="headerlink" href="#cork.AuthException.args" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="cork.AuthException.message">
+<tt class="descname">message</tt><a class="headerlink" href="#cork.AuthException.message" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="cork.Cork">
+<em class="property">class </em><tt class="descclassname">cork.</tt><tt class="descname">Cork</tt><big>(</big><em>directory</em>, <em>users_fname='users'</em>, <em>roles_fname='roles'</em><big>)</big><a class="headerlink" href="#cork.Cork" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <tt class="xref py py-class docutils literal"><span class="pre">object</span></tt></p>
+<p>Auth/Authorization/Accounting class</p>
+<dl class="method">
+<dt id="cork.Cork.login">
+<tt class="descname">login</tt><big>(</big><em>username</em>, <em>password</em>, <em>success_redirect=None</em>, <em>fail_redirect=None</em><big>)</big><a class="headerlink" href="#cork.Cork.login" title="Permalink to this definition">¶</a></dt>
+<dd><p>Check login credentials for an existing user.
+Optionally redirect the user to another page (tipically /login)</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>username</strong> (<em>str.</em>) &#8211; username</li>
+<li><strong>password</strong> (<em>str.</em>) &#8211; cleartext password</li>
+<li><strong>success_redirect</strong> (<em>str.</em>) &#8211; redirect authorized users (optional)</li>
+<li><strong>fail_redirect</strong> (<em>str.</em>) &#8211; redirect unauthorized users (optional)</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">True for successful logins, else False</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="cork.Cork.require">
+<tt class="descname">require</tt><big>(</big><em>username=None</em>, <em>role=None</em>, <em>fixed_role=False</em>, <em>fail_redirect=None</em><big>)</big><a class="headerlink" href="#cork.Cork.require" title="Permalink to this definition">¶</a></dt>
+<dd><p>Ensure the user is logged in has the required role (or higher).
+Optionally redirect the user to another page (tipically /login)
+If both <cite>username</cite> and <cite>role</cite> are specified, both conditions need to be
+satisfied.
+If none is specified, any authenticated user will be authorized.
+By default, any role with higher level than <cite>role</cite> will be authorized;
+set fixed_role=True to prevent this.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>username</strong> (<em>str.</em>) &#8211; username (optional)</li>
+<li><strong>role</strong> (<em>str.</em>) &#8211; role</li>
+<li><strong>fixed_role</strong> (<em>bool.</em>) &#8211; require user role to match <cite>role</cite> strictly</li>
+<li><strong>redirect</strong> (<em>str.</em>) &#8211; redirect unauthorized users (optional)</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="cork.Cork.create_role">
+<tt class="descname">create_role</tt><big>(</big><em>role</em>, <em>level</em><big>)</big><a class="headerlink" href="#cork.Cork.create_role" title="Permalink to this definition">¶</a></dt>
+<dd><p>Create a new role.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>role</strong> (<em>str.</em>) &#8211; role name</li>
+<li><strong>level</strong> (<em>int.</em>) &#8211; role level (0=lowest, 100=admin)</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Raises :</th><td class="field-body"><p class="first last">AuthException on errors</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="cork.Cork.delete_role">
+<tt class="descname">delete_role</tt><big>(</big><em>role</em><big>)</big><a class="headerlink" href="#cork.Cork.delete_role" title="Permalink to this definition">¶</a></dt>
+<dd><p>Deleta a role.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>role</strong> (<em>str.</em>) &#8211; role name</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Raises :</th><td class="field-body">AuthException on errors</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="cork.Cork.create_user">
+<tt class="descname">create_user</tt><big>(</big><em>username</em>, <em>role</em>, <em>password</em>, <em>email_addr=None</em>, <em>description=None</em><big>)</big><a class="headerlink" href="#cork.Cork.create_user" title="Permalink to this definition">¶</a></dt>
+<dd><p>Create a new user account.
+This method is available to users with level&gt;=100</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>username</strong> (<em>str.</em>) &#8211; username</li>
+<li><strong>role</strong> (<em>str</em>) &#8211; role</li>
+<li><strong>password</strong> (<em>str.</em>) &#8211; cleartext password</li>
+<li><strong>email_addr</strong> (<em>str.</em>) &#8211; email address (optional)</li>
+<li><strong>description</strong> (<em>str.</em>) &#8211; description (free form)</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Raises :</th><td class="field-body"><p class="first last">AuthException on errors</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="cork.Cork.delete_user">
+<tt class="descname">delete_user</tt><big>(</big><em>username</em><big>)</big><a class="headerlink" href="#cork.Cork.delete_user" title="Permalink to this definition">¶</a></dt>
+<dd><p>Delete a user account.
+This method is available to users with level&gt;=100</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>username</strong> (<em>str.</em>) &#8211; username</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Raises :</th><td class="field-body">Exceptions on errors</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="cork.Cork.current_user">
+<tt class="descname">current_user</tt><a class="headerlink" href="#cork.Cork.current_user" title="Permalink to this definition">¶</a></dt>
+<dd><p>Current autenticated user</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body">User() instance, if authenticated, None otherwise</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="cork.Cork.user">
+<tt class="descname">user</tt><big>(</big><em>username</em><big>)</big><a class="headerlink" href="#cork.Cork.user" title="Permalink to this definition">¶</a></dt>
+<dd><p>Existing user</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body">User() instance if the user exist, None otherwise</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="cork.User">
+<em class="property">class </em><tt class="descclassname">cork.</tt><tt class="descname">User</tt><big>(</big><em>username</em>, <em>cork_obj</em><big>)</big><a class="headerlink" href="#cork.User" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <tt class="xref py py-class docutils literal"><span class="pre">object</span></tt></p>
+<p>Represent an authenticated user</p>
+<p>Create User instance</p>
+<dl class="method">
+<dt id="cork.User.logout">
+<tt class="descname">logout</tt><big>(</big><big>)</big><a class="headerlink" href="#cork.User.logout" title="Permalink to this definition">¶</a></dt>
+<dd><p>Log the user out, remove cookie</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="cork.User.update">
+<tt class="descname">update</tt><big>(</big><em>role=None</em>, <em>pwd=None</em>, <em>email_addr=None</em><big>)</big><a class="headerlink" href="#cork.User.update" title="Permalink to this definition">¶</a></dt>
+<dd><p>Update an user account data</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="cork.User.delete">
+<tt class="descname">delete</tt><big>(</big><big>)</big><a class="headerlink" href="#cork.User.delete" title="Permalink to this definition">¶</a></dt>
+<dd><p>Delete user account</p>
+</dd></dl>
+
+</dd></dl>
+
 </div>
 <div class="section" id="indices-and-tables">
 <h1>Indices and tables<a class="headerlink" href="#indices-and-tables" title="Permalink to this headline">¶</a></h1>
@@ -102,6 +329,9 @@
         <li class="right" style="margin-right: 10px">
           <a href="genindex.html" title="General Index"
              >index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
         <li><a href="#">Cork 0.1 documentation</a> &raquo;</li> 
       </ul>
     </div>

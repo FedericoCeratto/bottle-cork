@@ -12,6 +12,11 @@ Contents:
    :maxdepth: 2
 
 
+.. automodule:: cork
+    :members:
+    :inherited-members:
+    :undoc-members:
+
 
 Indices and tables
 ==================
