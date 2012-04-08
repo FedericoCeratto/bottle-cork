@@ -81,7 +81,7 @@ def test_unauth_delete_role():
     assert_raises(AuthException, aaa.delete_role, 'user')
 
 @with_setup(setup_mockedadmin, teardown_dir)
-def test_delete_nonexisting_role():
+def test_delete_nonexistent_role():
     assert_raises(AAAException, aaa.delete_role, 'user123')
 
 @with_setup(setup_mockedadmin, teardown_dir)
@@ -124,7 +124,7 @@ def test_unauth_delete_user():
     assert_raises(AuthException, aaa.delete_user, 'phil')
 
 @with_setup(setup_mockedadmin, teardown_dir)
-def test_delete_nonexisting_user():
+def test_delete_nonexistent_user():
     assert_raises(AAAException, aaa.delete_user, 'not_an_user')
 
 @with_setup(setup_mockedadmin, teardown_dir)
@@ -170,7 +170,7 @@ def test_require_failing_role_fixed():
     assert_raises(AuthException, aaa.require, role='user', fixed_role=True)
 
 @with_setup(setup_mockedadmin, teardown_dir)
-def test_require_nonexisting_role():
+def test_require_nonexistent_role():
     assert_raises(AAAException, aaa.require, role='clown')
 
 @with_setup(setup_mockedadmin, teardown_dir)
@@ -184,5 +184,29 @@ def test_successful_require_role():
     aaa.require(username='admin', role='admin')
     aaa.require(username='admin', role='admin', fixed_role=True)
     aaa.require(username='admin', role='user')
+
+
+@with_setup(setup_mockedadmin, teardown_dir)
+def test_update_nonexistent_role():
+    assert_raises(AAAException, aaa.current_user.update, role='clown')
+
+@with_setup(setup_mockedadmin, teardown_dir)
+def test_update_role():
+    aaa.current_user.update(role='user')
+    assert aaa._users['admin']['role'] == 'user'
+
+@with_setup(setup_mockedadmin, teardown_dir)
+def test_update_email():
+    aaa.current_user.update(email_addr='foo')
+    assert aaa._users['admin']['email'] == 'foo'
+
+
+
+
+
+
+
+
+
 
 

@@ -347,15 +347,17 @@ class User(object):
         """Update an user account data
         """
         username = self.username
-        if username not in self._users:
+        if username not in self._cork._users:
             raise AAAException, "User does not exists."
         if role is not None:
-            self._users[username][0] = role
+            if role not in self._cork._roles:
+                raise AAAException, "Role does not exists."
+            self._cork._users[username]['role'] = role
         if pwd is not None:
-            self._users[username][1] = self._hash(username, pwd)
-        if email is not None:
-            self._users[username][2] = email_addr
-        self._save_users()
+            self._cork._users[username]['hash'] = self._hash(username, pwd)
+        if email_addr is not None:
+            self._cork._users[username]['email'] = email_addr
+        self._cork._save_users()
 
     def delete(self):
         """Delete user account"""
