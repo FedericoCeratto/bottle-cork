@@ -8,11 +8,17 @@ from cork import Cork, AAAException, AuthException
 
 testdir = None # Test directory
 aaa = None # global Cork instance
+cookie_name = None # global variable to track cookie status
 
 class MockedAdminCork(Cork):
     @property
     def _beaker_session_username(self):
         return 'admin'
+
+    def _setup_cookie(self, username):
+        global cookie_name
+        print 'setting cookie'
+        cookie_name = username
 
 def setup_dir():
     """Setup test directory with empty JSON files"""
@@ -29,16 +35,20 @@ def setup_dir():
 def setup_mockedadmin():
     """Setup test directory and a MockedAdminCork instance"""
     global aaa
+    global cookie_name
     setup_dir()
     aaa = MockedAdminCork(testdir)
     aaa._users['admin'] = {'role': 'admin', 'email': 'foo@foo.org'}
     aaa._roles = {'admin': 100, 'user': 50, 'readonly': 20}
+    cookie_name = None
 
 def teardown_dir():
+    global cookie_name
     global testdir
     if testdir:
         shutil.rmtree(testdir)
         testdir = None
+    cookie_name = None
 
 @with_setup(setup_dir, teardown_dir)
 def test_init():
@@ -125,3 +135,12 @@ def test_delete_user():
     with open(fname) as f:
         data = f.read()
         assert 'admin' not in data, repr(data)
+
+
+@with_setup(setup_mockedadmin, teardown_dir)
+def test_create_and_validate_user():
+    aaa.create_user('phil', 'user', 'hunter123')
+    login = aaa.login('phil', 'hunter123')
+    assert login == True, "Login must succed"
+    global cookie_name
+    assert cookie_name == 'phil'

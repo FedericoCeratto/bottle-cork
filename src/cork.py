@@ -26,10 +26,12 @@
 #
 # Roadmap:
 #  - password reset function
+#  - decouple authentication logic from data storage to allow multiple backends
+#    (e.g. a key/value database)
 
-from bottle import request
 from datetime import datetime
 from hashlib import sha512
+import bottle
 import os
 
 try:
@@ -58,6 +60,36 @@ class Cork(object):
         self._roles_fname = roles_fname
         self._mtimes = {}
         self._refresh() # load users and roles
+
+    def login(self, username, password, success_redirect=None,
+        fail_redirect=None):
+        """Check login credentials for an existing user.
+        Optionally redirect the user to another page (tipically /login)
+        :param username: username
+        :type username: str.
+        :param password: cleartext password
+        :type password: str.
+        :param success_redirect: redirect authorized users (optional)
+        :type success_redirect: str.
+        :param fail_redirect: redirect unauthorized users (optional)
+        :type fail_redirect: str.
+        :returns: True for successful logins, else False
+        """
+        assert isinstance(username, str), "the username must be a string"
+        assert isinstance(password, str), "the password must be a string"
+
+        if username in self._users:
+            if self._hash(username, password) == self._users[username]['hash']:
+                # Setup session data
+                self._setup_cookie(username)
+                if success_redirect:
+                    bottle.redirect(success_redirect)
+                return True
+
+            if fail_redirect:
+                bottle.redirect(fail_redirect)
+
+        return False
 
     def require(self, username=None, role=None, fixed_role=False, redirect=None):
         """Ensure the user is logged in has the required role (or higher).
@@ -189,12 +221,6 @@ class Cork(object):
             return User(username, self)
         return None
 
-    def validate(self, username, pwd):
-        """Validate an username and password"""
-        assert username, "Missing username."
-        assert username in self._users, "Incorrect user or password."
-        assert self._hash(username, pwd) == self._users[username][1], \
-            "Incorrect user or password."
 
 
     ## Private methods
@@ -202,7 +228,7 @@ class Cork(object):
     @property
     def _beaker_session_username(self):
         """Get username from Beaker session"""
-        session = request.environ.get('beaker.session')
+        session = bottle.request.environ.get('beaker.session')
         username = session.get('username', None)
         return username
 
@@ -229,13 +255,13 @@ class Cork(object):
             with open(fname) as f:
                 json_data = f.read()
         except Exception, e:
-            raise AAAException, "Unable read json file %s.json: %s" % (fname, e)
+            raise AAAException, "Unable read json file %s: %s" % (fname, e)
 
         try:
             dest = json.loads(json_data)
             self._mtimes[fname] = os.stat(fname).st_mtime
         except Exception, e:
-            raise AAAException, "Unable to parse JSON data from %s.json: %s" % \
+            raise AAAException, "Unable to parse JSON data from %s: %s" % \
                 (fname, e)
 
     def _savejson(self, fname, obj):
@@ -248,12 +274,17 @@ class Cork(object):
                 f.flush()
             os.rename("%s.tmp" % fname, fname)
         except Exception, e:
-            raise AAAException, "Unable to save JSON file %s.json: %s" % \
+            raise AAAException, "Unable to save JSON file %s: %s" % \
                 (fname, e)
 
     def _save_users(self):
         """Save users in a JSON file"""
         self._savejson('users', self._users)
+
+    def _setup_cookie(self, username):
+        """Setup cookie for a user that just logged in"""
+        session = bottle.request.environ.get('beaker.session')
+        session['username'] = username
 
     def _hash(self, username, pwd):
         """Hash username and password"""
@@ -279,7 +310,7 @@ class User(object):
 
     def logout(self):
         """Log the user out, remove cookie"""
-        s = request.environ.get('beaker.session')
+        s = bottle.request.environ.get('beaker.session')
         u = s.get('username', None)
         if u:
             log.info('User %s logged out.' % u)
