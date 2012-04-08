@@ -93,7 +93,7 @@ class Cork(object):
 
         return False
 
-    def require(self, username=None, role=None, fixed_role=False, redirect=None):
+    def require(self, username=None, role=None, fixed_role=False, fail_redirect=None):
         """Ensure the user is logged in has the required role (or higher).
         Optionally redirect the user to another page (tipically /login)
         If both `username` and `role` are specified, both conditions need to be
@@ -110,35 +110,52 @@ class Cork(object):
         :param redirect: redirect unauthorized users (optional)
         :type redirect: str.
         """
-
+        # Parameter validation
+        if username is not None:
+            if username not in self._users:
+                raise AAAException, "Nonexisting user"
         if fixed_role and role is None:
             raise AAAException, "A role must be specified if fixed_role " \
                 "has been set"
+
+        if role is not None and role not in self._roles:
+            raise AAAException, "Role not found"
+
+        if self.current_user.role not in self._roles:
+            raise AAAException, "Role not found for the current user"
+
+        # Authentication
         if username is not None:
             if username != self.current_user.username:
-                if redirect is None:
-                    raise AuthException, "Unauthorized access."
+                if fail_redirect is None:
+                    raise AuthException, "Unauthorized access: incorrect" \
+                        "username"
                 else:
-                    bottle.redirect(redirect)
+                    bottle.redirect(fail_redirect)
 
-        if fixed_role and role != self.current_user.role:
-            if redirect is None:
-                raise AuthException, "Unauthorized access."
+        if fixed_role:
+            if role == self.current_user.role:
+                return
+
+            if fail_redirect is None:
+                raise AuthException, "Unauthorized access: incorrect role"
             else:
                 bottle.redirect(redirect)
 
-            if role != self.current_user.role:
-                pass
-                #TODO
+        else:
+            if role is not None:
+                # Any role with higher level is allowed
+                current_lvl = self._roles[self.current_user.role]
+                threshold_lvl = self._roles[role]
+                if current_lvl >= threshold_lvl:
+                    return
 
-        return #TODO
-        myrole = s.get('role', None)
-        if not myrole:
-            raise Alert, "User needs to be authenticated."
-        if m[myrole] >= m[role]:
-            return
-        log.info("An account with '%s' level or higher is required." % repr(role))
-        raise Exception
+                if fail_redirect is None:
+                    raise AuthException, "Unauthorized access: "
+                else:
+                    bottle.redirect(redirect)
+
+        return
 
     def create_role(self, role, level):
         """Create a new role.

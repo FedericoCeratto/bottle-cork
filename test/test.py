@@ -11,6 +11,7 @@ aaa = None # global Cork instance
 cookie_name = None # global variable to track cookie status
 
 class MockedAdminCork(Cork):
+    """Mocked module where the current user is always 'admin'"""
     @property
     def _beaker_session_username(self):
         return 'admin'
@@ -39,7 +40,7 @@ def setup_mockedadmin():
     setup_dir()
     aaa = MockedAdminCork(testdir)
     aaa._users['admin'] = {'role': 'admin', 'email': 'foo@foo.org'}
-    aaa._roles = {'admin': 100, 'user': 50, 'readonly': 20}
+    aaa._roles = {'special': 200, 'admin': 100, 'user': 50}
     cookie_name = None
 
 def teardown_dir():
@@ -134,7 +135,7 @@ def test_delete_user():
     fname = "%s/%s.json" % (aaa._directory, aaa._users_fname)
     with open(fname) as f:
         data = f.read()
-        assert 'admin' not in data, repr(data)
+        assert 'admin' not in data, "'admin' must not be in %s" % repr(data)
 
 
 @with_setup(setup_mockedadmin, teardown_dir)
@@ -147,6 +148,8 @@ def test_failing_login():
 @with_setup(setup_mockedadmin, teardown_dir)
 def test_create_and_validate_user():
     aaa.create_user('phil', 'user', 'hunter123')
+    assert 'phil' in aaa._users
+    assert aaa._users['phil']['role'] == 'user'
     login = aaa.login('phil', 'hunter123')
     assert login == True, "Login must succed"
     global cookie_name
@@ -154,22 +157,32 @@ def test_create_and_validate_user():
 
 @with_setup(setup_mockedadmin, teardown_dir)
 def test_require_failing_username():
-    assert_raises(AuthException, aaa.require, username='no_such_user')
+    # The user exists, but I'm 'admin'
+    aaa.create_user('phil', 'user', 'hunter123')
+    assert_raises(AuthException, aaa.require, username='phil')
+
+@with_setup(setup_mockedadmin, teardown_dir)
+def test_require_nonexistent_username():
+    assert_raises(AAAException, aaa.require, username='no_such_user')
 
 @with_setup(setup_mockedadmin, teardown_dir)
 def test_require_failing_role_fixed():
-    assert_raises(AuthException, aaa.require, role='clown', fixed_role=True)
+    assert_raises(AuthException, aaa.require, role='user', fixed_role=True)
+
+@with_setup(setup_mockedadmin, teardown_dir)
+def test_require_nonexisting_role():
+    assert_raises(AAAException, aaa.require, role='clown')
 
 @with_setup(setup_mockedadmin, teardown_dir)
 def test_require_failing_role():
-    assert_raises(AuthException, aaa.require, role='user')
+    # Requesting level >= 100
+    assert_raises(AuthException, aaa.require, role='special')
 
-
-
-
-
-
-
-
+@with_setup(setup_mockedadmin, teardown_dir)
+def test_successful_require_role():
+    aaa.require(username='admin')
+    aaa.require(username='admin', role='admin')
+    aaa.require(username='admin', role='admin', fixed_role=True)
+    aaa.require(username='admin', role='user')
 
 
