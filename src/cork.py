@@ -28,6 +28,14 @@
 #  - password reset function
 
 from bottle import request
+from datetime import datetime
+from hashlib import sha512
+import os
+
+try:
+    import json
+except ImportError: # pragma: no cover
+    import simplejson as json
 
 class AAAException(Exception):
     """Generic Authentication/Authorization Exception"""
@@ -42,9 +50,14 @@ class Cork(object):
 
     def __init__(self, directory, users_fname='users', roles_fname='roles'):
         """"""
+        assert directory, "Directory name must be valid"
         self._directory = directory
-        self._users = _loadjson(users_fname)
-        self._roles = _loadjson(roles_fname)
+        self._users = {}
+        self._users_fname = users_fname
+        self._roles = {}
+        self._roles_fname = roles_fname
+        self._mtimes = {}
+        self._refresh() # load users and roles
 
     def require(self, username=None, role=None, fixed_role=False, redirect=None):
         """Ensure the user is logged in has the required role (or higher).
@@ -65,11 +78,19 @@ class Cork(object):
         """
         raise NotImplementedError
 
-        s = bottle.request.environ.get('beaker.session')
-        if not s:
-            log.warn("User needs to be authenticated.")
-            #TODO: not really explanatory in a multiuser session.
-            raise Alert, "User needs to be authenticated."
+        if username is not None:
+            if username != self.current_user.username:
+                if redirect is None:
+                    raise AuthException, "TODO"
+                else:
+                    bottle.redirect(redirect)
+
+        if role is not None:
+            if role != self.current_user.role:
+                pass
+                #TODO
+
+        return #TODO
         myrole = s.get('role', None)
         if not myrole:
             raise Alert, "User needs to be authenticated."
@@ -86,7 +107,12 @@ class Cork(object):
         :type level: int.
         :raises: AuthException on errors
         """
-        raise NotImplementedError
+        if self.current_user.level < 100:
+            raise AuthException, "The current user is not authorized to "
+        if role in self._roles:
+            raise AAAException, "The role is already existing"
+        self._roles[role] = level
+        self._savejson('roles', self._roles)
 
     def delete_role(self, role):
         """Deleta a role.
@@ -94,12 +120,17 @@ class Cork(object):
         :type role: str.
         :raises: AuthException on errors
         """
-        raise NotImplementedError
+        if self.current_user.level < 100:
+            raise AuthException, "The current user is not authorized to "
+        if role not in self._roles:
+            raise AAAException, "The role is not existing"
+        self._roles.pop(role)
+        self._savejson('roles', self._roles)
 
     def create_user(self, username, role, password, email_addr=None,
         description=None):
         """Create a new user account.
-        This method is available to users with level>100
+        This method is available to users with level>=100
         :param username: username
         :type username: str.
         :param role: role
@@ -113,55 +144,48 @@ class Cork(object):
         :raises: AuthException on errors
         """
         assert username, "Username must be provided."
+        if self.current_user.level < 100:
+            raise AuthException, "The current user is not authorized to "
         if username in self._users:
             raise AAAException, "User is already existing."
-        self._users[username] = [role, self._hash(username, pwd), email]
+        tstamp = str(datetime.utcnow())
+        self._users[username] = {
+            'role': role,
+            'hash': self._hash(username, password),
+            'email_addr': email_addr,
+            'desc': description,
+            'creation_date': tstamp
+        }
         self._save_users()
-
-        raise NotImplementedError
 
     def delete_user(self, username):
         """Delete a user account.
-        This method is available to users with level>100
+        This method is available to users with level>=100
         :param username: username
         :type username: str.
-        :raises: AuthException on errors
+        :raises: Exceptions on errors
         """
-        try:
-            self._users.pop(username)
-        except KeyError:
-            raise AAAException, "Non existing user."
-        self._save_users()
+        if self.current_user.level < 100:
+            raise AuthException, "The current user is not authorized to "
+        self.user(username).delete()
 
     @property
-    def user(self):
+    def current_user(self):
         """Current autenticated user
         :returns: User() instance, if authenticated, None otherwise
         """
-        raise NotImplementedError
+        username = self._beaker_session_username
+        if username is not None and username in self._users:
+            return User(username, self)
+        raise AuthException, "Unknown user: %s" % username
 
-    #def list(self):
-    #    return list(self._users)
-
-    def update(self, username, role=None, pwd=None, email=None):
-        """Update an user
-
-        Args:
-            username (string): the username
-        Kwargs:
-            role (string): user role
-            pwd (string): user password
-            email (string): user email
+    def user(self, username):
+        """Existing user
+        :returns: User() instance if the user exists, None otherwise
         """
-        if username not in self._users:
-            raise AAAException, "User does not exists."
-        if role is not None:
-            self._users[username][0] = role
-        if pwd is not None:
-            self._users[username][1] = self._hash(username, pwd)
-        if email is not None:
-            self._users[username][2] = email
-        self._save_users)
+        if username is not None and username in self._users:
+            return User(username, self)
+        return None
 
     def validate(self, username, pwd):
         """Validate an username and password"""
@@ -173,9 +197,32 @@ class Cork(object):
 
     ## Private methods
 
-    def _loadjson(self, fname):
-        """Load JSON file located under self._directory"""
+    @property
+    def _beaker_session_username(self):
+        """Get username from Beaker session"""
+        session = request.environ.get('beaker.session')
+        username = session.get('username', None)
+        return username
+
+    def _refresh(self):
+        """Load users and roles from JSON files, if needed"""
+        self._loadjson(self._users_fname, self._users)
+        self._loadjson(self._roles_fname, self._roles)
+
+    def _loadjson(self, fname, dest):
+        """Load JSON file located under self._directory, if needed
+        :param fname: short file name (without path and .json)
+        :type fname: str.
+        :param dest: destination
+        :type dest: dict
+        """
         fname = "%s/%s.json" % (self._directory, fname)
+        mtime = os.stat(fname).st_mtime
+
+        if self._mtimes.get(fname, 0) == mtime:
+            # no need to reload the file: the mtime has not been changed
+            return
+
         try:
             with open(fname) as f:
                 json_data = f.read()
@@ -183,7 +230,8 @@ class Cork(object):
             raise AAAException, "Unable read json file %s.json: %s" % (fname, e)
 
         try:
-            return json.loads(s)
+            dest = json.loads(json_data)
+            self._mtimes[fname] = os.stat(fname).st_mtime
         except Exception, e:
             raise AAAException, "Unable to parse JSON data from %s.json: %s" % \
                 (fname, e)
@@ -193,10 +241,10 @@ class Cork(object):
         fname = "%s/%s.json" % (self._directory, fname)
         try:
             s = json.dumps(obj)
-            with open("%s.tmp" % fname, 'wb'):
+            with open("%s.tmp" % fname, 'wb') as f:
                 f.write(s)
                 f.flush()
-            rename("%s.tmp" % fname, fname)
+            os.rename("%s.tmp" % fname, fname)
         except Exception, e:
             raise AAAException, "Unable to save JSON file %s.json: %s" % \
                 (fname, e)
@@ -216,21 +264,47 @@ class Cork(object):
         return len(self._users)
 
 
-
-
-
-
-
-
-
-
-
-
-
-
 class User(object):
     """Represent an authenticated user"""
 
+    def __init__(self, username, cork_obj):
+        """Create User instance"""
+        self._cork = cork_obj
+        assert username in self._cork._users, "Unknown user"
+        self.username = username
+        self.role = self._cork._users[username]['role']
+        self.level = self._cork._roles[self.role]
+
+    def logout(self):
+        """Log the user out, remove cookie"""
+        s = request.environ.get('beaker.session')
+        u = s.get('username', None)
+        if u:
+            log.info('User %s logged out.' % u)
+        s.delete()
+        bottle.redirect('/')
+
+    def update(self, role=None, pwd=None, email_addr=None):
+        """Update an user account data
+        """
+        username = self.username
+        if username not in self._users:
+            raise AAAException, "User does not exists."
+        if role is not None:
+            self._users[username][0] = role
+        if pwd is not None:
+            self._users[username][1] = self._hash(username, pwd)
+        if email is not None:
+            self._users[username][2] = email_addr
+        self._save_users()
+
+    def delete(self):
+        """Delete user account"""
+        try:
+            self._users.pop(self.username)
+        except KeyError:
+            raise AAAException, "Non existing user."
+        self._save_users()
 
 #TODO: add creation and last access date?
 
