@@ -81,6 +81,7 @@ class Cork(object):
         assert isinstance(username, str), "the username must be a string"
         assert isinstance(password, str), "the password must be a string"
 
+        print repr(self._users)
         if username in self._users:
             if self._hash(username, password) == self._users[username]['hash']:
                 # Setup session data
@@ -127,6 +128,9 @@ class Cork(object):
             raise AAAException, "Role not found for the current user"
 
         # Authentication
+        if self.current_user == None:
+            raise AuthException, "Unauthenticated user"
+
         if username is not None:
             if username != self.current_user.username:
                 if fail_redirect is None:
@@ -172,6 +176,10 @@ class Cork(object):
             raise AuthException, "The current user is not authorized to "
         if role in self._roles:
             raise AAAException, "The role is already existing"
+        try:
+            int(level)
+        except ValueError:
+            raise AAAException, "The level must be numeric."
         self._roles[role] = level
         self._savejson('roles', self._roles)
 
@@ -239,9 +247,12 @@ class Cork(object):
     def current_user(self):
         """Current autenticated user
 
-        :returns: User() instance, if authenticated, None otherwise
+        :returns: User() instance, if authenticated
+        :raises: AuthException otherwise
         """
         username = self._beaker_session_username
+        if username is None:
+            raise AuthException, "Unauthenticated user"
         if username is not None and username in self._users:
             return User(username, self)
         raise AuthException, "Unknown user: %s" % username
@@ -293,7 +304,9 @@ class Cork(object):
             raise AAAException, "Unable read json file %s: %s" % (fname, e)
 
         try:
-            dest = json.loads(json_data)
+            json_obj = json.loads(json_data)
+            dest.clear()
+            dest.update(json_obj)
             self._mtimes[fname] = os.stat(fname).st_mtime
         except Exception, e:
             raise AAAException, "Unable to parse JSON data from %s: %s" % \
@@ -320,6 +333,7 @@ class Cork(object):
         """Setup cookie for a user that just logged in"""
         session = bottle.request.environ.get('beaker.session')
         session['username'] = username
+        session.save()
 
     def _hash(self, username, pwd):
         """Hash username and password"""
@@ -343,7 +357,7 @@ class User(object):
         self.role = self._cork._users[username]['role']
         self.level = self._cork._roles[self.role]
 
-    def logout(self):
+    def logout(self, fail_redirect='/login'):
         """Log the user out, remove cookie"""
         s = bottle.request.environ.get('beaker.session')
         u = s.get('username', None)
@@ -351,6 +365,7 @@ class User(object):
             log.info('User %s logged out.' % u)
         s.delete()
         bottle.redirect('/')
+        #TODO
 
     def update(self, role=None, pwd=None, email_addr=None):
         """Update an user account data
