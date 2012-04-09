@@ -28,11 +28,11 @@ def setup_dir():
     testdir = "/dev/shm/fl_%s" % tstamp
     mkdir(testdir)
     with open("%s/users.json" % testdir, 'w') as f:
-        f.write('{}')
+        f.write("""{"admin": {"email_addr": null, "desc": null, "role": "admin", "hash": "69f75f38ac3bfd6ac813794f3d8c47acc867adb10b806e8979316ddbf6113999b6052efe4ba95c0fa9f6a568bddf60e8e5572d9254dbf3d533085e9153265623", "creation_date": "2012-04-09 14:22:27.075596"}}""")
     with open("%s/roles.json" % testdir, 'w') as f:
-        f.write('{}')
+        f.write("""{"admin": 100}""")
     print "setup done in %s" % testdir
-
+ 
 def setup_mockedadmin():
     """Setup test directory and a MockedAdminCork instance"""
     global aaa
@@ -54,6 +54,11 @@ def teardown_dir():
 @with_setup(setup_dir, teardown_dir)
 def test_init():
     aaa = Cork(testdir)
+
+@with_setup(setup_mockedadmin, teardown_dir)
+def test_mockedadmin():
+    assert len(aaa._users) == 1, repr(aaa._users)
+    assert 'admin' in aaa._users, repr(aaa._users)
 
 @with_setup(setup_mockedadmin, teardown_dir)
 def test_unauth_create_role():
@@ -110,7 +115,7 @@ def test_create_existing_user():
 @with_setup(setup_mockedadmin, teardown_dir)
 def test_create_user():
     assert len(aaa._users) == 1, repr(aaa._users)
-    aaa.create_user('phil', 'user', 'hunter123')
+    aaa.create_user('phil','user','user')
     assert len(aaa._users) == 2, repr(aaa._users)
     fname = "%s/%s.json" % (aaa._directory, aaa._users_fname)
     with open(fname) as f:
