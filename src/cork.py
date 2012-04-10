@@ -50,10 +50,17 @@ class AuthException(AAAException):
     pass
 
 class Cork(object):
-    """Auth/Authorization/Accounting class"""
 
     def __init__(self, directory, users_fname='users', roles_fname='roles'):
-        """"""
+        """Auth/Authorization/Accounting class
+
+        :param directory: configuration directory
+        :type directory: str.
+        :param users_fname: users filename (without .json), defaults to 'users'
+        :type users_fname: str.
+        :param roles_fname: roles filename (without .json), defaults to 'roles'
+        :type roles_fname: str.
+        """
         assert directory, "Directory name must be valid"
         self._directory = directory
         self._users = {}
@@ -116,7 +123,7 @@ class Cork(object):
         # Parameter validation
         if username is not None:
             if username not in self._users:
-                raise AAAException, "Nonexisting user"
+                raise AAAException, "Nonexistent user"
         if fixed_role and role is None:
             raise AAAException, "A role must be specified if fixed_role " \
                 "has been set"
@@ -193,7 +200,7 @@ class Cork(object):
         if self.current_user.level < 100:
             raise AuthException, "The current user is not authorized to "
         if role not in self._roles:
-            raise AAAException, "The role is not existing"
+            raise AAAException, "Nonexistent role."
         self._roles.pop(role)
         self._savejson('roles', self._roles)
 
@@ -205,7 +212,7 @@ class Cork(object):
         :param username: username
         :type username: str.
         :param role: role
-        :type role: str
+        :type role: str.
         :param password: cleartext password
         :type password: str.
         :param email_addr: email address (optional)
@@ -240,7 +247,7 @@ class Cork(object):
         if self.current_user.level < 100:
             raise AuthException, "The current user is not authorized to "
         if username not in self._users:
-            raise AAAException, "User does not exist"
+            raise AAAException, "Nonexistent user."
         self.user(username).delete()
 
     @property
@@ -347,10 +354,14 @@ class Cork(object):
 
 
 class User(object):
-    """Represent an authenticated user"""
 
     def __init__(self, username, cork_obj):
-        """Create User instance"""
+        """Represent an authenticated user
+
+        :param username: username
+        :type username: str.
+        :param cork_obj: instance of :class:`Cork`
+        """
         self._cork = cork_obj
         assert username in self._cork._users, "Unknown user"
         self.username = username
@@ -358,7 +369,11 @@ class User(object):
         self.level = self._cork._roles[self.role]
 
     def logout(self, fail_redirect='/login'):
-        """Log the user out, remove cookie"""
+        """Log the user out, remove cookie
+
+        :param fail_redirect: redirect the user if it is not logged in, defaults to '/login'
+        :type fail_redirect: str.
+        """
         s = bottle.request.environ.get('beaker.session')
         u = s.get('username', None)
         if u:
@@ -369,13 +384,21 @@ class User(object):
 
     def update(self, role=None, pwd=None, email_addr=None):
         """Update an user account data
+
+        :param role: change user role, if specified
+        :type role: str.
+        :param pwd: change user password, if specified
+        :type pwd: str.
+        :param email_addr: change user email address, if specified
+        :type email_addr: str.
+        :raises: AAAException on nonexistent user or role.
         """
         username = self.username
         if username not in self._cork._users:
             raise AAAException, "User does not exist."
         if role is not None:
             if role not in self._cork._roles:
-                raise AAAException, "Role does not exist."
+                raise AAAException, "Nonexistent role."
             self._cork._users[username]['role'] = role
         if pwd is not None:
             self._cork._users[username]['hash'] = self._hash(username, pwd)
@@ -384,11 +407,14 @@ class User(object):
         self._cork._save_users()
 
     def delete(self):
-        """Delete user account"""
+        """Delete user account
+
+        :raises: AAAException on nonexistent user.
+        """
         try:
             self._cork._users.pop(self.username)
         except KeyError:
-            raise AAAException, "Non existing user."
+            raise AAAException, "Nonexistent user."
         self._cork._save_users()
 
 #TODO: add creation and last access date?
