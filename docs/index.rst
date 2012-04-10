@@ -10,10 +10,17 @@ Cork provides a simple set of methods to implement Authentication and Authorizat
 
 It is designed to stay out of the way and let you focus on what your application should do.
 
+ `Source code <https://github.com/FedericoCeratto/bottle-cork>`_
+ - `Downloads <https://github.com/FedericoCeratto/bottle-cork/downloads>`_
+ - `Bug tracker <http://github.com/FedericoCeratto/bottle-cork/issues>`_
+ - IRC: #bottle on Freenode
+
 Features
 --------
 
-* Cork is designed for web application with a relatively small userbase. User credentials are stored in JSON files.
+* Minimal API
+
+* Designed for web application with moderate userbases. User credentials are stored in JSON files.
 
 * Simple role-based authentication. User are authorized by role e.g. 'admin', 'user', 'editor'. Admin users can create and delete other user account and roles.
 
@@ -29,12 +36,15 @@ Roadmap
 
 * Decoupling of authentication logic from data storage to allow multiple backends e.g. a key/value database
 
+* Hooks to share session data between multiple hosts
+
 
 Basic usage
 -----------
 
+A fully working example is provided with the Cork `sources <https://github.com/FedericoCeratto/bottle-cork/tree/master/examples>`_
 
-Example of a web application::
+**Example of a web application**::
 
     from cork import Cork
 
@@ -45,7 +55,7 @@ Example of a web application::
     def login():
         username = request.POST.get('user', '')
         password = request.POST.get('pwd', '')
-        aaa.login(username, password, redirect='/login')
+        aaa.login(username, password, success_redirect='/', fail_redirect='/login')
 
     @bottle.route('/logout')
     def logout():
@@ -55,18 +65,23 @@ Example of a web application::
     def index():
         """Only authenticated users can see this"""
         aaa.require(fail_redirect='/sorry_page')
-        return 'Welcome!'
+        return "Welcome %s" % aaa.current_user.username
 
     @bottle.route('/admin')
     def admin():
-        """Only admin users can see this"""
+        """Only administrators can see this"""
         aaa.require(role='admin', fail_redirect='/sorry_page')
         return 'Welcome administrators'
 
-    @bottle.view('login_form')
-    @bottle.route('/login')
-    def login_form():
-        return
+    @bottle.route('/register', method='POST')
+    def register():
+        """Users can create new accounts, but only with 'user' role"""
+        username = request.POST.get('user', '')
+        password = request.POST.get('pwd', '')
+        email_addr = request.POST.get('email_addr', '')
+        aaa.register(username, password, email_addr)
+        return 'Please check your inbox.'
+
 
     # Web application main
 
