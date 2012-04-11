@@ -33,6 +33,7 @@
 
 from datetime import datetime
 from hashlib import sha512
+from random import randint
 import bottle
 import os
 
@@ -71,7 +72,6 @@ class Cork(object):
         self._roles = {}
         self._roles_fname = roles_fname
         self._mtimes = {}
-        self._salt = None  # add salt string to enable credentials salting
         self._refresh()  # load users and roles
 
     def login(self, username, password, success_redirect=None,
@@ -94,7 +94,8 @@ class Cork(object):
 
         print repr(self._users)
         if username in self._users:
-            if self._hash(username, password) == self._users[username]['hash']:
+            if self._verify_password(username, password,
+                    self._users[username]['hash']):
                 # Setup session data
                 self._setup_cookie(username)
                 if success_redirect:
@@ -345,12 +346,17 @@ class Cork(object):
         session['username'] = username
         session.save()
 
-    def _hash(self, username, pwd):
+    @staticmethod
+    def _hash(username, pwd, salt=None):
         """Hash username and password"""
-        if self._salt is not None:
-            username = sha512(username).hexdigest() + self._salt
-            pwd = sha512(pwd).hexdigest() + self._salt
-        return sha512("%s:::%s" % (username, pwd)).hexdigest()
+        if salt is None:
+            salt = ''.join(chr(randint(0,255)) for i in range(32)).encode('hex')
+        return sha512("%s:::%s" % (username, pwd) + salt).hexdigest() + salt
+
+    @classmethod
+    def _verify_password(cls, username, pwd, salted_hash):
+        hash_, salt = salted_hash[:128], salted_hash[128:]
+        return cls._hash(username, pwd, salt) == salted_hash
 
     def __len__(self):
         """Count users"""
