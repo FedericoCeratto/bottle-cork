@@ -38,7 +38,7 @@ def setup_mockedadmin():
     global aaa
     global cookie_name
     setup_dir()
-    aaa = MockedAdminCork(testdir)
+    aaa = MockedAdminCork(testdir, smtp_server='localhost')
     aaa._users['admin'] = {'role': 'admin', 'email': 'foo@foo.org'}
     aaa._roles = {'special': 200, 'admin': 100, 'user': 50}
     cookie_name = None
@@ -206,7 +206,16 @@ def test_update_email():
     assert aaa._users['admin']['email'] == 'foo'
 
 
+import mock
+from cork import Mailer
+def test_send_email_no_mailserver():
+    aaa.mailer.send_email('a','b')
 
+# Patch the mailer _send() method to prevent network interactions
+@mock.patch.object(Mailer, '_send')
+def test_send_email(mocked):
+    aaa.mailer.send_email('a','b')
+    #FIXME
 
 
 

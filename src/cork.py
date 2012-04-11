@@ -32,10 +32,15 @@
 #    (e.g. a key/value database)
 
 from datetime import datetime
+from email.mime.multipart import MIMEMultipart
+from email.mime.text import MIMEText
 from hashlib import sha512
 from random import randint
+from threading import Thread
 import bottle
 import os
+
+
 
 try:
     import json
@@ -55,7 +60,8 @@ class AuthException(AAAException):
 
 class Cork(object):
 
-    def __init__(self, directory, users_fname='users', roles_fname='roles'):
+    def __init__(self, directory, email_sender=None, smtp_server=None,
+        users_fname='users', roles_fname='roles', pending_reg_fname='register'):
         """Auth/Authorization/Accounting class
 
         :param directory: configuration directory
@@ -72,6 +78,7 @@ class Cork(object):
         self._roles = {}
         self._roles_fname = roles_fname
         self._mtimes = {}
+        self.mailer = Mailer(email_sender, smtp_server)
         self._refresh()  # load users and roles
 
     def login(self, username, password, success_redirect=None,
@@ -279,6 +286,57 @@ class Cork(object):
             return User(username, self)
         return None
 
+    def register(self, username, password, email_addr, role='user',
+        max_level=50, email_template='registration_email', description=None):
+        """Register a new user account. An email with a registration validation
+        is sent to the user.
+        WARNING: this method is available to unauthenticated users
+
+        :param username: username
+        :type username: str.
+        :param password: cleartext password
+        :type password: str.
+        :param role: role (optional), defaults to 'user'
+        :type role: str.
+        :param max_level: maximum role level (optional), defaults to 50
+        :type max_level: int.
+        :param email_addr: email address
+        :type email_addr: str.
+        :param description: description (free form)
+        :type description: str.
+        :raises: AssertError or AAAException on errors
+        """
+        assert username, "Username must be provided."
+        assert password, "A password must be provided."
+        assert email_addr, "An email address must be provided."
+        if username in self._users:
+            raise AAAException, "User is already existing."
+        if role not in self._roles:
+            raise AAAException, "Nonexistent role"
+        if self._roles[role] > max_level:
+            raise AAAException, "Unauthorized role"
+
+        # store pending registration
+        creation_date = datetime.utcnow()
+        self._pending_registrations[username] = {
+            'role': role,
+            'hash': self._hash(username, password),
+            'email_addr': email_addr,
+            'desc': description,
+            'creation_date': creation_date
+        }
+        self._save_pending_registrations()
+
+        # send registration email
+        email_text = bottle.template(email_template,
+            username=username,
+            email_addr=email_addr,
+            role=role,
+            creation_date=creation_date
+        )
+        self.mailer.send_email(email_addr, email_text)
+
+
     ## Private methods
 
     @property
@@ -363,6 +421,7 @@ class Cork(object):
         return len(self._users)
 
 
+
 class User(object):
 
     def __init__(self, username, cork_obj):
@@ -427,3 +486,61 @@ class User(object):
         self._cork._save_users()
 
 #TODO: add creation and last access date?
+
+
+class Mailer(object):
+
+    def __init__(self, sender, smtp_server, join_timeout=5):
+        """Send emails asyncronously
+
+        :param sender: Sender email address
+        :type sender: str.
+        :param smtp_server: SMTP server
+        :type smtp_server: str.
+        """
+        self.sender = sender
+        self.smtp_server = smtp_server
+        self.join_timeout = join_timeout
+        self._threads = []
+
+    def send_email(self, email_addr, email_text):
+        """Send an email
+
+        :param email_addr: email address
+        :type email_addr: str.
+        :param email_text: email text
+        :type email_text: str.
+        """
+        if self.smtp_server is None:
+            return
+        msg = MIMEMultipart('alternative')
+        msg['Subject'] = "Register" #FIXME
+        msg['From'] = self.sender
+        msg['To'] = email_addr
+        part = MIMEText(email_text, 'html')
+        msg.attach(part)
+
+        #log.debug("Sending email using %s" % self._smtp_server)
+        thread = Thread(None, self._send, '', (msg, self.smtp_server))
+        thread.start()
+        self._threads.append(thread)
+
+    def _send(self, msg): # pragma: no cover
+        """Deliver an email using SMTP
+        """
+        try:
+            session = SMTP(self.smtp_server)
+            session.sendmail(self.sender, recipients, msg)
+            session.close()
+            log.debug('Email sent')
+        except Exception, e:
+            log.error("Error sending email: %s" % e)
+
+    def join(self, timeout):
+        """Flush email queue by waiting the completion of the existing threads"""
+        return [t.join(timeout) for t in self._threads]
+
+    def __del__(self):
+        """Class destructor: wait for threads to terminate within a timeout"""
+        self.join(self.join_timeout)
+
