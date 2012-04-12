@@ -35,17 +35,19 @@ from datetime import datetime
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 from hashlib import sha512
+from logging import getLogger
 from random import randint
+from smtplib import SMTP
 from threading import Thread
 import bottle
 import os
-
-
 
 try:
     import json
 except ImportError:  # pragma: no cover
     import simplejson as json
+
+log = getLogger(__name__)
 
 
 class AAAException(Exception):
@@ -99,7 +101,6 @@ class Cork(object):
         assert isinstance(username, str), "the username must be a string"
         assert isinstance(password, str), "the password must be a string"
 
-        print repr(self._users)
         if username in self._users:
             if self._verify_password(username, password,
                     self._users[username]['hash']):
@@ -521,16 +522,21 @@ class Mailer(object):
         msg.attach(part)
 
         #log.debug("Sending email using %s" % self._smtp_server)
-        thread = Thread(None, self._send, '', (msg, self.smtp_server))
+        thread = Thread(target=self._send, args=(email_addr, msg))
         thread.start()
         self._threads.append(thread)
 
-    def _send(self, msg): # pragma: no cover
+    def _send(self, email_addr, msg): # pragma: no cover
         """Deliver an email using SMTP
+
+        :param email_addr: recipient
+        :type email_addr: str.
+        :param msg: email text
+        :type msg: str.
         """
         try:
             session = SMTP(self.smtp_server)
-            session.sendmail(self.sender, recipients, msg)
+            session.sendmail(self.sender, email_addr, msg)
             session.close()
             log.debug('Email sent')
         except Exception, e:

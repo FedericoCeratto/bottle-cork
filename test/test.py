@@ -2,9 +2,11 @@ from nose.tools import assert_raises, with_setup
 from os import listdir, mkdir
 from tempfile import mkdtemp
 from time import time
+import mock
 import shutil
 
 from cork import Cork, AAAException, AuthException
+from cork import Mailer
 
 testdir = None # Test directory
 aaa = None # global Cork instance
@@ -206,16 +208,13 @@ def test_update_email():
     assert aaa._users['admin']['email'] == 'foo'
 
 
-import mock
-from cork import Mailer
-def test_send_email_no_mailserver():
-    aaa.mailer.send_email('a','b')
-
 # Patch the mailer _send() method to prevent network interactions
+@with_setup(setup_mockedadmin, teardown_dir)
 @mock.patch.object(Mailer, '_send')
 def test_send_email(mocked):
-    aaa.mailer.send_email('a','b')
-    #FIXME
+    assert aaa.mailer.smtp_server == 'localhost'
+    aaa.mailer.send_email('address','text')
+    aaa.mailer.join(1)
 
 
 
