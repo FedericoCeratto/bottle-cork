@@ -221,5 +221,3 @@ def test_send_email(mocked):
 
 
 
-
-

@@ -47,6 +47,8 @@ try:
 except ImportError:  # pragma: no cover
     import simplejson as json
 
+__version__ = '0.1~alpha'
+
 log = getLogger(__name__)
 
 
@@ -536,14 +538,18 @@ class Mailer(object):
         """
         try:
             session = SMTP(self.smtp_server)
-            session.sendmail(self.sender, email_addr, msg)
+            session.sendmail(self.sender, email_addr, msg) #TODO
             session.close()
             log.debug('Email sent')
         except Exception, e:
             log.error("Error sending email: %s" % e)
 
     def join(self, timeout):
-        """Flush email queue by waiting the completion of the existing threads"""
+        """Flush email queue by waiting the completion of the existing threads
+
+        :param timeout: timeout in seconds
+        :type timeout: int.
+        """
         return [t.join(timeout) for t in self._threads]
 
     def __del__(self):

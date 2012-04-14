@@ -15,6 +15,8 @@ It is designed to stay out of the way and let you focus on what your application
  - `Bug tracker <http://github.com/FedericoCeratto/bottle-cork/issues>`_
  - IRC: #bottle on Freenode
 
+Cork is currently **under development** - contributions are very welcome!
+
 Features
 --------
 
@@ -22,10 +24,15 @@ Features
 
 * Designed for web application with moderate userbases. User credentials are stored in JSON files.
 
-* Simple role-based authentication. User are authorized by role e.g. 'admin', 'user', 'editor'. Admin users can create and delete other user account and roles.
+* Simple role-based authentication. User are authorized by role e.g. 'admin', 'user', 'editor'.
+
+  * Admin users can create and delete user accounts and roles.
+
+* User registration with email delivery and confirmation
 
 * Thread safe and easy to tweak
 
+* Unit-tested and `code covered <./cover/cork.html>`_
 
 Roadmap
 -------
