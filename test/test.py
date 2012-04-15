@@ -1,4 +1,4 @@
-from nose.tools import assert_raises, with_setup
+from nose.tools import assert_raises, raises, with_setup
 import os
 from tempfile import mkdtemp
 from time import time
@@ -81,6 +81,18 @@ def test_init():
 def test_mockedadmin():
     assert len(aaa._users) == 1, repr(aaa._users)
     assert 'admin' in aaa._users, repr(aaa._users)
+
+@with_setup(setup_mockedadmin, teardown_dir)
+def test_loadjson_missing_file():
+    assert_raises(AAAException, aaa._loadjson, 'nonexistent_file', {})
+
+@raises(AAAException)
+@with_setup(setup_mockedadmin, teardown_dir)
+def test_loadjson_broken_file():
+    with open(testdir + '/broken_file.json', 'w') as f:
+        f.write('-----')
+    aaa._loadjson('broken_file', {})
+
 
 @with_setup(setup_mockedadmin, teardown_dir)
 def test_unauth_create_role():

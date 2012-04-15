@@ -410,14 +410,14 @@ class Cork(object):
         :param dest: destination
         :type dest: dict
         """
-        fname = "%s/%s.json" % (self._directory, fname)
-        mtime = os.stat(fname).st_mtime
-
-        if self._mtimes.get(fname, 0) == mtime:
-            # no need to reload the file: the mtime has not been changed
-            return
-
         try:
+            fname = "%s/%s.json" % (self._directory, fname)
+            mtime = os.stat(fname).st_mtime
+
+            if self._mtimes.get(fname, 0) == mtime:
+                # no need to reload the file: the mtime has not been changed
+                return
+
             with open(fname) as f:
                 json_data = f.read()
         except Exception as e:
