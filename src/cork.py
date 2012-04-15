@@ -41,6 +41,7 @@ from smtplib import SMTP
 from threading import Thread
 import bottle
 import os
+import uuid
 
 try:
     import json
@@ -222,6 +223,10 @@ class Cork(object):
         self._roles.pop(role)
         self._savejson(self._roles_fname, self._roles)
 
+    def list_roles(self):
+        """List roles."""
+        raise NotImplementedError
+
     def create_user(self, username, role, password, email_addr=None,
         description=None):
         """Create a new user account.
@@ -267,6 +272,10 @@ class Cork(object):
         if username not in self._users:
             raise AAAException("Nonexistent user.")
         self.user(username).delete()
+
+    def list_users(self):
+        """List users."""
+        raise NotImplementedError
 
     @property
     def current_user(self):
@@ -321,6 +330,8 @@ class Cork(object):
         if self._roles[role] > max_level:
             raise AAAException, "Unauthorized role"
 
+        registration_code = uuid.uuid4()
+
         # store pending registration
         creation_date = datetime.utcnow()
         self._pending_registrations[username] = {
@@ -328,7 +339,8 @@ class Cork(object):
             'hash': self._hash(username, password),
             'email_addr': email_addr,
             'desc': description,
-            'creation_date': creation_date
+            'creation_date': creation_date,
+            'code': registration_code
         }
         self._savejson(self._roles_fname, self._roles)
 
@@ -337,10 +349,19 @@ class Cork(object):
             username=username,
             email_addr=email_addr,
             role=role,
-            creation_date=creation_date
+            creation_date=creation_date,
+            registration_code=registration_code
         )
         self.mailer.send_email(email_addr, email_text)
 
+    def validate_registration(self, registration_code):
+        """Validate pending account registration, create a new account if
+        successful.
+
+        :param registration_code: registration code
+        :type registration_code: str.
+        """
+        raise NotImplementedError
 
     ## Private methods
 

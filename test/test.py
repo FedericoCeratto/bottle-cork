@@ -46,7 +46,7 @@ def setup_dir():
     with open("%s/register.json" % testdir, 'w') as f:
         f.write("""{}""")
     with open("%s/view/registration_email.tpl" % testdir, 'w') as f:
-        f.write(""" """)
+        f.write("""Username:{{username}} Email:{{email_addr}} Code:{{registration_code}}""")
     print "setup done in %s" % testdir
 
 def setup_mockedadmin():
