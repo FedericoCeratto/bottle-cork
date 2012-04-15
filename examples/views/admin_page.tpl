@@ -4,36 +4,57 @@
 <meta content="text/html; charset=utf-8" http-equiv="content-type">
 <div id='main'>
     <h2>Administration page</h2>
-    <p>Create new user:</p>
-    <form action="create_user" method="post">
-        <p><label>Username</label> <input type="text" name="username" /></p>
-        <p><label>Role</label> <input type="text" name="role" /></p>
-        <p><label>Password</label> <input type="password" name="password" /></p>
-        <button type="submit" > OK </button>
-        <button type="button" class="close"> Cancel </button>
-    </form>
-    <br />
-    <p>Delete user:</p>
-    <form action="delete_user" method="post">
-        <p><label>Username</label> <input type="text" name="username" /></p>
-        <button type="submit" > OK </button>
-        <button type="button" class="close"> Cancel </button>
-    </form>
-    <br />
-    <p>Create new role:</p>
-    <form action="create_role" method="post">
-        <p><label>Role</label> <input type="text" name="role" /></p>
-        <p><label>Level</label> <input type="text" name="level" /></p>
-        <button type="submit" > OK </button>
-        <button type="button" class="close"> Cancel </button>
-    </form>
-    <br />
-    <p>Delete role:</p>
-    <form action="delete_role" method="post">
-        <p><label>Role</label> <input type="text" name="role" /></p>
-        <button type="submit" > OK </button>
-        <button type="button" class="close"> Cancel </button>
-    </form>
+    <div id='commands'>
+      <p>Create new user:</p>
+      <form action="create_user" method="post">
+          <p><label>Username</label> <input type="text" name="username" /></p>
+          <p><label>Role</label> <input type="text" name="role" /></p>
+          <p><label>Password</label> <input type="password" name="password" /></p>
+          <button type="submit" > OK </button>
+          <button type="button" class="close"> Cancel </button>
+      </form>
+      <br />
+      <p>Delete user:</p>
+      <form action="delete_user" method="post">
+          <p><label>Username</label> <input type="text" name="username" /></p>
+          <button type="submit" > OK </button>
+          <button type="button" class="close"> Cancel </button>
+      </form>
+      <br />
+      <p>Create new role:</p>
+      <form action="create_role" method="post">
+          <p><label>Role</label> <input type="text" name="role" /></p>
+          <p><label>Level</label> <input type="text" name="level" /></p>
+          <button type="submit" > OK </button>
+          <button type="button" class="close"> Cancel </button>
+      </form>
+      <br />
+      <p>Delete role:</p>
+      <form action="delete_role" method="post">
+          <p><label>Role</label> <input type="text" name="role" /></p>
+          <button type="submit" > OK </button>
+          <button type="button" class="close"> Cancel </button>
+      </form>
+    </div>
+    <div id="users">
+        <table>
+            <tr><th>Username</th><th>Role</th><th>Email</th><th>Description</th></tr>
+            %for u in users:
+            <tr><td>{{u[0]}}</td><td>{{u[1]}}</td><td>{{u[2]}}</td><td>{{u[2]}}</td></tr>
+            %end
+        </table>
+        <br/>
+        <table>
+            <tr><th>Role</th><th>Level</th></tr>
+            %for r in roles:
+            <tr><td>{{r[0]}}</td><td>{{r[1]}}</td></tr>
+            %end
+        </table>
+        <p>(Reload page to refresh)</p>
+    </div>
+
+    <div class="clear"></div>
+
     <div id='status'><p>Ready.</p></div>
     <script src="http://ajax.googleapis.com/ajax/libs/jquery/1.7.1/jquery.min.js"></script>
     <script>
@@ -49,13 +70,15 @@
                 $("div#status").css("background-color", "#fff0f0");
                 $("div#status p").text(j.msg);
               }
-              $("div#status").delay(500).fadeOut(500);
+              $("div#status").delay(800).fadeOut(500);
             }, "json");
             return false;
         });
     </script>
 </div>
 <style>
+div#commands { width: 45%%; float: left}
+div#users { width: 45%; float: right}
 div#main {
     color: #777;
     margin: auto;
@@ -89,5 +112,6 @@ div#status {
     -moz-border-radius: 10px;
     border-radius: 10px;
 }
+.clear { clear: both;}}
 </style>
 

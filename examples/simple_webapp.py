@@ -15,6 +15,9 @@ aaa = Cork('example_conf')
 
 # #  Bottle methods  # #
 
+def postd():
+    return bottle.request.forms
+
 def post_get(name, default=''):
     return bottle.request.POST.get(name, default).strip()
 
@@ -43,16 +46,15 @@ def index():
 def admin():
     """Only admin users can see this"""
     aaa.require(role='admin', fail_redirect='/sorry_page')
-    return {}
+    return dict(
+        users = aaa.list_users(),
+        roles = aaa.list_roles()
+    )
 
 @bottle.route('/create_user', method='POST')
 def create_user():
     try:
-        aaa.create_user(
-            post_get('username'),
-            post_get('role'),
-            post_get('password')
-        )
+        aaa.create_user(postd().username, postd().role, postd().password)
         return dict(ok=True, msg='')
     except Exception, e:
         return dict(ok=False, msg=e.message)
@@ -63,6 +65,7 @@ def delete_user():
         aaa.delete_user(post_get('username'))
         return dict(ok=True, msg='')
     except Exception, e:
+        print repr(e)
         return dict(ok=False, msg=e.message)
 
 @bottle.route('/create_role', method='POST')
