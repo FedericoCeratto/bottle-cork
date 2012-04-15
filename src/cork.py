@@ -34,7 +34,12 @@
 from datetime import datetime, timedelta
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
-from hashlib import sha512
+import hashlib
+import hmac
+from base64 import b64encode, b64decode
+from itertools import izip, starmap
+import struct
+from operator import xor
 from logging import getLogger
 from random import randint
 from smtplib import SMTP
@@ -171,6 +176,10 @@ class Cork(object):
         self._store = JsonBackend(directory, users_fname='users',
             roles_fname='roles', pending_reg_fname='register',
             initialize=initialize)
+        self._pwd_hashfunc = 'sha512'
+        self._pwd_keylen = 64
+        self._pwd_saltlen = 16
+        self._pwd_iterations = 1000
 
 
     def login(self, username, password, success_redirect=None,
@@ -491,17 +500,59 @@ class Cork(object):
         session['username'] = username
         session.save()
 
-    @staticmethod
-    def _hash(username, pwd, salt=None):
+    def _hash(self, username, pwd, salt=None):
         """Hash username and password"""
-        if salt is None:
-            salt = ''.join(chr(randint(0,255)) for i in range(32)).encode('hex')
-        return sha512("%s:::%s" % (username, pwd) + salt).hexdigest() + salt
+        # Backwards compatible
+        if salt:
+            return hashlib.sha512(
+                    "%s:::%s" % (username, pwd) + salt).hexdigest() + salt
+        salt = os.urandom(self._pwd_saltlen)
+        hash_ = self.pbkdf2(pwd, salt, self._pwd_iterations, self._pwd_keylen,
+                            getattr(hashlib, self._pwd_hashfunc))
+        return "PBKDF2$%s$%i$%s$%s" % (self._pwd_hashfunc, self._pwd_iterations,
+                                       b64encode(salt), b64encode(hash_))
 
-    @classmethod
-    def _verify_password(cls, username, pwd, salted_hash):
-        hash_, salt = salted_hash[:128], salted_hash[128:]
-        return cls._hash(username, pwd, salt) == salted_hash
+    @staticmethod
+    def pbkdf2(data, salt, iterations, keylen, hashfunc):
+        """Returns a binary digest for the PBKDF2 hash algorithm of `data`
+        with the given `salt`. It iterates `iterations` time and produces a
+        key of `keylen` bytes. By default SHA-1 is used as hash function,
+        a different hashlib `hashfunc` can be provided.
+        """
+        #https://github.com/mitsuhiko/python-pbkdf2
+        mac = hmac.new(data, None, hashfunc)
+        def _pseudorandom(x, mac=mac):
+            h = mac.copy()
+            h.update(x)
+            return map(ord, h.digest())
+        buf = []
+        for block in xrange(1, -(-keylen // mac.digest_size) + 1):
+            rv = u = _pseudorandom(salt + struct.pack('>I', block))
+            for i in xrange(iterations - 1):
+                u = _pseudorandom(''.join(map(chr, u)))
+                rv = starmap(xor, izip(rv, u))
+            buf.extend(rv)
+        return ''.join(map(chr, buf))[:keylen]
+
+    def _verify_password(self, username, pwd, hash_):
+        """Verify password against hash"""
+        #http://exyr.org/2011/hashing-passwords/
+        if hash_.startswith("PBKDF2$"):
+            algorithm, hash_func, iterations, salt, hash_a = hash_.split('$')
+            assert algorithm == 'PBKDF2'
+            hash_a = b64decode(hash_a)
+            salt = b64decode(salt)
+            hash_b = self.pbkdf2(pwd, salt, int(iterations), len(hash_a),
+                                getattr(hashlib, hash_func))
+            assert len(hash_a) == len(hash_b)
+            diff = 0
+            for char_a, char_b in izip(hash_a, hash_b):
+                diff |= ord(char_a) ^ ord(char_b)
+            return diff == 0
+        else:
+            #backwards compatible support
+            hash_, salt = hash_[:128], hash_[128:]
+            return self._hash(username, pwd, salt)[:128] == hash_
 
     def __len__(self):
         """Count users"""
