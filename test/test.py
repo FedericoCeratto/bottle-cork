@@ -1,5 +1,5 @@
 from nose.tools import assert_raises, with_setup
-from os import listdir, mkdir
+import os
 from tempfile import mkdtemp
 from time import time
 import mock
@@ -20,7 +20,16 @@ class MockedAdminCork(Cork):
 
     def _setup_cookie(self, username):
         global cookie_name
-        print 'setting cookie'
+        cookie_name = username
+
+class MockedUnauthenticatedCork(Cork):
+    """Mocked module where the current user is always 'admin'"""
+    @property
+    def _beaker_session_username(self):
+        return None
+
+    def _setup_cookie(self, username):
+        global cookie_name
         cookie_name = username
 
 def setup_dir():
@@ -28,21 +37,32 @@ def setup_dir():
     global testdir
     tstamp = "%f" % time()
     testdir = "/dev/shm/fl_%s" % tstamp
-    mkdir(testdir)
+    os.mkdir(testdir)
+    os.mkdir(testdir + '/view')
     with open("%s/users.json" % testdir, 'w') as f:
         f.write("""{"admin": {"email_addr": null, "desc": null, "role": "admin", "hash": "69f75f38ac3bfd6ac813794f3d8c47acc867adb10b806e8979316ddbf6113999b6052efe4ba95c0fa9f6a568bddf60e8e5572d9254dbf3d533085e9153265623", "creation_date": "2012-04-09 14:22:27.075596"}}""")
     with open("%s/roles.json" % testdir, 'w') as f:
-        f.write("""{"admin": 100}""")
+        f.write("""{"special": 200, "admin": 100, "user": 50}""")
+    with open("%s/register.json" % testdir, 'w') as f:
+        f.write("""{}""")
+    with open("%s/view/registration_email.tpl" % testdir, 'w') as f:
+        f.write(""" """)
     print "setup done in %s" % testdir
- 
+
 def setup_mockedadmin():
     """Setup test directory and a MockedAdminCork instance"""
     global aaa
     global cookie_name
     setup_dir()
     aaa = MockedAdminCork(testdir, smtp_server='localhost')
-    aaa._users['admin'] = {'role': 'admin', 'email': 'foo@foo.org'}
-    aaa._roles = {'special': 200, 'admin': 100, 'user': 50}
+    cookie_name = None
+
+def setup_mocked_unauthenticated():
+    """Setup test directory and a MockedAdminCork instance"""
+    global aaa
+    global cookie_name
+    setup_dir()
+    aaa = MockedUnauthenticatedCork(testdir)
     cookie_name = None
 
 def teardown_dir():
@@ -70,6 +90,10 @@ def test_unauth_create_role():
 @with_setup(setup_mockedadmin, teardown_dir)
 def test_create_existing_role():
     assert_raises(AAAException, aaa.create_role, 'user', 33)
+
+@with_setup(setup_mockedadmin, teardown_dir)
+def test_create_role_with_incorrect_level():
+    assert_raises(AAAException, aaa.create_role, 'user', 'not_a_number')
 
 @with_setup(setup_mockedadmin, teardown_dir)
 def test_create_role():
@@ -206,6 +230,46 @@ def test_update_role():
 def test_update_email():
     aaa.current_user.update(email_addr='foo')
     assert aaa._users['admin']['email'] == 'foo'
+
+
+@with_setup(setup_mocked_unauthenticated, teardown_dir)
+def test_get_current_user_unauth():
+    def get_user():
+        print aaa.current_user.username
+    assert_raises(AAAException, get_user)
+
+@with_setup(setup_mockedadmin, teardown_dir)
+def test_register_no_user():
+    assert_raises(AssertionError, aaa.register, None, 'pwd', 'a@a.a')
+
+@with_setup(setup_mockedadmin, teardown_dir)
+def test_register_no_pwd():
+    assert_raises(AssertionError, aaa.register, 'foo', None, 'a@a.a')
+
+@with_setup(setup_mockedadmin, teardown_dir)
+def test_register_no_email():
+    assert_raises(AssertionError, aaa.register, 'foo', 'pwd', None)
+
+@with_setup(setup_mockedadmin, teardown_dir)
+def test_register_already_existing():
+    assert_raises(AAAException, aaa.register, 'admin', 'pwd', 'a@a.a')
+
+@with_setup(setup_mockedadmin, teardown_dir)
+def test_register_no_role():
+    assert_raises(AAAException, aaa.register, 'foo', 'pwd', 'a@a.a', role='clown')
+
+@with_setup(setup_mockedadmin, teardown_dir)
+def test_register_role_too_high():
+    assert_raises(AAAException, aaa.register, 'foo', 'pwd', 'a@a.a', role='admin')
+
+# Patch the mailer _send() method to prevent network interactions
+@with_setup(setup_mockedadmin, teardown_dir)
+@mock.patch.object(Mailer, '_send')
+def test_register(mocked):
+    old_dir = os.getcwd()
+    os.chdir(testdir)
+    aaa.register('foo', 'pwd', 'a@a.a')
+    os.chdir(old_dir)
 
 
 # Patch the mailer _send() method to prevent network interactions

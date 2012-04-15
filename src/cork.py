@@ -82,6 +82,8 @@ class Cork(object):
         self._roles = {}
         self._roles_fname = roles_fname
         self._mtimes = {}
+        self._pending_reg_fname = pending_reg_fname
+        self._pending_registrations = {}
         self.mailer = Mailer(email_sender, smtp_server)
         self._refresh()  # load users and roles
 
@@ -218,7 +220,7 @@ class Cork(object):
         if role not in self._roles:
             raise AAAException("Nonexistent role.")
         self._roles.pop(role)
-        self._savejson('roles', self._roles)
+        self._savejson(self._roles_fname, self._roles)
 
     def create_user(self, username, role, password, email_addr=None,
         description=None):
@@ -290,7 +292,7 @@ class Cork(object):
         return None
 
     def register(self, username, password, email_addr, role='user',
-        max_level=50, email_template='registration_email', description=None):
+        max_level=50, email_template='view/registration_email', description=None):
         """Register a new user account. An email with a registration validation
         is sent to the user.
         WARNING: this method is available to unauthenticated users
@@ -328,7 +330,7 @@ class Cork(object):
             'desc': description,
             'creation_date': creation_date
         }
-        self._save_pending_registrations()
+        self._savejson(self._roles_fname, self._roles)
 
         # send registration email
         email_text = bottle.template(email_template,
@@ -353,6 +355,7 @@ class Cork(object):
         """Load users and roles from JSON files, if needed"""
         self._loadjson(self._users_fname, self._users)
         self._loadjson(self._roles_fname, self._roles)
+        self._loadjson(self._pending_reg_fname, self._pending_registrations)
 
     def _loadjson(self, fname, dest):
         """Load JSON file located under self._directory, if needed
