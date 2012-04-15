@@ -164,6 +164,11 @@ def test_unauth_create_user():
 def test_create_existing_user():
     assert_raises(AAAException, aaa.create_user, 'admin', 'admin', 'bogus')
 
+@raises(AAAException)
+@with_setup(setup_mockedadmin, teardown_dir)
+def test_create_user_with_wrong_role():
+    aaa.create_user('admin2', 'nonexistent_role', 'bogus')
+
 @with_setup(setup_mockedadmin, teardown_dir)
 def test_create_user():
     assert len(aaa._store.users) == 1, repr(aaa._store.users)

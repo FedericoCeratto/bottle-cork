@@ -338,6 +338,8 @@ class Cork(object):
             raise AuthException("The current user is not authorized to ")
         if username in self._store.users:
             raise AAAException("User is already existing.")
+        if role not in self._store.roles:
+            raise AAAException("Nonexistent user role.")
         tstamp = str(datetime.utcnow())
         self._store.users[username] = {
             'role': role,
@@ -365,12 +367,12 @@ class Cork(object):
     def list_users(self):
         """List users.
 
-        :return: (username, email_addr, description) generator (sorted by
+        :return: (username, role, email_addr, description) generator (sorted by
         username)
         """
         for un in sorted(self._store.users):
             d = self._store.users[un]
-            yield (un, d['email_addr'], d['desc'])
+            yield (un, d['role'], d['email_addr'], d['desc'])
 
     @property
     def current_user(self):
