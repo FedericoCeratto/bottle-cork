@@ -253,6 +253,12 @@ def test_successful_require_role():
 def test_update_nonexistent_role():
     assert_raises(AAAException, aaa.current_user.update, role='clown')
 
+@raises(AAAException)
+@with_setup(setup_mockedadmin, teardown_dir)
+def test_update_nonexistent_user():
+    aaa._users.pop('admin')
+    aaa.current_user.update(role='user')
+
 @with_setup(setup_mockedadmin, teardown_dir)
 def test_update_role():
     aaa.current_user.update(role='user')
@@ -329,6 +335,11 @@ def test_send_email(mocked):
     aaa.mailer.send_email('address','text')
     aaa.mailer.join()
 
+@with_setup(setup_mockedadmin, teardown_dir)
+def test_do_not_send_email():
+    aaa.mailer.smtp_server = None # disable email delivery
+    aaa.mailer.send_email('address','text')
+    aaa.mailer.join()
 
 @with_setup(setup_mockedadmin, teardown_dir)
 def test_validate_registration_no_code():

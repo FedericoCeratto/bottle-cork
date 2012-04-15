@@ -52,6 +52,8 @@ __version__ = '0.1~alpha'
 
 log = getLogger(__name__)
 
+#TODO: session expiration
+#TODO: cookie removal on logout
 
 class AAAException(Exception):
     """Generic Authentication/Authorization Exception"""
