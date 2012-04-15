@@ -270,6 +270,7 @@ def test_register(mocked):
     os.chdir(testdir)
     aaa.register('foo', 'pwd', 'a@a.a')
     os.chdir(old_dir)
+    assert len(aaa._pending_registrations) == 1, repr(aaa._pending_registrations)
 
 
 # Patch the mailer _send() method to prevent network interactions
@@ -281,6 +282,28 @@ def test_send_email(mocked):
     aaa.mailer.join()
 
 
+@with_setup(setup_mockedadmin, teardown_dir)
+def test_validate_registration_no_code():
+    assert_raises(AAAException, aaa.validate_registration, 'not_a_valid_code')
+
+# Patch the mailer _send() method to prevent network interactions
+@with_setup(setup_mockedadmin, teardown_dir)
+@mock.patch.object(Mailer, '_send')
+def test_validate_registration(mocked):
+    # create registration
+    old_dir = os.getcwd()
+    os.chdir(testdir)
+    aaa.register('user_foo', 'pwd', 'a@a.a')
+    os.chdir(old_dir)
+    assert len(aaa._pending_registrations) == 1, repr(aaa._pending_registrations)
+    # get the registration code, and run validate_registration
+    code = aaa._pending_registrations.keys()[0]
+    user_data = aaa._pending_registrations[code]
+    aaa.validate_registration(code)
+    assert user_data['username'] in aaa._users, "Account should have been added"
+    # test login
+    login = aaa.login('user_foo', 'pwd')
+    assert login == True, "Login must succed"
 
 
 

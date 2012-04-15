@@ -330,19 +330,19 @@ class Cork(object):
         if self._roles[role] > max_level:
             raise AAAException, "Unauthorized role"
 
-        registration_code = uuid.uuid4()
+        registration_code = uuid.uuid4().hex
 
         # store pending registration
-        creation_date = datetime.utcnow()
-        self._pending_registrations[username] = {
+        creation_date = str(datetime.utcnow())
+        self._pending_registrations[registration_code] = {
+            'username': username,
             'role': role,
             'hash': self._hash(username, password),
             'email_addr': email_addr,
             'desc': description,
             'creation_date': creation_date,
-            'code': registration_code
         }
-        self._savejson(self._roles_fname, self._roles)
+        self._savejson(self._pending_reg_fname, self._pending_registrations)
 
         # send registration email
         email_text = bottle.template(email_template,
@@ -361,7 +361,21 @@ class Cork(object):
         :param registration_code: registration code
         :type registration_code: str.
         """
-        raise NotImplementedError
+        try:
+            data = self._pending_registrations.pop(registration_code)
+        except KeyError:
+            raise AuthException("Invalid registration code.")
+
+        # the user data is moved from _pending_registrations to _users
+        username = data['username']
+        self._users[username] = {
+            'role': data['role'],
+            'hash': data['hash'],
+            'email_addr': data['email_addr'],
+            'desc': data['desc'],
+            'creation_date': data['creation_date']
+        }
+        self._save_users()
 
     ## Private methods
 
