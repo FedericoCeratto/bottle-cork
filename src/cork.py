@@ -459,8 +459,15 @@ class Cork(object):
 
     def __len__(self):
         """Count users"""
-        return len(self._users)
+        return len(self._users) #TODO: remove this?
 
+    def _purge_expired_registrations(self, exp_time=96):
+        """Purge expired registration requests.
+
+        :param exp_time: expiration time (hours)
+        :type exp_time: float.
+        """
+        raise NotImplementedError
 
 
 class User(object):
