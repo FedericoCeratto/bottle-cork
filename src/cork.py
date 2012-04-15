@@ -547,15 +547,14 @@ class Mailer(object):
         except Exception, e:
             log.error("Error sending email: %s" % e)
 
-    def join(self, timeout):
+    def join(self):
         """Flush email queue by waiting the completion of the existing threads
 
-        :param timeout: timeout in seconds
-        :type timeout: int.
+        :returns: None
         """
-        return [t.join(timeout) for t in self._threads]
+        return [t.join(self.join_timeout) for t in self._threads]
 
     def __del__(self):
         """Class destructor: wait for threads to terminate within a timeout"""
-        self.join(self.join_timeout)
+        self.join()
 

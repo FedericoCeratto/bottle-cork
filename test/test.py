@@ -278,7 +278,7 @@ def test_register(mocked):
 def test_send_email(mocked):
     assert aaa.mailer.smtp_server == 'localhost'
     aaa.mailer.send_email('address','text')
-    aaa.mailer.join(1)
+    aaa.mailer.join()
 
 
 
