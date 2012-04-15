@@ -39,6 +39,7 @@
     <script>
         // Prevent form submission, send POST asynchronously and parse returned JSON
         $('form').submit(function() {
+            $("div#status").fadeIn(100);
             z = $(this);
             $.post($(this).attr('action'), $(this).serialize(), function(j){
               if (j.ok) {
@@ -48,6 +49,7 @@
                 $("div#status").css("background-color", "#fff0f0");
                 $("div#status p").text(j.msg);
               }
+              $("div#status").delay(500).fadeOut(500);
             }, "json");
             return false;
         });
