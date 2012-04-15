@@ -324,11 +324,11 @@ class Cork(object):
         assert password, "A password must be provided."
         assert email_addr, "An email address must be provided."
         if username in self._users:
-            raise AAAException, "User is already existing."
+            raise AAAException("User is already existing.")
         if role not in self._roles:
-            raise AAAException, "Nonexistent role"
+            raise AAAException("Nonexistent role")
         if self._roles[role] > max_level:
-            raise AAAException, "Unauthorized role"
+            raise AAAException("Unauthorized role")
 
         registration_code = uuid.uuid4().hex
 
