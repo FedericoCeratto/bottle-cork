@@ -533,7 +533,7 @@ class User(object):
                 raise AAAException("Nonexistent role.")
             self._cork._users[username]['role'] = role
         if pwd is not None:
-            self._cork._users[username]['hash'] = self._hash(username, pwd)
+            self._cork._users[username]['hash'] = self._cork._hash(username, pwd)
         if email_addr is not None:
             self._cork._users[username]['email'] = email_addr
         self._cork._save_users()

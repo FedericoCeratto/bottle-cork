@@ -259,6 +259,10 @@ def test_update_role():
     assert aaa._users['admin']['role'] == 'user'
 
 @with_setup(setup_mockedadmin, teardown_dir)
+def test_update_pwd():
+    aaa.current_user.update(pwd='meow')
+
+@with_setup(setup_mockedadmin, teardown_dir)
 def test_update_email():
     aaa.current_user.update(email_addr='foo')
     assert aaa._users['admin']['email'] == 'foo'
