@@ -270,6 +270,13 @@ def test_get_current_user_unauth():
         print aaa.current_user.username
     assert_raises(AAAException, get_user)
 
+@raises(AuthException)
+@with_setup(setup_mockedadmin, teardown_dir)
+def test_get_current_user_nonexistent():
+    # The current user 'admin' is not in the user table
+    aaa._users.pop('admin')
+    c = aaa.current_user
+
 
 @with_setup(setup_mockedadmin, teardown_dir)
 def test_get_nonexistent_user():
