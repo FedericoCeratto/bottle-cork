@@ -93,6 +93,13 @@ def test_loadjson_broken_file():
         f.write('-----')
     aaa._loadjson('broken_file', {})
 
+@with_setup(setup_mockedadmin, teardown_dir)
+def test_loadjson_unchanged():
+    # By running _refresh with unchanged files the files should not be reloaded
+    mtimes = aaa._mtimes
+    aaa._refresh()
+    # The test simply ensures that no mtimes have been updated
+    assert mtimes == aaa._mtimes
 
 @with_setup(setup_mockedadmin, teardown_dir)
 def test_unauth_create_role():
@@ -262,6 +269,11 @@ def test_get_current_user_unauth():
         print aaa.current_user.username
     assert_raises(AAAException, get_user)
 
+
+@with_setup(setup_mockedadmin, teardown_dir)
+def test_get_nonexistent_user():
+    assert aaa.user('nonexistent_user') is None
+
 @with_setup(setup_mockedadmin, teardown_dir)
 def test_register_no_user():
     assert_raises(AssertionError, aaa.register, None, 'pwd', 'a@a.a')
@@ -329,5 +341,22 @@ def test_validate_registration(mocked):
     login = aaa.login('user_foo', 'pwd')
     assert login == True, "Login must succed"
 
+
+# Patch the mailer _send() method to prevent network interactions
+@with_setup(setup_mockedadmin, teardown_dir)
+@mock.patch.object(Mailer, '_send')
+def test_purge_expired_registration(mocked):
+    old_dir = os.getcwd()
+    os.chdir(testdir)
+    aaa.register('foo', 'pwd', 'a@a.a')
+    os.chdir(old_dir)
+    assert len(aaa._pending_registrations) == 1, "The registration should" \
+        " be present"
+    aaa._purge_expired_registrations()
+    assert len(aaa._pending_registrations) == 1, "The registration should " \
+        "be still there"
+    aaa._purge_expired_registrations(exp_time=0)
+    assert len(aaa._pending_registrations) == 0, "The registration should " \
+        "have been removed"
 
 

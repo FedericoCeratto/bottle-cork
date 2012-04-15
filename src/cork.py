@@ -31,7 +31,7 @@
 #  - decouple authentication logic from data storage to allow multiple backends
 #    (e.g. a key/value database)
 
-from datetime import datetime
+from datetime import datetime, timedelta
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 from hashlib import sha512
@@ -477,7 +477,13 @@ class Cork(object):
         :param exp_time: expiration time (hours)
         :type exp_time: float.
         """
-        raise NotImplementedError
+        for uuid, data in self._pending_registrations.items():
+            creation = datetime.strptime(data['creation_date'],
+                "%Y-%m-%d %H:%M:%S.%f")
+            now = datetime.utcnow()
+            maxdelta = timedelta(hours=exp_time)
+            if now - creation > maxdelta:
+                self._pending_registrations.pop(uuid)
 
 
 class User(object):
