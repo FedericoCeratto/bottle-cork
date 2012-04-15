@@ -65,344 +65,45 @@ class AuthException(AAAException):
     pass
 
 
-class Cork(object):
+class JsonBackend(object):
 
-    def __init__(self, directory, email_sender=None, smtp_server=None,
-        users_fname='users', roles_fname='roles', pending_reg_fname='register'):
-        """Auth/Authorization/Accounting class
+    def __init__(self, directory, users_fname='users',
+            roles_fname='roles', pending_reg_fname='register', initialize=False):
+        """Data storage class. Handles JSON files
 
-        :param directory: configuration directory
-        :type directory: str.
-        :param users_fname: users filename (without .json), defaults to 'users'
+        :param users_fname: users file name (without .json)
         :type users_fname: str.
-        :param roles_fname: roles filename (without .json), defaults to 'roles'
+        :param roles_fname: roless file name (without .json)
         :type roles_fname: str.
+        :param pending_reg_fnames: pending registrations file name (without .json)
+        :type pending_reg_fname: str.
+        :param initialize: create empty JSON files (defaults to False)
+        :type initialize: bool.
         """
         assert directory, "Directory name must be valid"
         self._directory = directory
-        self._users = {}
+        self.users = {}
         self._users_fname = users_fname
-        self._roles = {}
+        self.roles = {}
         self._roles_fname = roles_fname
         self._mtimes = {}
         self._pending_reg_fname = pending_reg_fname
-        self._pending_registrations = {}
-        self.mailer = Mailer(email_sender, smtp_server)
+        self.pending_registrations = {}
+        if initialize:
+            self._initialize_storage()
         self._refresh()  # load users and roles
 
-    def login(self, username, password, success_redirect=None,
-        fail_redirect=None):
-        """Check login credentials for an existing user.
-        Optionally redirect the user to another page (tipically /login)
-
-        :param username: username
-        :type username: str.
-        :param password: cleartext password
-        :type password: str.
-        :param success_redirect: redirect authorized users (optional)
-        :type success_redirect: str.
-        :param fail_redirect: redirect unauthorized users (optional)
-        :type fail_redirect: str.
-        :returns: True for successful logins, else False
-        """
-        assert isinstance(username, str), "the username must be a string"
-        assert isinstance(password, str), "the password must be a string"
-
-        if username in self._users:
-            if self._verify_password(username, password,
-                    self._users[username]['hash']):
-                # Setup session data
-                self._setup_cookie(username)
-                if success_redirect:
-                    bottle.redirect(success_redirect)
-                return True
-
-            if fail_redirect:
-                bottle.redirect(fail_redirect)
-
-        return False
-
-    def require(self, username=None, role=None, fixed_role=False,
-        fail_redirect=None):
-        """Ensure the user is logged in has the required role (or higher).
-        Optionally redirect the user to another page (tipically /login)
-        If both `username` and `role` are specified, both conditions need to be
-        satisfied.
-        If none is specified, any authenticated user will be authorized.
-        By default, any role with higher level than `role` will be authorized;
-        set fixed_role=True to prevent this.
-
-        :param username: username (optional)
-        :type username: str.
-        :param role: role
-        :type role: str.
-        :param fixed_role: require user role to match `role` strictly
-        :type fixed_role: bool.
-        :param redirect: redirect unauthorized users (optional)
-        :type redirect: str.
-        """
-        # Parameter validation
-        if username is not None:
-            if username not in self._users:
-                raise AAAException("Nonexistent user")
-        if fixed_role and role is None:
-            raise AAAException("""A role must be specified if fixed_role
-                has been set""")
-
-        if role is not None and role not in self._roles:
-            raise AAAException("Role not found")
-
-        if self.current_user.role not in self._roles:
-            raise AAAException("Role not found for the current user")
-
-        # Authentication
-        if self.current_user == None:
-            raise AuthException("Unauthenticated user")
-
-        if username is not None:
-            if username != self.current_user.username:
-                if fail_redirect is None:
-                    raise AuthException("""Unauthorized access: incorrect
-                        username""")
-                else:
-                    bottle.redirect(fail_redirect)
-
-        if fixed_role:
-            if role == self.current_user.role:
-                return
-
-            if fail_redirect is None:
-                raise AuthException("Unauthorized access: incorrect role")
-            else:
-                bottle.redirect(redirect)
-
-        else:
-            if role is not None:
-                # Any role with higher level is allowed
-                current_lvl = self._roles[self.current_user.role]
-                threshold_lvl = self._roles[role]
-                if current_lvl >= threshold_lvl:
-                    return
-
-                if fail_redirect is None:
-                    raise AuthException("Unauthorized access: ")
-                else:
-                    bottle.redirect(redirect)
-
-        return
-
-    def create_role(self, role, level):
-        """Create a new role.
-
-        :param role: role name
-        :type role: str.
-        :param level: role level (0=lowest, 100=admin)
-        :type level: int.
-        :raises: AuthException on errors
-        """
-        if self.current_user.level < 100:
-            raise AuthException("The current user is not authorized to ")
-        if role in self._roles:
-            raise AAAException("The role is already existing")
-        try:
-            int(level)
-        except ValueError:
-            raise AAAException("The level must be numeric.")
-        self._roles[role] = level
-        self._savejson('roles', self._roles)
-
-    def delete_role(self, role):
-        """Deleta a role.
-
-        :param role: role name
-        :type role: str.
-        :raises: AuthException on errors
-        """
-        if self.current_user.level < 100:
-            raise AuthException("The current user is not authorized to ")
-        if role not in self._roles:
-            raise AAAException("Nonexistent role.")
-        self._roles.pop(role)
-        self._savejson(self._roles_fname, self._roles)
-
-    def list_roles(self):
-        """List roles.
-
-        :returns: (role, role_level) generator (sorted by role)
-        """
-        for role in sorted(self._roles):
-            yield (role, self._roles[role])
-
-    def create_user(self, username, role, password, email_addr=None,
-        description=None):
-        """Create a new user account.
-        This method is available to users with level>=100
-
-        :param username: username
-        :type username: str.
-        :param role: role
-        :type role: str.
-        :param password: cleartext password
-        :type password: str.
-        :param email_addr: email address (optional)
-        :type email_addr: str.
-        :param description: description (free form)
-        :type description: str.
-        :raises: AuthException on errors
-        """
-        assert username, "Username must be provided."
-        if self.current_user.level < 100:
-            raise AuthException("The current user is not authorized to ")
-        if username in self._users:
-            raise AAAException("User is already existing.")
-        tstamp = str(datetime.utcnow())
-        self._users[username] = {
-            'role': role,
-            'hash': self._hash(username, password),
-            'email_addr': email_addr,
-            'desc': description,
-            'creation_date': tstamp
-        }
-        self._save_users()
-
-    def delete_user(self, username):
-        """Delete a user account.
-        This method is available to users with level>=100
-
-        :param username: username
-        :type username: str.
-        :raises: Exceptions on errors
-        """
-        if self.current_user.level < 100:
-            raise AuthException("The current user is not authorized to ")
-        if username not in self._users:
-            raise AAAException("Nonexistent user.")
-        self.user(username).delete()
-
-    def list_users(self):
-        """List users.
-
-        :return: (username, email_addr, description) generator (sorted by
-        username)
-        """
-        for un in sorted(self._users):
-            d = self._users[un]
-            yield (un, d['email_addr'], d['desc'])
-
-    @property
-    def current_user(self):
-        """Current autenticated user
-
-        :returns: User() instance, if authenticated
-        :raises: AuthException otherwise
-        """
-        username = self._beaker_session_username
-        if username is None:
-            raise AuthException("Unauthenticated user")
-        if username is not None and username in self._users:
-            return User(username, self)
-        raise AuthException("Unknown user: %s" % username)
-
-    def user(self, username):
-        """Existing user
-
-        :returns: User() instance if the user exist, None otherwise
-        """
-        if username is not None and username in self._users:
-            return User(username, self)
-        return None
-
-    def register(self, username, password, email_addr, role='user',
-        max_level=50, email_template='view/registration_email', description=None):
-        """Register a new user account. An email with a registration validation
-        is sent to the user.
-        WARNING: this method is available to unauthenticated users
-
-        :param username: username
-        :type username: str.
-        :param password: cleartext password
-        :type password: str.
-        :param role: role (optional), defaults to 'user'
-        :type role: str.
-        :param max_level: maximum role level (optional), defaults to 50
-        :type max_level: int.
-        :param email_addr: email address
-        :type email_addr: str.
-        :param description: description (free form)
-        :type description: str.
-        :raises: AssertError or AAAException on errors
-        """
-        assert username, "Username must be provided."
-        assert password, "A password must be provided."
-        assert email_addr, "An email address must be provided."
-        if username in self._users:
-            raise AAAException("User is already existing.")
-        if role not in self._roles:
-            raise AAAException("Nonexistent role")
-        if self._roles[role] > max_level:
-            raise AAAException("Unauthorized role")
-
-        registration_code = uuid.uuid4().hex
-
-        # store pending registration
-        creation_date = str(datetime.utcnow())
-        self._pending_registrations[registration_code] = {
-            'username': username,
-            'role': role,
-            'hash': self._hash(username, password),
-            'email_addr': email_addr,
-            'desc': description,
-            'creation_date': creation_date,
-        }
-        self._savejson(self._pending_reg_fname, self._pending_registrations)
-
-        # send registration email
-        email_text = bottle.template(email_template,
-            username=username,
-            email_addr=email_addr,
-            role=role,
-            creation_date=creation_date,
-            registration_code=registration_code
-        )
-        self.mailer.send_email(email_addr, email_text)
-
-    def validate_registration(self, registration_code):
-        """Validate pending account registration, create a new account if
-        successful.
-
-        :param registration_code: registration code
-        :type registration_code: str.
-        """
-        try:
-            data = self._pending_registrations.pop(registration_code)
-        except KeyError:
-            raise AuthException("Invalid registration code.")
-
-        # the user data is moved from _pending_registrations to _users
-        username = data['username']
-        self._users[username] = {
-            'role': data['role'],
-            'hash': data['hash'],
-            'email_addr': data['email_addr'],
-            'desc': data['desc'],
-            'creation_date': data['creation_date']
-        }
-        self._save_users()
-
-    ## Private methods
-
-    @property
-    def _beaker_session_username(self):
-        """Get username from Beaker session"""
-        session = bottle.request.environ.get('beaker.session')
-        username = session.get('username', None)
-        return username
+    def _initialize_storage(self):
+        """Create empty JSON files"""
+        self._savejson(self._users_fname, {})
+        self._savejson(self._roles_fname, {})
+        self._savejson(self._pending_reg_fname, {})
 
     def _refresh(self):
         """Load users and roles from JSON files, if needed"""
-        self._loadjson(self._users_fname, self._users)
-        self._loadjson(self._roles_fname, self._roles)
-        self._loadjson(self._pending_reg_fname, self._pending_registrations)
+        self._loadjson(self._users_fname, self.users)
+        self._loadjson(self._roles_fname, self.roles)
+        self._loadjson(self._pending_reg_fname, self.pending_registrations)
 
     def _loadjson(self, fname, dest):
         """Load JSON file located under self._directory, if needed
@@ -449,7 +150,338 @@ class Cork(object):
 
     def _save_users(self):
         """Save users in a JSON file"""
-        self._savejson('users', self._users)
+        self._savejson('users', self.users)
+
+
+class Cork(object):
+
+    def __init__(self, directory, email_sender=None, smtp_server=None,
+        users_fname='users', roles_fname='roles', pending_reg_fname='register',
+        initialize=False):
+        """Auth/Authorization/Accounting class
+
+        :param directory: configuration directory
+        :type directory: str.
+        :param users_fname: users filename (without .json), defaults to 'users'
+        :type users_fname: str.
+        :param roles_fname: roles filename (without .json), defaults to 'roles'
+        :type roles_fname: str.
+        """
+        self.mailer = Mailer(email_sender, smtp_server)
+        self._store = JsonBackend(directory, users_fname='users',
+            roles_fname='roles', pending_reg_fname='register',
+            initialize=initialize)
+
+
+    def login(self, username, password, success_redirect=None,
+        fail_redirect=None):
+        """Check login credentials for an existing user.
+        Optionally redirect the user to another page (tipically /login)
+
+        :param username: username
+        :type username: str.
+        :param password: cleartext password
+        :type password: str.
+        :param success_redirect: redirect authorized users (optional)
+        :type success_redirect: str.
+        :param fail_redirect: redirect unauthorized users (optional)
+        :type fail_redirect: str.
+        :returns: True for successful logins, else False
+        """
+        assert isinstance(username, str), "the username must be a string"
+        assert isinstance(password, str), "the password must be a string"
+
+        if username in self._store.users:
+            if self._verify_password(username, password,
+                    self._store.users[username]['hash']):
+                # Setup session data
+                self._setup_cookie(username)
+                if success_redirect:
+                    bottle.redirect(success_redirect)
+                return True
+
+            if fail_redirect:
+                bottle.redirect(fail_redirect)
+
+        return False
+
+    def require(self, username=None, role=None, fixed_role=False,
+        fail_redirect=None):
+        """Ensure the user is logged in has the required role (or higher).
+        Optionally redirect the user to another page (tipically /login)
+        If both `username` and `role` are specified, both conditions need to be
+        satisfied.
+        If none is specified, any authenticated user will be authorized.
+        By default, any role with higher level than `role` will be authorized;
+        set fixed_role=True to prevent this.
+
+        :param username: username (optional)
+        :type username: str.
+        :param role: role
+        :type role: str.
+        :param fixed_role: require user role to match `role` strictly
+        :type fixed_role: bool.
+        :param redirect: redirect unauthorized users (optional)
+        :type redirect: str.
+        """
+        # Parameter validation
+        if username is not None:
+            if username not in self._store.users:
+                raise AAAException("Nonexistent user")
+        if fixed_role and role is None:
+            raise AAAException("""A role must be specified if fixed_role
+                has been set""")
+
+        if role is not None and role not in self._store.roles:
+            raise AAAException("Role not found")
+
+        if self.current_user.role not in self._store.roles:
+            raise AAAException("Role not found for the current user")
+
+        # Authentication
+        if self.current_user == None:
+            raise AuthException("Unauthenticated user")
+
+        if username is not None:
+            if username != self.current_user.username:
+                if fail_redirect is None:
+                    raise AuthException("""Unauthorized access: incorrect
+                        username""")
+                else:
+                    bottle.redirect(fail_redirect)
+
+        if fixed_role:
+            if role == self.current_user.role:
+                return
+
+            if fail_redirect is None:
+                raise AuthException("Unauthorized access: incorrect role")
+            else:
+                bottle.redirect(redirect)
+
+        else:
+            if role is not None:
+                # Any role with higher level is allowed
+                current_lvl = self._store.roles[self.current_user.role]
+                threshold_lvl = self._store.roles[role]
+                if current_lvl >= threshold_lvl:
+                    return
+
+                if fail_redirect is None:
+                    raise AuthException("Unauthorized access: ")
+                else:
+                    bottle.redirect(redirect)
+
+        return
+
+    def create_role(self, role, level):
+        """Create a new role.
+
+        :param role: role name
+        :type role: str.
+        :param level: role level (0=lowest, 100=admin)
+        :type level: int.
+        :raises: AuthException on errors
+        """
+        if self.current_user.level < 100:
+            raise AuthException("The current user is not authorized to ")
+        if role in self._store.roles:
+            raise AAAException("The role is already existing")
+        try:
+            int(level)
+        except ValueError:
+            raise AAAException("The level must be numeric.")
+        self._store.roles[role] = level
+        self._store._savejson('roles', self._store.roles)
+
+    def delete_role(self, role):
+        """Deleta a role.
+
+        :param role: role name
+        :type role: str.
+        :raises: AuthException on errors
+        """
+        if self.current_user.level < 100:
+            raise AuthException("The current user is not authorized to ")
+        if role not in self._store.roles:
+            raise AAAException("Nonexistent role.")
+        self._store.roles.pop(role)
+        self._store._savejson(self._store._roles_fname, self._store.roles)
+
+    def list_roles(self):
+        """List roles.
+
+        :returns: (role, role_level) generator (sorted by role)
+        """
+        for role in sorted(self._store.roles):
+            yield (role, self._store.roles[role])
+
+    def create_user(self, username, role, password, email_addr=None,
+        description=None):
+        """Create a new user account.
+        This method is available to users with level>=100
+
+        :param username: username
+        :type username: str.
+        :param role: role
+        :type role: str.
+        :param password: cleartext password
+        :type password: str.
+        :param email_addr: email address (optional)
+        :type email_addr: str.
+        :param description: description (free form)
+        :type description: str.
+        :raises: AuthException on errors
+        """
+        assert username, "Username must be provided."
+        if self.current_user.level < 100:
+            raise AuthException("The current user is not authorized to ")
+        if username in self._store.users:
+            raise AAAException("User is already existing.")
+        tstamp = str(datetime.utcnow())
+        self._store.users[username] = {
+            'role': role,
+            'hash': self._hash(username, password),
+            'email_addr': email_addr,
+            'desc': description,
+            'creation_date': tstamp
+        }
+        self._store._save_users()
+
+    def delete_user(self, username):
+        """Delete a user account.
+        This method is available to users with level>=100
+
+        :param username: username
+        :type username: str.
+        :raises: Exceptions on errors
+        """
+        if self.current_user.level < 100:
+            raise AuthException("The current user is not authorized to ")
+        if username not in self._store.users:
+            raise AAAException("Nonexistent user.")
+        self.user(username).delete()
+
+    def list_users(self):
+        """List users.
+
+        :return: (username, email_addr, description) generator (sorted by
+        username)
+        """
+        for un in sorted(self._store.users):
+            d = self._store.users[un]
+            yield (un, d['email_addr'], d['desc'])
+
+    @property
+    def current_user(self):
+        """Current autenticated user
+
+        :returns: User() instance, if authenticated
+        :raises: AuthException otherwise
+        """
+        username = self._beaker_session_username
+        if username is None:
+            raise AuthException("Unauthenticated user")
+        if username is not None and username in self._store.users:
+            return User(username, self)
+        raise AuthException("Unknown user: %s" % username)
+
+    def user(self, username):
+        """Existing user
+
+        :returns: User() instance if the user exist, None otherwise
+        """
+        if username is not None and username in self._store.users:
+            return User(username, self)
+        return None
+
+    def register(self, username, password, email_addr, role='user',
+        max_level=50, email_template='view/registration_email',
+        description=None):
+        """Register a new user account. An email with a registration validation
+        is sent to the user.
+        WARNING: this method is available to unauthenticated users
+
+        :param username: username
+        :type username: str.
+        :param password: cleartext password
+        :type password: str.
+        :param role: role (optional), defaults to 'user'
+        :type role: str.
+        :param max_level: maximum role level (optional), defaults to 50
+        :type max_level: int.
+        :param email_addr: email address
+        :type email_addr: str.
+        :param description: description (free form)
+        :type description: str.
+        :raises: AssertError or AAAException on errors
+        """
+        assert username, "Username must be provided."
+        assert password, "A password must be provided."
+        assert email_addr, "An email address must be provided."
+        if username in self._store.users:
+            raise AAAException("User is already existing.")
+        if role not in self._store.roles:
+            raise AAAException("Nonexistent role")
+        if self._store.roles[role] > max_level:
+            raise AAAException("Unauthorized role")
+
+        registration_code = uuid.uuid4().hex
+
+        # store pending registration
+        creation_date = str(datetime.utcnow())
+        self._store.pending_registrations[registration_code] = {
+            'username': username,
+            'role': role,
+            'hash': self._hash(username, password),
+            'email_addr': email_addr,
+            'desc': description,
+            'creation_date': creation_date,
+        }
+        self._store._savejson(self._store._pending_reg_fname,
+            self._store.pending_registrations)
+
+        # send registration email
+        email_text = bottle.template(email_template,
+            username=username,
+            email_addr=email_addr,
+            role=role,
+            creation_date=creation_date,
+            registration_code=registration_code
+        )
+        self.mailer.send_email(email_addr, email_text)
+
+    def validate_registration(self, registration_code):
+        """Validate pending account registration, create a new account if
+        successful.
+
+        :param registration_code: registration code
+        :type registration_code: str.
+        """
+        try:
+            data = self._store.pending_registrations.pop(registration_code)
+        except KeyError:
+            raise AuthException("Invalid registration code.")
+
+        # the user data is moved from pending_registrations to _users
+        username = data['username']
+        self._store.users[username] = {
+            'role': data['role'],
+            'hash': data['hash'],
+            'email_addr': data['email_addr'],
+            'desc': data['desc'],
+            'creation_date': data['creation_date']
+        }
+        self._store._save_users()
+
+    ## Private methods
+
+    @property
+    def _beaker_session_username(self):
+        """Get username from Beaker session"""
+        session = bottle.request.environ.get('beaker.session')
+        username = session.get('username', None)
+        return username
 
     def _setup_cookie(self, username):
         """Setup cookie for a user that just logged in"""
@@ -471,7 +503,7 @@ class Cork(object):
 
     def __len__(self):
         """Count users"""
-        return len(self._users) #TODO: remove this?
+        return len(self._store.users) #TODO: remove this?
 
     def _purge_expired_registrations(self, exp_time=96):
         """Purge expired registration requests.
@@ -479,13 +511,13 @@ class Cork(object):
         :param exp_time: expiration time (hours)
         :type exp_time: float.
         """
-        for uuid, data in self._pending_registrations.items():
+        for uuid, data in self._store.pending_registrations.items():
             creation = datetime.strptime(data['creation_date'],
                 "%Y-%m-%d %H:%M:%S.%f")
             now = datetime.utcnow()
             maxdelta = timedelta(hours=exp_time)
             if now - creation > maxdelta:
-                self._pending_registrations.pop(uuid)
+                self._store.pending_registrations.pop(uuid)
 
 
 class User(object):
@@ -498,10 +530,10 @@ class User(object):
         :param cork_obj: instance of :class:`Cork`
         """
         self._cork = cork_obj
-        assert username in self._cork._users, "Unknown user"
+        assert username in self._cork._store.users, "Unknown user"
         self.username = username
-        self.role = self._cork._users[username]['role']
-        self.level = self._cork._roles[self.role]
+        self.role = self._cork._store.users[username]['role']
+        self.level = self._cork._store.roles[self.role]
 
     def logout(self, fail_redirect='/login'):
         """Log the user out, remove cookie
@@ -528,17 +560,18 @@ class User(object):
         :raises: AAAException on nonexistent user or role.
         """
         username = self.username
-        if username not in self._cork._users:
+        if username not in self._cork._store.users:
             raise AAAException("User does not exist.")
         if role is not None:
-            if role not in self._cork._roles:
+            if role not in self._cork._store.roles:
                 raise AAAException("Nonexistent role.")
-            self._cork._users[username]['role'] = role
+            self._cork._store.users[username]['role'] = role
         if pwd is not None:
-            self._cork._users[username]['hash'] = self._cork._hash(username, pwd)
+            self._cork._store.users[username]['hash'] = self._cork._hash(
+                username, pwd)
         if email_addr is not None:
-            self._cork._users[username]['email'] = email_addr
-        self._cork._save_users()
+            self._cork._store.users[username]['email'] = email_addr
+        self._cork._store._save_users()
 
     def delete(self):
         """Delete user account
@@ -546,10 +579,10 @@ class User(object):
         :raises: AAAException on nonexistent user.
         """
         try:
-            self._cork._users.pop(self.username)
+            self._cork._store.users.pop(self.username)
         except KeyError:
             raise AAAException("Nonexistent user.")
-        self._cork._save_users()
+        self._cork._store._save_users()
 
 #TODO: add creation and last access date?
 

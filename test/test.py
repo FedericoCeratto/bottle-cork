@@ -79,31 +79,31 @@ def test_init():
 
 @with_setup(setup_mockedadmin, teardown_dir)
 def test_mockedadmin():
-    assert len(aaa._users) == 1, repr(aaa._users)
-    assert 'admin' in aaa._users, repr(aaa._users)
+    assert len(aaa._store.users) == 1, repr(aaa._store.users)
+    assert 'admin' in aaa._store.users, repr(aaa._store.users)
 
 @with_setup(setup_mockedadmin, teardown_dir)
 def test_loadjson_missing_file():
-    assert_raises(AAAException, aaa._loadjson, 'nonexistent_file', {})
+    assert_raises(AAAException, aaa._store._loadjson, 'nonexistent_file', {})
 
 @raises(AAAException)
 @with_setup(setup_mockedadmin, teardown_dir)
 def test_loadjson_broken_file():
     with open(testdir + '/broken_file.json', 'w') as f:
         f.write('-----')
-    aaa._loadjson('broken_file', {})
+    aaa._store._loadjson('broken_file', {})
 
 @with_setup(setup_mockedadmin, teardown_dir)
 def test_loadjson_unchanged():
     # By running _refresh with unchanged files the files should not be reloaded
-    mtimes = aaa._mtimes
-    aaa._refresh()
+    mtimes = aaa._store._mtimes
+    aaa._store._refresh()
     # The test simply ensures that no mtimes have been updated
-    assert mtimes == aaa._mtimes
+    assert mtimes == aaa._store._mtimes
 
 @with_setup(setup_mockedadmin, teardown_dir)
 def test_unauth_create_role():
-    aaa._roles['admin'] = 10 # lower admin level
+    aaa._store.roles['admin'] = 10 # lower admin level
     assert_raises(AuthException, aaa.create_role, 'user', 33)
 
 @with_setup(setup_mockedadmin, teardown_dir)
@@ -117,10 +117,10 @@ def test_create_role_with_incorrect_level():
 
 @with_setup(setup_mockedadmin, teardown_dir)
 def test_create_role():
-    assert len(aaa._roles) == 3, repr(aaa._roles)
+    assert len(aaa._store.roles) == 3, repr(aaa._store.roles)
     aaa.create_role('user33', 33)
-    assert len(aaa._roles) == 4, repr(aaa._roles)
-    fname = "%s/%s.json" % (aaa._directory, aaa._roles_fname)
+    assert len(aaa._store.roles) == 4, repr(aaa._store.roles)
+    fname = "%s/%s.json" % (aaa._store._directory, aaa._store._roles_fname)
     with open(fname) as f:
         data = f.read()
         assert 'user33' in data, repr(data)
@@ -128,7 +128,7 @@ def test_create_role():
 
 @with_setup(setup_mockedadmin, teardown_dir)
 def test_unauth_delete_role():
-    aaa._roles['admin'] = 10 # lower admin level
+    aaa._store.roles['admin'] = 10 # lower admin level
     assert_raises(AuthException, aaa.delete_role, 'user')
 
 @with_setup(setup_mockedadmin, teardown_dir)
@@ -137,27 +137,27 @@ def test_delete_nonexistent_role():
 
 @with_setup(setup_mockedadmin, teardown_dir)
 def test_create_delete_role():
-    assert len(aaa._roles) == 3, repr(aaa._roles)
+    assert len(aaa._store.roles) == 3, repr(aaa._store.roles)
     aaa.create_role('user33', 33)
-    assert len(aaa._roles) == 4, repr(aaa._roles)
-    fname = "%s/%s.json" % (aaa._directory, aaa._roles_fname)
+    assert len(aaa._store.roles) == 4, repr(aaa._store.roles)
+    fname = "%s/%s.json" % (aaa._store._directory, aaa._store._roles_fname)
     with open(fname) as f:
         data = f.read()
         assert 'user33' in data, repr(data)
-    assert aaa._roles['user33'] == 33
+    assert aaa._store.roles['user33'] == 33
     aaa.delete_role('user33')
-    assert len(aaa._roles) == 3, repr(aaa._roles)
+    assert len(aaa._store.roles) == 3, repr(aaa._store.roles)
 
 
 @with_setup(setup_mockedadmin, teardown_dir)
 def test_list_roles():
     roles = list(aaa.list_roles())
-    assert len(roles) == 3, "Incorrect. Users are: %s" % repr(aaa._roles)
+    assert len(roles) == 3, "Incorrect. Users are: %s" % repr(aaa._store.roles)
 
 
 @with_setup(setup_mockedadmin, teardown_dir)
 def test_unauth_create_user():
-    aaa._roles['admin'] = 10 # lower admin level
+    aaa._store.roles['admin'] = 10 # lower admin level
     assert_raises(AuthException, aaa.create_user, 'phil', 'user', 'hunter123')
 
 @with_setup(setup_mockedadmin, teardown_dir)
@@ -166,10 +166,10 @@ def test_create_existing_user():
 
 @with_setup(setup_mockedadmin, teardown_dir)
 def test_create_user():
-    assert len(aaa._users) == 1, repr(aaa._users)
+    assert len(aaa._store.users) == 1, repr(aaa._store.users)
     aaa.create_user('phil','user','user')
-    assert len(aaa._users) == 2, repr(aaa._users)
-    fname = "%s/%s.json" % (aaa._directory, aaa._users_fname)
+    assert len(aaa._store.users) == 2, repr(aaa._store.users)
+    fname = "%s/%s.json" % (aaa._store._directory, aaa._store._users_fname)
     with open(fname) as f:
         data = f.read()
         assert 'phil' in data, repr(data)
@@ -177,7 +177,7 @@ def test_create_user():
 
 @with_setup(setup_mockedadmin, teardown_dir)
 def test_unauth_delete_user():
-    aaa._roles['admin'] = 10 # lower admin level
+    aaa._store.roles['admin'] = 10 # lower admin level
     assert_raises(AuthException, aaa.delete_user, 'phil')
 
 @with_setup(setup_mockedadmin, teardown_dir)
@@ -186,10 +186,10 @@ def test_delete_nonexistent_user():
 
 @with_setup(setup_mockedadmin, teardown_dir)
 def test_delete_user():
-    assert len(aaa._users) == 1, repr(aaa._users)
+    assert len(aaa._store.users) == 1, repr(aaa._store.users)
     aaa.delete_user('admin')
-    assert len(aaa._users) == 0, repr(aaa._users)
-    fname = "%s/%s.json" % (aaa._directory, aaa._users_fname)
+    assert len(aaa._store.users) == 0, repr(aaa._store.users)
+    fname = "%s/%s.json" % (aaa._store._directory, aaa._store._users_fname)
     with open(fname) as f:
         data = f.read()
         assert 'admin' not in data, "'admin' must not be in %s" % repr(data)
@@ -198,7 +198,7 @@ def test_delete_user():
 @with_setup(setup_mockedadmin, teardown_dir)
 def test_list_users():
     users = list(aaa.list_users())
-    assert len(users) == 1, "Incorrect. Users are: %s" % repr(aaa._users)
+    assert len(users) == 1, "Incorrect. Users are: %s" % repr(aaa._store.users)
 
 
 @with_setup(setup_mockedadmin, teardown_dir)
@@ -211,8 +211,8 @@ def test_failing_login():
 @with_setup(setup_mockedadmin, teardown_dir)
 def test_create_and_validate_user():
     aaa.create_user('phil', 'user', 'hunter123')
-    assert 'phil' in aaa._users
-    assert aaa._users['phil']['role'] == 'user'
+    assert 'phil' in aaa._store.users
+    assert aaa._store.users['phil']['role'] == 'user'
     login = aaa.login('phil', 'hunter123')
     assert login == True, "Login must succed"
     global cookie_name
@@ -256,13 +256,13 @@ def test_update_nonexistent_role():
 @raises(AAAException)
 @with_setup(setup_mockedadmin, teardown_dir)
 def test_update_nonexistent_user():
-    aaa._users.pop('admin')
+    aaa._store.users.pop('admin')
     aaa.current_user.update(role='user')
 
 @with_setup(setup_mockedadmin, teardown_dir)
 def test_update_role():
     aaa.current_user.update(role='user')
-    assert aaa._users['admin']['role'] == 'user'
+    assert aaa._store.users['admin']['role'] == 'user'
 
 @with_setup(setup_mockedadmin, teardown_dir)
 def test_update_pwd():
@@ -271,7 +271,7 @@ def test_update_pwd():
 @with_setup(setup_mockedadmin, teardown_dir)
 def test_update_email():
     aaa.current_user.update(email_addr='foo')
-    assert aaa._users['admin']['email'] == 'foo'
+    assert aaa._store.users['admin']['email'] == 'foo'
 
 
 @with_setup(setup_mocked_unauthenticated, teardown_dir)
@@ -284,7 +284,7 @@ def test_get_current_user_unauth():
 @with_setup(setup_mockedadmin, teardown_dir)
 def test_get_current_user_nonexistent():
     # The current user 'admin' is not in the user table
-    aaa._users.pop('admin')
+    aaa._store.users.pop('admin')
     c = aaa.current_user
 
 
@@ -324,7 +324,7 @@ def test_register(mocked):
     os.chdir(testdir)
     aaa.register('foo', 'pwd', 'a@a.a')
     os.chdir(old_dir)
-    assert len(aaa._pending_registrations) == 1, repr(aaa._pending_registrations)
+    assert len(aaa._store.pending_registrations) == 1, repr(aaa._store.pending_registrations)
 
 
 # Patch the mailer _send() method to prevent network interactions
@@ -354,12 +354,12 @@ def test_validate_registration(mocked):
     os.chdir(testdir)
     aaa.register('user_foo', 'pwd', 'a@a.a')
     os.chdir(old_dir)
-    assert len(aaa._pending_registrations) == 1, repr(aaa._pending_registrations)
+    assert len(aaa._store.pending_registrations) == 1, repr(aaa._store.pending_registrations)
     # get the registration code, and run validate_registration
-    code = aaa._pending_registrations.keys()[0]
-    user_data = aaa._pending_registrations[code]
+    code = aaa._store.pending_registrations.keys()[0]
+    user_data = aaa._store.pending_registrations[code]
     aaa.validate_registration(code)
-    assert user_data['username'] in aaa._users, "Account should have been added"
+    assert user_data['username'] in aaa._store.users, "Account should have been added"
     # test login
     login = aaa.login('user_foo', 'pwd')
     assert login == True, "Login must succed"
@@ -373,13 +373,13 @@ def test_purge_expired_registration(mocked):
     os.chdir(testdir)
     aaa.register('foo', 'pwd', 'a@a.a')
     os.chdir(old_dir)
-    assert len(aaa._pending_registrations) == 1, "The registration should" \
+    assert len(aaa._store.pending_registrations) == 1, "The registration should" \
         " be present"
     aaa._purge_expired_registrations()
-    assert len(aaa._pending_registrations) == 1, "The registration should " \
+    assert len(aaa._store.pending_registrations) == 1, "The registration should " \
         "be still there"
     aaa._purge_expired_registrations(exp_time=0)
-    assert len(aaa._pending_registrations) == 0, "The registration should " \
+    assert len(aaa._store.pending_registrations) == 0, "The registration should " \
         "have been removed"
 
 
