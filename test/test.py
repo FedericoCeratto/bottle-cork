@@ -130,6 +130,12 @@ def test_create_delete_role():
 
 
 @with_setup(setup_mockedadmin, teardown_dir)
+def test_list_roles():
+    roles = list(aaa.list_roles())
+    assert len(roles) == 3, "Incorrect. Users are: %s" % repr(aaa._roles)
+
+
+@with_setup(setup_mockedadmin, teardown_dir)
 def test_unauth_create_user():
     aaa._roles['admin'] = 10 # lower admin level
     assert_raises(AuthException, aaa.create_user, 'phil', 'user', 'hunter123')
@@ -167,6 +173,12 @@ def test_delete_user():
     with open(fname) as f:
         data = f.read()
         assert 'admin' not in data, "'admin' must not be in %s" % repr(data)
+
+
+@with_setup(setup_mockedadmin, teardown_dir)
+def test_list_users():
+    users = list(aaa.list_users())
+    assert len(users) == 1, "Incorrect. Users are: %s" % repr(aaa._users)
 
 
 @with_setup(setup_mockedadmin, teardown_dir)
@@ -304,7 +316,6 @@ def test_validate_registration(mocked):
     # test login
     login = aaa.login('user_foo', 'pwd')
     assert login == True, "Login must succed"
-
 
 
 

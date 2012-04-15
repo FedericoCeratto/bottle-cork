@@ -224,8 +224,12 @@ class Cork(object):
         self._savejson(self._roles_fname, self._roles)
 
     def list_roles(self):
-        """List roles."""
-        raise NotImplementedError
+        """List roles.
+
+        :returns: (role, role_level) generator (sorted by role)
+        """
+        for role in sorted(self._roles):
+            yield (role, self._roles[role])
 
     def create_user(self, username, role, password, email_addr=None,
         description=None):
@@ -274,8 +278,14 @@ class Cork(object):
         self.user(username).delete()
 
     def list_users(self):
-        """List users."""
-        raise NotImplementedError
+        """List users.
+
+        :return: (username, email_addr, description) generator (sorted by
+        username)
+        """
+        for un in sorted(self._users):
+            d = self._users[un]
+            yield (un, d['email_addr'], d['desc'])
 
     @property
     def current_user(self):
