@@ -110,9 +110,10 @@ def test_unauth_create_role():
 def test_create_existing_role():
     assert_raises(AAAException, aaa.create_role, 'user', 33)
 
+@raises(AAAException)
 @with_setup(setup_mockedadmin, teardown_dir)
 def test_create_role_with_incorrect_level():
-    assert_raises(AAAException, aaa.create_role, 'user', 'not_a_number')
+    aaa.create_role('new_user', 'not_a_number')
 
 @with_setup(setup_mockedadmin, teardown_dir)
 def test_create_role():
