@@ -503,7 +503,7 @@ class Cork(object):
     def _hash(self, username, pwd, salt=None):
         """Hash username and password"""
         # Backwards compatible
-        if salt:
+        if salt is not None:
             return hashlib.sha512(
                     "%s:::%s" % (username, pwd) + salt).hexdigest() + salt
         salt = os.urandom(self._pwd_saltlen)
