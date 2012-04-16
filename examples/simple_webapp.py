@@ -30,13 +30,13 @@ def login():
 
 @bottle.route('/logout')
 def logout():
-    aaa.current_user.logout()
+    aaa.logout()
 
 @bottle.route('/')
 def index():
     """Only authenticated users can see this"""
     session = bottle.request.environ.get('beaker.session')
-    aaa.require(fail_redirect='/sorry_page')
+    aaa.require(fail_redirect='/login')
     return 'Welcome! <a href="/admin">Admin page</a>'
 
 # Admin-only pages
@@ -47,6 +47,7 @@ def admin():
     """Only admin users can see this"""
     aaa.require(role='admin', fail_redirect='/sorry_page')
     return dict(
+        current_user = aaa.current_user,
         users = aaa.list_users(),
         roles = aaa.list_roles()
     )

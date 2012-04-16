@@ -205,6 +205,22 @@ class Cork(object):
 
         return False
 
+    def logout(self, success_redirect='/login', fail_redirect='/login'):
+        """Log the user out, remove cookie
+
+        :param success_redirect: redirect the user after logging out
+        :type success_redirect: str.
+        :param fail_redirect: redirect the user if it is not logged in
+        :type fail_redirect: str.
+        """
+        try:
+            session = bottle.request.environ.get('beaker.session')
+            session_username = session.get('username', None)
+            session.delete()
+            bottle.redirect(success_redirect)
+        except: #TODO: improve this
+            bottle.redirect(fail_redirect)
+
     def require(self, username=None, role=None, fixed_role=False,
         fail_redirect=None):
         """Ensure the user is logged in has the required role (or higher).
@@ -228,6 +244,7 @@ class Cork(object):
         if username is not None:
             if username not in self._store.users:
                 raise AAAException("Nonexistent user")
+
         if fixed_role and role is None:
             raise AAAException("""A role must be specified if fixed_role
                 has been set""")
@@ -235,12 +252,17 @@ class Cork(object):
         if role is not None and role not in self._store.roles:
             raise AAAException("Role not found")
 
-        if self.current_user.role not in self._store.roles:
-            raise AAAException("Role not found for the current user")
-
         # Authentication
-        if self.current_user == None:
-            raise AuthException("Unauthenticated user")
+        try:
+            cu = self.current_user
+        except AAAException:
+            if fail_redirect is None:
+                raise AuthException("Unauthenticated user")
+            else:
+                bottle.redirect(fail_redirect)
+
+        if cu.role not in self._store.roles:
+            raise AAAException("Role not found for the current user")
 
         if username is not None:
             if username != self.current_user.username:
@@ -385,7 +407,7 @@ class Cork(object):
         if username is None:
             raise AuthException("Unauthenticated user")
         if username is not None and username in self._store.users:
-            return User(username, self)
+            return User(username, self, is_current_user=True)
         raise AuthException("Unknown user: %s" % username)
 
     def user(self, username):
@@ -524,12 +546,17 @@ class Cork(object):
 
 class User(object):
 
-    def __init__(self, username, cork_obj):
-        """Represent an authenticated user
+    def __init__(self, username, cork_obj, is_current_user=False):
+        """Represent an authenticated user, exposing useful attributes:
+        username, role, level, session_creation_time, session_accessed_time,
+        session_id. The session-related attributes are available for the
+        current user only.
 
         :param username: username
         :type username: str.
         :param cork_obj: instance of :class:`Cork`
+        :param is_current_user: fetch extra  data from the current user session
+        :type is_current_user: bool. (defaults to False)
         """
         self._cork = cork_obj
         assert username in self._cork._store.users, "Unknown user"
@@ -537,18 +564,14 @@ class User(object):
         self.role = self._cork._store.users[username]['role']
         self.level = self._cork._store.roles[self.role]
 
-    def logout(self, fail_redirect='/login'):
-        """Log the user out, remove cookie
-
-        :param fail_redirect: redirect the user if it is not logged in
-        :type fail_redirect: str.
-        """
-        s = bottle.request.environ.get('beaker.session')
-        u = s.get('username', None)
-        if u:
-            log.info('User %s logged out.' % u)
-        s.delete()
-        bottle.redirect(fail_redirect)
+        if is_current_user:
+            try:
+                session = bottle.request.environ.get('beaker.session')
+                self.session_creation_time = session['_creation_time']
+                self.session_accessed_time = session['_accessed_time']
+                self.session_id = session['_id']
+            except:
+                pass #fixme
 
     def update(self, role=None, pwd=None, email_addr=None):
         """Update an user account data

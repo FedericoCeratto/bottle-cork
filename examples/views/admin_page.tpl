@@ -3,7 +3,9 @@
 <head>
 <meta content="text/html; charset=utf-8" http-equiv="content-type">
 <div id='main'>
-    <h2>Administration page</h2>
+    <h2>Cork - Administration page</h2>
+    <p>Welcome {{current_user.username}}, your role is: {{current_user.role}},
+    access time: {{current_user.session_accessed_time}}</p>
     <div id='commands'>
       <p>Create new user:</p>
       <form action="create_user" method="post">
@@ -56,6 +58,9 @@
     <div class="clear"></div>
 
     <div id='status'><p>Ready.</p></div>
+    <div id="urls">
+      <a href="/">index</a> <a href="/logout">logout</a>
+    </div>
     <script src="http://ajax.googleapis.com/ajax/libs/jquery/1.7.1/jquery.min.js"></script>
     <script>
         // Prevent form submission, send POST asynchronously and parse returned JSON
@@ -112,6 +117,11 @@ div#status {
     -moz-border-radius: 10px;
     border-radius: 10px;
 }
-.clear { clear: both;}}
+.clear { clear: both;}
+div#urls {
+  position:absolute;
+  top:0;
+  right:1em;
+}
 </style>
 
