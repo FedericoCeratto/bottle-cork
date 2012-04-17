@@ -13,6 +13,13 @@ from cork import Cork
 # Use users.json and roles.json in the local example_conf directory
 aaa = Cork('example_conf')
 
+app = bottle.app()
+session_opts = {
+    'session.type': 'cookie',
+    'session.validate_key': True,
+}
+app = SessionMiddleware(app, session_opts)
+
 # #  Bottle methods  # #
 
 def postd():
@@ -21,7 +28,7 @@ def postd():
 def post_get(name, default=''):
     return bottle.request.POST.get(name, default).strip()
 
-@bottle.route('/login', method='POST')
+@bottle.post('/login')
 def login():
     """Authenticate users"""
     username = post_get('user')
@@ -52,7 +59,7 @@ def admin():
         roles = aaa.list_roles()
     )
 
-@bottle.route('/create_user', method='POST')
+@bottle.post('/create_user')
 def create_user():
     try:
         aaa.create_user(postd().username, postd().role, postd().password)
@@ -60,7 +67,7 @@ def create_user():
     except Exception, e:
         return dict(ok=False, msg=e.message)
 
-@bottle.route('/delete_user', method='POST')
+@bottle.post('/delete_user')
 def delete_user():
     try:
         aaa.delete_user(post_get('username'))
@@ -69,7 +76,7 @@ def delete_user():
         print repr(e)
         return dict(ok=False, msg=e.message)
 
-@bottle.route('/create_role', method='POST')
+@bottle.post('/create_role')
 def create_role():
     try:
         aaa.create_role(post_get('role'), post_get('level'))
@@ -77,7 +84,7 @@ def create_role():
     except Exception, e:
         return dict(ok=False, msg=e.message)
 
-@bottle.route('/delete_role', method='POST')
+@bottle.post('/delete_role')
 def delete_role():
     try:
         aaa.delete_role(post_get('role'))
