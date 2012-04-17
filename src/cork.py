@@ -215,7 +215,6 @@ class Cork(object):
         """
         try:
             session = bottle.request.environ.get('beaker.session')
-            session_username = session.get('username', None)
             session.delete()
             bottle.redirect(success_redirect)
         except: #TODO: improve this
@@ -403,11 +402,12 @@ class Cork(object):
         :returns: User() instance, if authenticated
         :raises: AuthException otherwise
         """
-        username = self._beaker_session_username
+        session = self._beaker_session
+        username = session.get('username', None)
         if username is None:
             raise AuthException("Unauthenticated user")
         if username is not None and username in self._store.users:
-            return User(username, self, is_current_user=True)
+            return User(username, self, session=session)
         raise AuthException("Unknown user: %s" % username)
 
     def user(self, username):
@@ -501,10 +501,14 @@ class Cork(object):
     ## Private methods
 
     @property
+    def _beaker_session(self):
+        """Get Beaker session"""
+        return bottle.request.environ.get('beaker.session')
+
+    @property
     def _beaker_session_username(self):
         """Get username from Beaker session"""
-        session = bottle.request.environ.get('beaker.session')
-        username = session.get('username', None)
+        username = self_beaker_session.get('username', None)
         return username
 
     def _setup_cookie(self, username):
@@ -546,7 +550,7 @@ class Cork(object):
 
 class User(object):
 
-    def __init__(self, username, cork_obj, is_current_user=False):
+    def __init__(self, username, cork_obj, session=None):
         """Represent an authenticated user, exposing useful attributes:
         username, role, level, session_creation_time, session_accessed_time,
         session_id. The session-related attributes are available for the
@@ -555,8 +559,6 @@ class User(object):
         :param username: username
         :type username: str.
         :param cork_obj: instance of :class:`Cork`
-        :param is_current_user: fetch extra  data from the current user session
-        :type is_current_user: bool. (defaults to False)
         """
         self._cork = cork_obj
         assert username in self._cork._store.users, "Unknown user"
@@ -564,9 +566,8 @@ class User(object):
         self.role = self._cork._store.users[username]['role']
         self.level = self._cork._store.roles[self.role]
 
-        if is_current_user:
+        if session is not None:
             try:
-                session = bottle.request.environ.get('beaker.session')
                 self.session_creation_time = session['_creation_time']
                 self.session_accessed_time = session['_accessed_time']
                 self.session_id = session['_id']

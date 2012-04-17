@@ -12,11 +12,19 @@ testdir = None # Test directory
 aaa = None # global Cork instance
 cookie_name = None # global variable to track cookie status
 
+class RoAttrDict(dict):
+    """Read-only attribute-accessed dictionary.
+    Used to mock beaker's session objects
+    """
+    def __getattr__(self, name):
+        return self[name]
+
+
 class MockedAdminCork(Cork):
     """Mocked module where the current user is always 'admin'"""
     @property
-    def _beaker_session_username(self):
-        return 'admin'
+    def _beaker_session(self):
+        return RoAttrDict(username='admin')
 
     def _setup_cookie(self, username):
         global cookie_name
@@ -25,7 +33,7 @@ class MockedAdminCork(Cork):
 class MockedUnauthenticatedCork(Cork):
     """Mocked module where the current user is always 'admin'"""
     @property
-    def _beaker_session_username(self):
+    def _beaker_session(self):
         return None
 
     def _setup_cookie(self, username):
@@ -278,12 +286,11 @@ def test_update_email():
     aaa.current_user.update(email_addr='foo')
     assert aaa._store.users['admin']['email'] == 'foo'
 
-
+@raises(AAAException)
 @with_setup(setup_mocked_unauthenticated, teardown_dir)
 def test_get_current_user_unauth():
-    def get_user():
-        print aaa.current_user.username
-    assert_raises(AAAException, get_user)
+    print repr(aaa._beaker_session)
+    aaa.current_user['username']
 
 @raises(AuthException)
 @with_setup(setup_mockedadmin, teardown_dir)
