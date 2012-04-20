@@ -31,12 +31,12 @@
 #  - decouple authentication logic from data storage to allow multiple backends
 #    (e.g. a key/value database)
 
+from base64 import b64encode, b64decode
+from beaker import crypto
 from datetime import datetime, timedelta
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
-from hashlib import sha512
 from logging import getLogger
-from random import randint
 from smtplib import SMTP
 from threading import Thread
 import bottle
@@ -519,14 +519,23 @@ class Cork(object):
 
     @staticmethod
     def _hash(username, pwd, salt=None):
-        """Hash username and password"""
+        """Hash username and password, generating salt value if required
+
+        :returns: base-64 encoded str.
+        """
         if salt is None:
-            salt = ''.join(chr(randint(0,255)) for i in range(32)).encode('hex')
-        return sha512("%s:::%s" % (username, pwd) + salt).hexdigest() + salt
+            salt = os.urandom(32)
+        assert len(salt) == 32, "Incorrect salt length"
+        h = crypto.generateCryptoKeys(username + pwd, salt, 10)
+        return b64encode(salt + h)
 
     @classmethod
     def _verify_password(cls, username, pwd, salted_hash):
-        hash_, salt = salted_hash[:128], salted_hash[128:]
+        """Verity username/password pair against a salted hash
+
+        :returns: bool
+        """
+        salt = b64decode(salted_hash)[:32]
         return cls._hash(username, pwd, salt) == salted_hash
 
     def __len__(self):

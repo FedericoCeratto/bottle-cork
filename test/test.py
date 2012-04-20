@@ -109,6 +109,26 @@ def test_loadjson_unchanged():
     # The test simply ensures that no mtimes have been updated
     assert mtimes == aaa._store._mtimes
 
+
+@with_setup(setup_mockedadmin, teardown_dir)
+def test_password_hashing():
+    shash = aaa._hash('user_foo', 'bogus_pwd')
+    assert len(shash) == 88, "hash length should be 88"
+    assert shash.endswith('=='), "hash should end with '=='"
+    assert aaa._verify_password('user_foo', 'bogus_pwd', shash) == True, \
+        "Hashing verification should succeed"
+
+@with_setup(setup_mockedadmin, teardown_dir)
+def test_incorrect_password_hashing():
+    shash = aaa._hash('user_foo', 'bogus_pwd')
+    assert len(shash) == 88, "hash length should be 88"
+    assert shash.endswith('=='), "hash should end with '=='"
+    assert aaa._verify_password('user_foo', '####', shash) == False, \
+        "Hashing verification should fail"
+    assert aaa._verify_password('###', 'bogus_pwd', shash) == False, \
+        "Hashing verification should fail"
+
+
 @with_setup(setup_mockedadmin, teardown_dir)
 def test_unauth_create_role():
     aaa._store.roles['admin'] = 10 # lower admin level
