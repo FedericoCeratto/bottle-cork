@@ -53,4 +53,10 @@ def test_functional_login_logout():
     # fetch the same page, unsuccessfully
     assert app.get('/admin').status == REDIR
 
+@with_setup(login, teardown)
+def test_functional_expiration():
+    assert app.get('/admin').status == '200 OK'
+    # change the cookie expiration in order to expire it
+    app.app.options['timeout'] = 0
+    assert app.get('/admin').status == REDIR, "The cookie should have expired"
 

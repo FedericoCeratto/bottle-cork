@@ -13,10 +13,14 @@ from cork import Cork
 # Use users.json and roles.json in the local example_conf directory
 aaa = Cork('example_conf')
 
+import datetime
 app = bottle.app()
 session_opts = {
     'session.type': 'cookie',
     'session.validate_key': True,
+    #TODO: enable timeout
+    #'session.cookie_expires': datetime.timedelta(0),
+    #'timeout': 1
 }
 app = SessionMiddleware(app, session_opts)
 
@@ -108,15 +112,6 @@ def sorry_page():
 # #  Web application main  # #
 
 def main():
-
-    session_opts = {
-        'session.type': 'cookie',
-        'session.validate_key': True,
-    }
-
-    # Setup Beaker middleware to handle sessions and cookies
-    app = bottle.default_app()
-    app = SessionMiddleware(app, session_opts)
 
     # Start the Bottle webapp
     bottle.debug(True)

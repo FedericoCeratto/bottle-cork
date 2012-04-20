@@ -31,10 +31,10 @@ class MockedAdminCork(Cork):
         cookie_name = username
 
 class MockedUnauthenticatedCork(Cork):
-    """Mocked module where the current user is always 'admin'"""
+    """Mocked module where the current user not set"""
     @property
     def _beaker_session(self):
-        return None
+        return RoAttrDict()
 
     def _setup_cookie(self, username):
         global cookie_name
