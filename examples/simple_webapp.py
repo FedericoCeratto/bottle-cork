@@ -18,9 +18,9 @@ app = bottle.app()
 session_opts = {
     'session.type': 'cookie',
     'session.validate_key': True,
-    #TODO: enable timeout
-    #'session.cookie_expires': datetime.timedelta(0),
-    #'timeout': 1
+    'session.cookie_expires': True,
+    'session.timeout': 3600 * 24, # 1 day
+    #'session.encrypt_key': 'please use random keys',
 }
 app = SessionMiddleware(app, session_opts)
 
