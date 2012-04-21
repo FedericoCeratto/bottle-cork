@@ -1,0 +1,6 @@
+recursive-include src *
+recursive-exclude src *~
+recursive-include examples *
+recursive-exclude examples *~
+recursive-include test *
+recursive-exclude test *~
