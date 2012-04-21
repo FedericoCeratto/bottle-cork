@@ -1,6 +1,8 @@
-recursive-include src *
-recursive-exclude src *~
-recursive-include examples *
-recursive-exclude examples *~
-recursive-include test *
-recursive-exclude test *~
+include test/*.py
+include setup.py
+include cork.py
+include examples/functional_test.py
+include examples/simple_webapp.py
+recursive-include examples/views/ *
+recursive-include examples/example_conf/ *
+
