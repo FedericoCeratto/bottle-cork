@@ -55,6 +55,8 @@ def setup_dir():
         f.write("""{}""")
     with open("%s/view/registration_email.tpl" % testdir, 'w') as f:
         f.write("""Username:{{username}} Email:{{email_addr}} Code:{{registration_code}}""")
+    with open("%s/view/password_reset_email.tpl" % testdir, 'w') as f:
+        f.write("""Username:{{username}} Email:{{email_addr}} Code:{{reset_code}}""")
     print "setup done in %s" % testdir
 
 def setup_mockedadmin():
@@ -413,5 +415,59 @@ def test_purge_expired_registration(mocked):
     aaa._purge_expired_registrations(exp_time=0)
     assert len(aaa._store.pending_registrations) == 0, "The registration should " \
         "have been removed"
+
+
+@raises(AAAException)
+@with_setup(setup_mockedadmin, teardown_dir)
+@mock.patch.object(Mailer, '_send')
+def test_send_password_reset_email_no_params(mocked):
+    aaa.send_password_reset_email()
+
+@raises(AAAException)
+@with_setup(setup_mockedadmin, teardown_dir)
+@mock.patch.object(Mailer, '_send')
+def test_send_password_reset_email_incorrect_addr(mocked):
+    aaa.send_password_reset_email(email_addr='incorrect_addr')
+
+@raises(AAAException)
+@with_setup(setup_mockedadmin, teardown_dir)
+@mock.patch.object(Mailer, '_send')
+def test_send_password_reset_email_incorrect_user(mocked):
+    aaa.send_password_reset_email(username='bogus_name')
+
+@raises(AAAException)
+@with_setup(setup_mockedadmin, teardown_dir)
+@mock.patch.object(Mailer, '_send')
+def test_send_password_reset_email_missing_email_addr(mocked):
+    aaa.send_password_reset_email(username='admin')
+
+@raises(AuthException)
+@with_setup(setup_mockedadmin, teardown_dir)
+@mock.patch.object(Mailer, '_send')
+def test_send_password_reset_email_incorrect_pair(mocked):
+    aaa.send_password_reset_email(username='admin', email_addr='incorrect_addr')
+
+@with_setup(setup_mockedadmin, teardown_dir)
+@mock.patch.object(Mailer, '_send')
+def test_send_password_reset_email_by_email_addr(mocked):
+    aaa._store.users['admin']['email_addr'] = 'admin@localhost.local'
+    old_dir = os.getcwd()
+    os.chdir(testdir)
+    aaa.send_password_reset_email(email_addr='admin@localhost.local')
+    os.chdir(old_dir)
+
+@with_setup(setup_mockedadmin, teardown_dir)
+@mock.patch.object(Mailer, '_send')
+def test_send_password_reset_email_by_username(mocked):
+    aaa._store.users['admin']['email_addr'] = 'admin@localhost.local'
+    old_dir = os.getcwd()
+    os.chdir(testdir)
+    assert not mocked.called
+    aaa.send_password_reset_email(username='admin')
+    assert mocked.called
+    assert mocked.call_args[0][1]['To'] == 'admin@localhost.local'
+    os.chdir(old_dir)
+
+
 
 

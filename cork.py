@@ -25,7 +25,6 @@
 #  - user registration
 #
 # Roadmap:
-#  - password reset function
 #  - add hooks to provide logging or user-defined functions in case of
 #     login/require failure
 #  - decouple authentication logic from data storage to allow multiple backends
@@ -498,6 +497,56 @@ class Cork(object):
         }
         self._store._save_users()
 
+    def send_password_reset_email(self, username=None, email_addr=None,
+        email_template='view/password_reset_email'):
+        """Email the user with a link to reset his/her password
+        If only one parameter is passed, fetch the other from the users database
+        If both are passed they will be matched against the users db as a
+        security check
+
+        :param username: username
+        :type username: str.
+        :param email_addr: email address
+        :type email_addr: str.
+        :raises: AAAException on missing username or email_addr,
+            AuthException on incorrect username/email_addr pair
+        """
+        if username is None:
+            if email_addr is None:
+                raise AAAException("At least `username` or `email_addr` must" \
+                    " be specified.")
+
+            # only email_addr is specified: fetch the username
+            for k, v in self._store.users.iteritems():
+                if v['email_addr'] == email_addr:
+                    username = k
+                    break
+                raise AAAException("Email address not found.")
+
+        else: # username is provided
+            if username not in self._store.users:
+                raise AAAException("Nonexistent user.")
+            if email_addr is None:
+                email_addr = self._store.users[username].get('email_addr', None)
+                if not email_addr:
+                    raise AAAException("Email address not available.")
+            else:
+                # both username and email_addr are provided: check them
+                stored_email_addr = self._store.users[username]
+                if email_addr != stored_email_addr:
+                    raise AuthException("Username/email_addr pair not found.")
+
+
+        reset_code = self._hash(username, email_addr)
+        # send reset email
+        email_text = bottle.template(email_template,
+            username=username,
+            email_addr=email_addr,
+            reset_code=reset_code
+        )
+        self.mailer.send_email(email_addr, email_text)
+
+
     ## Private methods
 
     @property
@@ -537,10 +586,6 @@ class Cork(object):
         """
         salt = b64decode(salted_hash)[:32]
         return cls._hash(username, pwd, salt) == salted_hash
-
-    def __len__(self):
-        """Count users"""
-        return len(self._store.users) #TODO: remove this?
 
     def _purge_expired_registrations(self, exp_time=96):
         """Purge expired registration requests.
