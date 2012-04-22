@@ -456,6 +456,7 @@ def test_send_password_reset_email_by_email_addr(mocked):
     os.chdir(testdir)
     aaa.send_password_reset_email(email_addr='admin@localhost.local')
     os.chdir(old_dir)
+    #TODO: add UT
 
 @with_setup(setup_mockedadmin, teardown_dir)
 @mock.patch.object(Mailer, '_send')
