@@ -1,8 +1,9 @@
+from nose import SkipTest
 from nose.tools import assert_raises, raises, with_setup
-import os
 from tempfile import mkdtemp
 from time import time
 import mock
+import os
 import shutil
 
 from cork import Cork, AAAException, AuthException
@@ -459,14 +460,15 @@ def test_send_password_reset_email_by_email_addr(mocked):
 @with_setup(setup_mockedadmin, teardown_dir)
 @mock.patch.object(Mailer, '_send')
 def test_send_password_reset_email_by_username(mocked):
-    aaa._store.users['admin']['email_addr'] = 'admin@localhost.local'
     old_dir = os.getcwd()
     os.chdir(testdir)
+    aaa._store.users['admin']['email_addr'] = 'admin@localhost.local'
     assert not mocked.called
     aaa.send_password_reset_email(username='admin')
+    aaa.mailer.join()
+    os.chdir(old_dir)
     assert mocked.called
     assert mocked.call_args[0][1]['To'] == 'admin@localhost.local'
-    os.chdir(old_dir)
 
 
 

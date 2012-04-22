@@ -712,6 +712,7 @@ class Mailer(object):
         :param msg: email text
         :type msg: str.
         """
+        print 111
         try:
             session = SMTP(self.smtp_server)
             session.sendmail(self.sender, email_addr, msg) #TODO
