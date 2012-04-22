@@ -48,7 +48,7 @@ try:
 except ImportError:  # pragma: no cover
     import simplejson as json
 
-__version__ = '0.1~beta'
+__version__ = '0.1~beta2'
 
 log = getLogger(__name__)
 
@@ -501,9 +501,9 @@ class Cork(object):
     def send_password_reset_email(self, username=None, email_addr=None,
         email_template='view/password_reset_email'):
         """Email the user with a link to reset his/her password
-        If only one parameter is passed, fetch the other from the users database
-        If both are passed they will be matched against the users db as a
-        security check
+        If only one parameter is passed, fetch the other from the users
+        database. If both are passed they will be matched against the users
+        database as a security check
 
         :param username: username
         :type username: str.

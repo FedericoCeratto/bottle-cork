@@ -15,7 +15,7 @@ It is designed to stay out of the way and let you focus on what your application
  - `Bug tracker <http://github.com/FedericoCeratto/bottle-cork/issues>`_
  - IRC: #bottle on Freenode
 
-**Version 0.1-alpha is out!**
+**Version 0.1-beta is out!**
 
 Cork is currently **under development** - contributions are very welcome!
 
@@ -38,11 +38,10 @@ Features
 
 * Multiple backends support (e.g. storing users/roles in a key/value database)
 
+* Password reset function
 
 Roadmap
 -------
-
-* Password reset function
 
 * Additional hooks to provide logging or user-defined functions in case of login()/require() failure
 
