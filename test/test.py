@@ -471,6 +471,18 @@ def test_send_password_reset_email_by_username(mocked):
     assert mocked.called
     assert mocked.call_args[0][1]['To'] == 'admin@localhost.local'
 
+@raises(AuthException)
+@with_setup(setup_mockedadmin, teardown_dir)
+def test_perform_password_reset_invalid():
+    aaa.reset_password('bogus', 'newpassword')
+
+@with_setup(setup_mockedadmin, teardown_dir)
+def test_perform_password_reset():
+    old_dir = os.getcwd()
+    os.chdir(testdir)
+    token = aaa._reset_code('admin', 'admin@localhost.local')
+    aaa.reset_password(token, 'newpassword')
+    os.chdir(old_dir)
 
 
 

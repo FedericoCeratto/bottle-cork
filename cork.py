@@ -38,6 +38,7 @@ from email.mime.text import MIMEText
 from logging import getLogger
 from smtplib import SMTP
 from threading import Thread
+from time import time
 import bottle
 import os
 import uuid
@@ -536,8 +537,9 @@ class Cork(object):
                 if email_addr != stored_email_addr:
                     raise AuthException("Username/email_addr pair not found.")
 
+        # generate a reset_code token
+        reset_code = self._reset_code(username, email_addr)
 
-        reset_code = self._hash(username, email_addr)
         # send reset email
         email_text = bottle.template(email_template,
             username=username,
@@ -546,7 +548,31 @@ class Cork(object):
         )
         self.mailer.send_email(email_addr, email_text)
 
-    #TODO: add password reset method
+    def reset_password(self, reset_code, password):
+        """Validate reset_code and update the account password
+        The username is extracted from the reset_code token
+
+        :param reset_code: reset token
+        :type reset_code: str.
+        :param password: new password
+        :type password: str.
+        :raises: AuthException for invalid reset tokens, AAAException
+        """
+        try:
+            reset_code = b64decode(reset_code)
+            username, email_addr, tstamp, h = reset_code.split(':', 3)
+            tstamp = int(tstamp)
+        except (TypeError, ValueError):
+            raise AuthException("Invalid reset code.")
+        #TODO: make timeout configurable
+        if time() - tstamp > 3600 * 24:
+            raise AuthException("Expired reset code.")
+        if not self._verify_password(username, email_addr, h):
+            raise AuthException("Invalid reset code.")
+        user = self.user(username)
+        if user is None:
+            raise AAAException("Nonexistent user.")
+        user.update(pwd=password)
 
     ## Private methods
 
@@ -602,6 +628,19 @@ class Cork(object):
             if now - creation > maxdelta:
                 self._store.pending_registrations.pop(uuid)
 
+    def _reset_code(self, username, email_addr):
+        """generate a reset_code token
+
+        :param username: username
+        :type username: str.
+        :param email_addr: email address
+        :type email_addr: str.
+        :returns: Base-64 encoded token
+        """
+        h = self._hash(username, email_addr)
+        t = "%d" % time()
+        reset_code = ':'.join((username, email_addr, t, h))
+        return b64encode(reset_code)
 
 class User(object):
 
