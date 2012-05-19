@@ -4,13 +4,13 @@ from setuptools import setup
 from cork import __version__
 
 CLASSIFIERS = map(str.strip,
-"""
-Environment :: Console
-License :: OSI Approved :: GNU Lesser General Public License (LGPL)
+"""Environment :: Console
+License :: OSI Approved :: GNU Lesser General Public License v3 (LGPLv3)
 Natural Language :: English
 Operating System :: POSIX :: Linux
 Programming Language :: Python
 Topic :: Internet :: WWW/HTTP :: WSGI
+Topic :: Software Development :: Libraries :: Python Modules
 """.splitlines())
 
 setup(
