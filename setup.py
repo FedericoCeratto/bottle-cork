@@ -10,6 +10,7 @@ Natural Language :: English
 Operating System :: POSIX :: Linux
 Programming Language :: Python
 Topic :: Internet :: WWW/HTTP :: WSGI
+Topic :: Security
 Topic :: Software Development :: Libraries :: Python Modules
 """.splitlines())
 
