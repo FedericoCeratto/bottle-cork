@@ -1,3 +1,4 @@
+from base64 import b64encode, b64decode
 from nose import SkipTest
 from nose.tools import assert_raises, raises, with_setup
 from tempfile import mkdtemp
@@ -518,6 +519,46 @@ def test_perform_password_reset_timed_out():
     aaa.password_reset_timeout = 0
     token = aaa._reset_code('admin', 'admin@localhost.local')
     aaa.reset_password(token, 'newpassword')
+
+@raises(AAAException)
+@with_setup(setup_mockedadmin, teardown_dir)
+def test_perform_password_reset_nonexistent_user():
+    token = aaa._reset_code('admin_bogus', 'admin@localhost.local')
+    aaa.reset_password(token, 'newpassword')
+
+# The following test should fail
+# an user can change the password reset timestamp by b64-decoding the token,
+# editing the field and b64-encoding it
+@raises(AuthException)
+@with_setup(setup_mockedadmin, teardown_dir)
+def test_perform_password_reset_mangled_timestamp():
+    raise SkipTest
+    token = aaa._reset_code('admin', 'admin@localhost.local')
+    username, email_addr, tstamp, h = b64decode(token).split(':', 3)
+    tstamp = str(int(tstamp) + 100)
+    mangled_token = ':'.join((username, email_addr, tstamp, h))
+    mangled_token = b64encode(mangled_token)
+    aaa.reset_password(mangled_token, 'newpassword')
+
+@raises(AuthException)
+@with_setup(setup_mockedadmin, teardown_dir)
+def test_perform_password_reset_mangled_username():
+    token = aaa._reset_code('admin', 'admin@localhost.local')
+    username, email_addr, tstamp, h = b64decode(token).split(':', 3)
+    username += "mangled_username"
+    mangled_token = ':'.join((username, email_addr, tstamp, h))
+    mangled_token = b64encode(mangled_token)
+    aaa.reset_password(mangled_token, 'newpassword')
+
+@raises(AuthException)
+@with_setup(setup_mockedadmin, teardown_dir)
+def test_perform_password_reset_mangled_email():
+    token = aaa._reset_code('admin', 'admin@localhost.local')
+    username, email_addr, tstamp, h = b64decode(token).split(':', 3)
+    email_addr += "mangled_email"
+    mangled_token = ':'.join((username, email_addr, tstamp, h))
+    mangled_token = b64encode(mangled_token)
+    aaa.reset_password(mangled_token, 'newpassword')
 
 @with_setup(setup_mockedadmin, teardown_dir)
 def test_perform_password_reset():
