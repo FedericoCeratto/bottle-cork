@@ -52,8 +52,6 @@ __version__ = '0.1~beta2'
 
 log = getLogger(__name__)
 
-#TODO: session expiration
-#TODO: cookie removal on logout
 
 class AAAException(Exception):
     """Generic Authentication/Authorization Exception"""
@@ -217,7 +215,7 @@ class Cork(object):
             session = bottle.request.environ.get('beaker.session')
             session.delete()
             bottle.redirect(success_redirect)
-        except: #TODO: improve this
+        except:
             bottle.redirect(fail_redirect)
 
     def require(self, username=None, role=None, fixed_role=False,
@@ -564,7 +562,6 @@ class Cork(object):
             tstamp = int(tstamp)
         except (TypeError, ValueError):
             raise AuthException("Invalid reset code.")
-        #TODO: make timeout configurable
         if time() - tstamp > 3600 * 24:
             raise AuthException("Expired reset code.")
         if not self._verify_password(username, email_addr, h):
@@ -666,7 +663,7 @@ class User(object):
                 self.session_accessed_time = session['_accessed_time']
                 self.session_id = session['_id']
             except:
-                pass #fixme
+                pass
 
     def update(self, role=None, pwd=None, email_addr=None):
         """Update an user account data
@@ -704,7 +701,6 @@ class User(object):
             raise AAAException("Nonexistent user.")
         self._cork._store._save_users()
 
-#TODO: add creation and last access date?
 
 
 class Mailer(object):
@@ -733,7 +729,7 @@ class Mailer(object):
         if self.smtp_server is None:
             return
         msg = MIMEMultipart('alternative')
-        msg['Subject'] = "Register" #FIXME
+        msg['Subject'] = "Register"
         msg['From'] = self.sender
         msg['To'] = email_addr
         part = MIMEText(email_text, 'html')
@@ -754,7 +750,7 @@ class Mailer(object):
         """
         try:
             session = SMTP(self.smtp_server)
-            session.sendmail(self.sender, email_addr, msg) #TODO
+            session.sendmail(self.sender, email_addr, msg)
             session.close()
             log.debug('Email sent')
         except Exception, e:
