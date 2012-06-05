@@ -299,6 +299,11 @@ def test_require_nonexistent_username():
 def test_require_failing_role_fixed():
     assert_raises(AuthException, aaa.require, role='user', fixed_role=True)
 
+@raises(AAAException)
+@with_setup(setup_mockedadmin, teardown_dir)
+def test_require_missing_parameter():
+    aaa.require(fixed_role=True)
+
 @with_setup(setup_mockedadmin, teardown_dir)
 def test_require_nonexistent_role():
     assert_raises(AAAException, aaa.require, role='clown')

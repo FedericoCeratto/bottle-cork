@@ -244,8 +244,8 @@ class Cork(object):
                 raise AAAException("Nonexistent user")
 
         if fixed_role and role is None:
-            raise AAAException("""A role must be specified if fixed_role
-                has been set""")
+            raise AAAException(
+                """A role must be specified if fixed_role has been set""")
 
         if role is not None and role not in self._store.roles:
             raise AAAException("Role not found")
