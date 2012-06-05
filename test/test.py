@@ -107,9 +107,11 @@ def test_initialize_storage():
     with open("%s/register.json" % testdir) as f:
         assert f.readlines() == ['{}']
     with open("%s/view/registration_email.tpl" % testdir) as f:
-        assert f.readlines() == ['{}']
+        assert f.readlines() == [
+            'Username:{{username}} Email:{{email_addr}} Code:{{registration_code}}']
     with open("%s/view/password_reset_email.tpl" % testdir) as f:
-        assert f.readlines() == ['{}']
+        assert f.readlines() == [
+            'Username:{{username}} Email:{{email_addr}} Code:{{reset_code}}']
 
 @with_setup(setup_mockedadmin, teardown_dir)
 def test_mockedadmin():
