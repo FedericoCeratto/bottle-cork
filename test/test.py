@@ -113,6 +113,12 @@ def test_initialize_storage():
         assert f.readlines() == [
             'Username:{{username}} Email:{{email_addr}} Code:{{reset_code}}']
 
+@raises(AAAException)
+@with_setup(setup_dir, teardown_dir)
+def test_unable_to_save():
+    bogus_dir = '/___inexisting_directory___'
+    aaa = Cork(bogus_dir, initialize=True)
+
 @with_setup(setup_mockedadmin, teardown_dir)
 def test_mockedadmin():
     assert len(aaa._store.users) == 1, repr(aaa._store.users)
