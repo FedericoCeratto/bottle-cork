@@ -512,6 +512,13 @@ def test_send_password_reset_email_by_username(mocked):
 def test_perform_password_reset_invalid():
     aaa.reset_password('bogus', 'newpassword')
 
+@raises(AuthException)
+@with_setup(setup_mockedadmin, teardown_dir)
+def test_perform_password_reset_timed_out():
+    aaa.password_reset_timeout = 0
+    token = aaa._reset_code('admin', 'admin@localhost.local')
+    aaa.reset_password(token, 'newpassword')
+
 @with_setup(setup_mockedadmin, teardown_dir)
 def test_perform_password_reset():
     old_dir = os.getcwd()
