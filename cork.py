@@ -579,12 +579,6 @@ class Cork(object):
         """Get Beaker session"""
         return bottle.request.environ.get('beaker.session')
 
-    @property
-    def _beaker_session_username(self):
-        """Get username from Beaker session"""
-        username = self_beaker_session.get('username', None)
-        return username
-
     def _setup_cookie(self, username):
         """Setup cookie for a user that just logged in"""
         session = bottle.request.environ.get('beaker.session')
