@@ -41,8 +41,17 @@ class MockedUnauthenticatedCork(Cork):
         global cookie_name
         cookie_name = username
 
+def setup_empty_dir():
+    """Setup test directory without JSON files"""
+    global testdir
+    tstamp = "%f" % time()
+    testdir = "/dev/shm/fl_%s" % tstamp
+    os.mkdir(testdir)
+    os.mkdir(testdir + '/view')
+    print "setup done in %s" % testdir
+
 def setup_dir():
-    """Setup test directory with empty JSON files"""
+    """Setup test directory with valid JSON files"""
     global testdir
     tstamp = "%f" % time()
     testdir = "/dev/shm/fl_%s" % tstamp
@@ -87,6 +96,20 @@ def teardown_dir():
 @with_setup(setup_dir, teardown_dir)
 def test_init():
     aaa = Cork(testdir)
+
+@with_setup(setup_dir, teardown_dir)
+def test_initialize_storage():
+    aaa = Cork(testdir, initialize=True)
+    with open("%s/users.json" % testdir) as f:
+        assert f.readlines() == ['{}']
+    with open("%s/roles.json" % testdir) as f:
+        assert f.readlines() == ['{}']
+    with open("%s/register.json" % testdir) as f:
+        assert f.readlines() == ['{}']
+    with open("%s/view/registration_email.tpl" % testdir) as f:
+        assert f.readlines() == ['{}']
+    with open("%s/view/password_reset_email.tpl" % testdir) as f:
+        assert f.readlines() == ['{}']
 
 @with_setup(setup_mockedadmin, teardown_dir)
 def test_mockedadmin():
