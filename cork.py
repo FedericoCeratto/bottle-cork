@@ -169,6 +169,7 @@ class Cork(object):
         self._store = JsonBackend(directory, users_fname='users',
             roles_fname='roles', pending_reg_fname='register',
             initialize=initialize)
+        self.password_reset_timeout = 3600 * 24
 
 
     def login(self, username, password, success_redirect=None,
@@ -562,7 +563,7 @@ class Cork(object):
             tstamp = int(tstamp)
         except (TypeError, ValueError):
             raise AuthException("Invalid reset code.")
-        if time() - tstamp > 3600 * 24:
+        if time() - tstamp > self.password_reset_timeout:
             raise AuthException("Expired reset code.")
         if not self._verify_password(username, email_addr, h):
             raise AuthException("Invalid reset code.")
