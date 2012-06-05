@@ -15,14 +15,14 @@ It is designed to stay out of the way and let you focus on what your application
  - `Bug tracker <http://github.com/FedericoCeratto/bottle-cork/issues>`_
  - IRC: #bottle on Freenode
 
-**Version 0.1-beta is out!**
+**Version 0.1-beta2 is out!**
 
 Cork is currently **under development** - contributions are very welcome!
 
 Features
 --------
 
-* Minimal API
+* Minimal design, easy to tweak.
 
 * Designed for web application with moderate userbases. User credentials are stored in JSON files.
 
@@ -30,15 +30,13 @@ Features
 
   * Admin users can create and delete user accounts and roles.
 
-* User registration with email delivery and confirmation
+* User registration and password reset using email delivery and confirmation.
 
-* Thread safe and easy to tweak
+* Unit-tested and almost fully `code covered <./cover/cork.html>`_
 
-* Unit-tested and `code covered <./cover/cork.html>`_
+* Multiple backends support (e.g. storing users/roles in a key/value database).
 
-* Multiple backends support (e.g. storing users/roles in a key/value database)
-
-* Password reset function
+* Thread safe.
 
 Roadmap
 -------
@@ -47,6 +45,7 @@ Roadmap
 
 * Hooks to share session data between multiple hosts
 
+* Flask support
 
 Basic usage
 -----------
