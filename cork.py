@@ -155,7 +155,7 @@ class Cork(object):
 
     def __init__(self, directory, email_sender=None, smtp_server=None,
         users_fname='users', roles_fname='roles', pending_reg_fname='register',
-        initialize=False):
+        initialize=False, session_domain=None):
         """Auth/Authorization/Accounting class
 
         :param directory: configuration directory
@@ -170,7 +170,7 @@ class Cork(object):
             roles_fname='roles', pending_reg_fname='register',
             initialize=initialize)
         self.password_reset_timeout = 3600 * 24
-
+        self.session_domain = session_domain
 
     def login(self, username, password, success_redirect=None,
         fail_redirect=None):
@@ -583,6 +583,8 @@ class Cork(object):
         """Setup cookie for a user that just logged in"""
         session = bottle.request.environ.get('beaker.session')
         session['username'] = username
+        if self.session_domain is not None:
+            session.domain = self.session_domain
         session.save()
 
     @staticmethod
