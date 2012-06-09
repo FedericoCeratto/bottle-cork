@@ -20,7 +20,7 @@ session_opts = {
     'session.validate_key': True,
     'session.cookie_expires': True,
     'session.timeout': 3600 * 24, # 1 day
-    #'session.encrypt_key': 'please use random keys',
+    'session.encrypt_key': 'please use a random key and keep it secret!',
 }
 app = SessionMiddleware(app, session_opts)
 
