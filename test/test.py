@@ -404,13 +404,13 @@ def test_register(mocked):
 @mock.patch.object(Mailer, '_send')
 def test_send_email(mocked):
     assert aaa.mailer.smtp_server == 'localhost'
-    aaa.mailer.send_email('address','text')
+    aaa.mailer.send_email('address',' sbj', 'text')
     aaa.mailer.join()
 
 @with_setup(setup_mockedadmin, teardown_dir)
 def test_do_not_send_email():
     aaa.mailer.smtp_server = None # disable email delivery
-    aaa.mailer.send_email('address','text')
+    aaa.mailer.send_email('address', 'sbj', 'text')
     aaa.mailer.join()
 
 @with_setup(setup_mockedadmin, teardown_dir)

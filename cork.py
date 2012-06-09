@@ -419,7 +419,8 @@ class Cork(object):
         return None
 
     def register(self, username, password, email_addr, role='user',
-        max_level=50, email_template='view/registration_email',
+        max_level=50, subject="Signup confirmation",
+        email_template='view/registration_email',
         description=None):
         """Register a new user account. An email with a registration validation
         is sent to the user.
@@ -435,6 +436,10 @@ class Cork(object):
         :type max_level: int.
         :param email_addr: email address
         :type email_addr: str.
+        :param subject: email subject
+        :type subject: str.
+        :param email_template: email template filename
+        :type email_template: str.
         :param description: description (free form)
         :type description: str.
         :raises: AssertError or AAAException on errors
@@ -472,7 +477,7 @@ class Cork(object):
             creation_date=creation_date,
             registration_code=registration_code
         )
-        self.mailer.send_email(email_addr, email_text)
+        self.mailer.send_email(email_addr, subject, email_text)
 
     def validate_registration(self, registration_code):
         """Validate pending account registration, create a new account if
@@ -498,6 +503,7 @@ class Cork(object):
         self._store._save_users()
 
     def send_password_reset_email(self, username=None, email_addr=None,
+        subject="Password reset confirmation",
         email_template='view/password_reset_email'):
         """Email the user with a link to reset his/her password
         If only one parameter is passed, fetch the other from the users
@@ -508,6 +514,10 @@ class Cork(object):
         :type username: str.
         :param email_addr: email address
         :type email_addr: str.
+        :param subject: email subject
+        :type subject: str.
+        :param email_template: email template filename
+        :type email_template: str.
         :raises: AAAException on missing username or email_addr,
             AuthException on incorrect username/email_addr pair
         """
@@ -545,7 +555,7 @@ class Cork(object):
             email_addr=email_addr,
             reset_code=reset_code
         )
-        self.mailer.send_email(email_addr, email_text)
+        self.mailer.send_email(email_addr, subject, email_text)
 
     def reset_password(self, reset_code, password):
         """Validate reset_code and update the account password
@@ -715,7 +725,7 @@ class Mailer(object):
         self.join_timeout = join_timeout
         self._threads = []
 
-    def send_email(self, email_addr, email_text):
+    def send_email(self, email_addr, subject, email_text):
         """Send an email
 
         :param email_addr: email address
@@ -726,7 +736,7 @@ class Mailer(object):
         if self.smtp_server is None:
             return
         msg = MIMEMultipart('alternative')
-        msg['Subject'] = "Register"
+        msg['Subject'] = subject
         msg['From'] = self.sender
         msg['To'] = email_addr
         part = MIMEText(email_text, 'html')
