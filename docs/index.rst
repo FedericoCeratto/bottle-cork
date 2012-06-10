@@ -13,11 +13,13 @@ It is designed to stay out of the way and let you focus on what your application
  `Source code <https://github.com/FedericoCeratto/bottle-cork>`_
  - `Downloads <https://github.com/FedericoCeratto/bottle-cork/downloads>`_
  - `Bug tracker <http://github.com/FedericoCeratto/bottle-cork/issues>`_
- - IRC: #bottle on Freenode
+ - IRC: #bottle on Freenode (`webchat <http://webchat.freenode.net?channels=bottle&uio=OT10cnVlde>`_)
 
-**Version 0.1-beta2 is out!**
+News:
 
-Cork is currently **under development** - contributions are very welcome!
+* 2012-06-10: **Version 0.1~beta3 is out!** - Improved registration and password reset
+
+Cork is currently under development - contributions are very welcome!
 
 Features
 --------
@@ -52,7 +54,7 @@ Basic usage
 
 A fully working example is provided with the Cork `sources <https://github.com/FedericoCeratto/bottle-cork/tree/master/examples>`_
 
-**Example of a web application**::
+**Example web application**::
 
     from cork import Cork
 
