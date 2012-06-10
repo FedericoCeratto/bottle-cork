@@ -277,7 +277,7 @@ class Cork(object):
             if fail_redirect is None:
                 raise AuthException("Unauthorized access: incorrect role")
             else:
-                bottle.redirect(redirect)
+                bottle.redirect(fail_redirect)
 
         else:
             if role is not None:
@@ -290,7 +290,7 @@ class Cork(object):
                 if fail_redirect is None:
                     raise AuthException("Unauthorized access: ")
                 else:
-                    bottle.redirect(redirect)
+                    bottle.redirect(fail_redirect)
 
         return
 
@@ -420,7 +420,7 @@ class Cork(object):
 
     def register(self, username, password, email_addr, role='user',
         max_level=50, subject="Signup confirmation",
-        email_template='view/registration_email',
+        email_template='views/registration_email.tpl',
         description=None):
         """Register a new user account. An email with a registration validation
         is sent to the user.
@@ -455,9 +455,19 @@ class Cork(object):
             raise AAAException("Unauthorized role")
 
         registration_code = uuid.uuid4().hex
+        creation_date = str(datetime.utcnow())
+
+        # send registration email
+        email_text = bottle.template(email_template,
+            username=username,
+            email_addr=email_addr,
+            role=role,
+            creation_date=creation_date,
+            registration_code=registration_code
+        )
+        self.mailer.send_email(email_addr, subject, email_text)
 
         # store pending registration
-        creation_date = str(datetime.utcnow())
         self._store.pending_registrations[registration_code] = {
             'username': username,
             'role': role,
@@ -469,15 +479,6 @@ class Cork(object):
         self._store._savejson(self._store._pending_reg_fname,
             self._store.pending_registrations)
 
-        # send registration email
-        email_text = bottle.template(email_template,
-            username=username,
-            email_addr=email_addr,
-            role=role,
-            creation_date=creation_date,
-            registration_code=registration_code
-        )
-        self.mailer.send_email(email_addr, subject, email_text)
 
     def validate_registration(self, registration_code):
         """Validate pending account registration, create a new account if
@@ -504,7 +505,7 @@ class Cork(object):
 
     def send_password_reset_email(self, username=None, email_addr=None,
         subject="Password reset confirmation",
-        email_template='view/password_reset_email'):
+        email_template='views/password_reset_email'):
         """Email the user with a link to reset his/her password
         If only one parameter is passed, fetch the other from the users
         database. If both are passed they will be matched against the users
@@ -542,9 +543,9 @@ class Cork(object):
                     raise AAAException("Email address not available.")
             else:
                 # both username and email_addr are provided: check them
-                stored_email_addr = self._store.users[username]
+                stored_email_addr = self._store.users[username]['email_addr']
                 if email_addr != stored_email_addr:
-                    raise AuthException("Username/email_addr pair not found.")
+                    raise AuthException("Username/email address pair not found.")
 
         # generate a reset_code token
         reset_code = self._reset_code(username, email_addr)
@@ -730,11 +731,14 @@ class Mailer(object):
 
         :param email_addr: email address
         :type email_addr: str.
+        :param subject: subject
+        :type subject: str.
         :param email_text: email text
         :type email_text: str.
+        :raises: AAAException if smtp_server and/or sender are not set
         """
-        if self.smtp_server is None:
-            return
+        if not (self.smtp_server and self.sender):
+            raise AAAException("SMTP server or sender not set")
         msg = MIMEMultipart('alternative')
         msg['Subject'] = subject
         msg['From'] = self.sender
@@ -742,8 +746,8 @@ class Mailer(object):
         part = MIMEText(email_text, 'html')
         msg.attach(part)
 
-        #log.debug("Sending email using %s" % self._smtp_server)
-        thread = Thread(target=self._send, args=(email_addr, msg))
+        log.debug("Sending email using %s" % self.smtp_server)
+        thread = Thread(target=self._send, args=(email_addr, msg.as_string()))
         thread.start()
         self._threads.append(thread)
 
@@ -761,7 +765,7 @@ class Mailer(object):
             session.close()
             log.debug('Email sent')
         except Exception, e:
-            log.error("Error sending email: %s" % e)
+            log.error("Error sending email: %s" % e, exc_info=True)
 
     def join(self):
         """Flush email queue by waiting the completion of the existing threads

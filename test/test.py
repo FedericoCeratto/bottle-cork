@@ -57,16 +57,16 @@ def setup_dir():
     tstamp = "%f" % time()
     testdir = "/dev/shm/fl_%s" % tstamp
     os.mkdir(testdir)
-    os.mkdir(testdir + '/view')
+    os.mkdir(testdir + '/views')
     with open("%s/users.json" % testdir, 'w') as f:
         f.write("""{"admin": {"email_addr": null, "desc": null, "role": "admin", "hash": "69f75f38ac3bfd6ac813794f3d8c47acc867adb10b806e8979316ddbf6113999b6052efe4ba95c0fa9f6a568bddf60e8e5572d9254dbf3d533085e9153265623", "creation_date": "2012-04-09 14:22:27.075596"}}""")
     with open("%s/roles.json" % testdir, 'w') as f:
         f.write("""{"special": 200, "admin": 100, "user": 50}""")
     with open("%s/register.json" % testdir, 'w') as f:
         f.write("""{}""")
-    with open("%s/view/registration_email.tpl" % testdir, 'w') as f:
+    with open("%s/views/registration_email.tpl" % testdir, 'w') as f:
         f.write("""Username:{{username}} Email:{{email_addr}} Code:{{registration_code}}""")
-    with open("%s/view/password_reset_email.tpl" % testdir, 'w') as f:
+    with open("%s/views/password_reset_email.tpl" % testdir, 'w') as f:
         f.write("""Username:{{username}} Email:{{email_addr}} Code:{{reset_code}}""")
     print "setup done in %s" % testdir
 
@@ -75,7 +75,7 @@ def setup_mockedadmin():
     global aaa
     global cookie_name
     setup_dir()
-    aaa = MockedAdminCork(testdir, smtp_server='localhost')
+    aaa = MockedAdminCork(testdir, smtp_server='localhost', email_sender='test@localhost')
     cookie_name = None
 
 def setup_mocked_unauthenticated():
@@ -107,10 +107,10 @@ def test_initialize_storage():
         assert f.readlines() == ['{}']
     with open("%s/register.json" % testdir) as f:
         assert f.readlines() == ['{}']
-    with open("%s/view/registration_email.tpl" % testdir) as f:
+    with open("%s/views/registration_email.tpl" % testdir) as f:
         assert f.readlines() == [
             'Username:{{username}} Email:{{email_addr}} Code:{{registration_code}}']
-    with open("%s/view/password_reset_email.tpl" % testdir) as f:
+    with open("%s/views/password_reset_email.tpl" % testdir) as f:
         assert f.readlines() == [
             'Username:{{username}} Email:{{email_addr}} Code:{{reset_code}}']
 
@@ -407,6 +407,7 @@ def test_send_email(mocked):
     aaa.mailer.send_email('address',' sbj', 'text')
     aaa.mailer.join()
 
+@raises(AAAException)
 @with_setup(setup_mockedadmin, teardown_dir)
 def test_do_not_send_email():
     aaa.mailer.smtp_server = None # disable email delivery
@@ -506,7 +507,7 @@ def test_send_password_reset_email_by_username(mocked):
     aaa.mailer.join()
     os.chdir(old_dir)
     assert mocked.called
-    assert mocked.call_args[0][1]['To'] == 'admin@localhost.local'
+    assert mocked.call_args[0][0] == 'admin@localhost.local'
 
 @raises(AuthException)
 @with_setup(setup_mockedadmin, teardown_dir)

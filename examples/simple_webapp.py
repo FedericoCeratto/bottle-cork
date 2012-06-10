@@ -9,9 +9,13 @@
 import bottle
 from beaker.middleware import SessionMiddleware
 from cork import Cork
+import logging
+
+logging.basicConfig(format='localhost - - [%(asctime)s] %(message)s', level=logging.DEBUG)
+log = logging.getLogger(__name__)
 
 # Use users.json and roles.json in the local example_conf directory
-aaa = Cork('example_conf')
+aaa = Cork('example_conf', email_sender='federico.ceratto@gmail.com', smtp_server='mail2.eircom.net')
 
 import datetime
 app = bottle.app()
@@ -35,20 +39,54 @@ def post_get(name, default=''):
 @bottle.post('/login')
 def login():
     """Authenticate users"""
-    username = post_get('user')
-    password = post_get('pwd')
+    username = post_get('username')
+    password = post_get('password')
     aaa.login(username, password, success_redirect='/', fail_redirect='/login')
 
 @bottle.route('/logout')
 def logout():
     aaa.logout()
 
+@bottle.post('/register')
+def register():
+    """Send out registration email"""
+    aaa.register(post_get('username'), post_get('password'), post_get('email_address'))
+    return 'Please check your mailbox.'
+
+@bottle.route('/validate_registration/:registration_code')
+def validate_registration(registration_code):
+    """Validate registration, create user account"""
+    aaa.validate_registration(registration_code)
+    return 'Thanks. <a href="/login">Go to login</a>'
+
+@bottle.post('/reset_password')
+def send_password_reset_email():
+    """Send out password reset email"""
+    aaa.send_password_reset_email(
+        username=post_get('username'),
+        email_addr=post_get('email_address')
+    )
+    return 'Please check your mailbox.'
+
+@bottle.route('/change_password/:reset_code')
+@bottle.view('password_change_form')
+def change_password(reset_code):
+    """Show password change form"""
+    return dict(reset_code=reset_code)
+
+@bottle.post('/change_password')
+def change_password():
+    """Change password"""
+    aaa.reset_password(post_get('reset_code'), post_get('password'))
+    return 'Thanks. <a href="/login">Go to login</a>'
+
+
 @bottle.route('/')
 def index():
     """Only authenticated users can see this"""
     session = bottle.request.environ.get('beaker.session')
     aaa.require(fail_redirect='/login')
-    return 'Welcome! <a href="/admin">Admin page</a>'
+    return 'Welcome! <a href="/admin">Admin page</a> <a href="/logout">Logout</a>'
 
 # Admin-only pages
 

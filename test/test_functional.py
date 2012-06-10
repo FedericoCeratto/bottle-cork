@@ -85,7 +85,7 @@ def login():
     """run setup_app and log in"""
     global app
     setup_app()
-    p = app.post('/login', {'user': 'admin', 'pwd': 'admin'})
+    p = app.post('/login', {'username': 'admin', 'password': 'admin'})
 
 def teardown():
     global tmpdir
@@ -106,7 +106,7 @@ def test_functional_login():
 def test_functional_login_logout():
 
     # log in and get a cookie
-    p = app.post('/login', {'user': 'admin', 'pwd': 'admin'})
+    p = app.post('/login', {'username': 'admin', 'password': 'admin'})
     assert p.status == REDIR
 
     # fetch a page successfully
