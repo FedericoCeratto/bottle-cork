@@ -1,19 +1,19 @@
-.. Cork documentation master file, created by
-   sphinx-quickstart on Sun Apr  8 13:40:17 2012.
-   You can adapt this file completely to your liking, but it should at least
-   contain the root `toctree` directive.
 
 Cork - Authentication for the Bottle web framework
 ================================
+
+.. sidebar:: Links
+
+ - `Mailing list <https://groups.google.com/forum/?fromgroups#!forum/cork-discuss>`_
+ - `Bug tracker <http://github.com/FedericoCeratto/bottle-cork/issues>`_
+ - IRC: (`#bottle <http://webchat.freenode.net?channels=bottle&uio=OT10cnVlde>`_) on Freenode
+ - `Downloads <http://pypi.python.org/pypi/bottle-cork/>`_
+ - `Source code <https://github.com/FedericoCeratto/bottle-cork>`_
 
 Cork provides a simple set of methods to implement Authentication and Authorization in web applications based on Bottle.
 
 It is designed to stay out of the way and let you focus on what your application should do.
 
- `Source code <https://github.com/FedericoCeratto/bottle-cork>`_
- - `Downloads <https://github.com/FedericoCeratto/bottle-cork/downloads>`_
- - `Bug tracker <http://github.com/FedericoCeratto/bottle-cork/issues>`_
- - IRC: #bottle on Freenode (`webchat <http://webchat.freenode.net?channels=bottle&uio=OT10cnVlde>`_)
 
 News:
 
@@ -51,6 +51,12 @@ Roadmap
 
 Basic usage
 -----------
+
+Installation::
+
+    $ pip install bottle-cork
+    or
+    $ easy_install bottle-cork
 
 A fully working example is provided with the Cork `sources <https://github.com/FedericoCeratto/bottle-cork/tree/master/examples>`_
 
