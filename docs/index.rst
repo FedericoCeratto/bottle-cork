@@ -17,9 +17,10 @@ It is designed to stay out of the way and let you focus on what your application
 
 News:
 
-* 2012-06-10: **Version 0.1~beta3 is out!** - Improved registration and password reset
+* 2012-07-09: **Version 0.1 is out!** - Improved installation
+* 2012-06-10: Version 0.1~beta3 - Improved registration and password reset
 
-Cork is currently under development - contributions are very welcome!
+Cork is under development - contributions are welcome.
 
 Features
 --------
@@ -58,7 +59,9 @@ Installation::
     or
     $ easy_install bottle-cork
 
-A fully working example is provided with the Cork `sources <https://github.com/FedericoCeratto/bottle-cork/tree/master/examples>`_
+Use virtualenv on package-based Linux distributions! `Learn why <http://workaround.org/easy-install-debian>`_
+
+A fully working example is provided with the Cork `sources <https://github.com/FedericoCeratto/bottle-cork/downloads>`_
 
 **Example web application**::
 
