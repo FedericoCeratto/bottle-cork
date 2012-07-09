@@ -1,8 +1,4 @@
 include test/*.py
 include setup.py
-include cork.py
-include examples/functional_test.py
-include examples/simple_webapp.py
-recursive-include examples/views/ *
-recursive-include examples/example_conf/ *
+recursive-include examples *
 

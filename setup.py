@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 from setuptools import setup
-from cork import __version__
+from cork.cork import __version__
 
 CLASSIFIERS = map(str.strip,
 """Environment :: Console
@@ -28,18 +28,10 @@ setup(
     install_requires = [
         'bottle',
         'beaker',
+        'setuptools',
     ],
-    modules = ["cork"],
+    packages = ['cork'],
     platforms = ['Linux'],
-    package_data = {
-        '': [
-            'test/*',
-            'cork.py',
-            'examples/*'
-        ]
-    },
-    entry_points = {},
-    scripts = ([]),
     test_suite='nose.collector',
     tests_require=['nose'],
 )
