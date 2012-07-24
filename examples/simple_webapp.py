@@ -88,6 +88,14 @@ def index():
     aaa.require(fail_redirect='/login')
     return 'Welcome! <a href="/admin">Admin page</a> <a href="/logout">Logout</a>'
 
+@bottle.route('/restricted_download')
+def restricted_download():
+    """Only authenticated users can download this file"""
+    aaa.require(fail_redirect='/login')
+    return bottle.static_file('static_file', root='.')
+
+
+
 # Admin-only pages
 
 @bottle.route('/admin')
