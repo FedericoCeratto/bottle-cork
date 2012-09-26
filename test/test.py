@@ -4,7 +4,7 @@ from nose.tools import assert_raises, raises, with_setup
 from tempfile import mkdtemp
 from time import time
 import mock
-import os
+import os, sys
 import shutil
 
 from cork import Cork, AAAException, AuthException
@@ -42,11 +42,17 @@ class MockedUnauthenticatedCork(Cork):
         global cookie_name
         cookie_name = username
 
+def get_test_dir():
+    tstamp = "%f" % time()
+    if sys.platform == 'darwin':
+        return "/tmp/fl_%s" % tstamp
+    else:
+        return "/dev/shm/fl_%s" % tstamp
+
 def setup_empty_dir():
     """Setup test directory without JSON files"""
     global testdir
-    tstamp = "%f" % time()
-    testdir = "/dev/shm/fl_%s" % tstamp
+    testdir = get_test_dir()
     os.mkdir(testdir)
     os.mkdir(testdir + '/view')
     print "setup done in %s" % testdir
@@ -54,8 +60,7 @@ def setup_empty_dir():
 def setup_dir():
     """Setup test directory with valid JSON files"""
     global testdir
-    tstamp = "%f" % time()
-    testdir = "/dev/shm/fl_%s" % tstamp
+    testdir = get_test_dir()
     os.mkdir(testdir)
     os.mkdir(testdir + '/views')
     with open("%s/users.json" % testdir, 'w') as f:
