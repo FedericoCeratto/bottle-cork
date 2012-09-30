@@ -31,7 +31,7 @@
 #    (e.g. a key/value database)
 
 from base64 import b64encode, b64decode
-from beaker import crypto
+from hashlib import sha1
 from datetime import datetime, timedelta
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
@@ -190,7 +190,7 @@ class Cork(object):
         assert isinstance(username, str), "the username must be a string"
         assert isinstance(password, str), "the password must be a string"
 
-        if username in self._store.users:
+        if username in self._store.users and len(password.strip()):
             if self._verify_password(username, password,
                     self._store.users[username]['hash']):
                 # Setup session data
@@ -199,9 +199,8 @@ class Cork(object):
                     bottle.redirect(success_redirect)
                 return True
 
-            if fail_redirect:
-                bottle.redirect(fail_redirect)
-
+        if fail_redirect:
+            bottle.redirect(fail_redirect)
         return False
 
     def logout(self, success_redirect='/login', fail_redirect='/login'):
@@ -448,7 +447,7 @@ class Cork(object):
         assert password, "A password must be provided."
         assert email_addr, "An email address must be provided."
         if username in self._store.users:
-            raise AAAException("User is already existing.")
+            raise AAAException("User already exists.")
         if role not in self._store.roles:
             raise AAAException("Nonexistent role")
         if self._store.roles[role] > max_level:
@@ -607,8 +606,9 @@ class Cork(object):
         if salt is None:
             salt = os.urandom(32)
         assert len(salt) == 32, "Incorrect salt length"
-        h = crypto.generateCryptoKeys(username + pwd, salt, 10)
-        return b64encode(salt + h)
+        h = sha1(username + pwd + salt).hexdigest()
+        result = b64encode(salt + h)
+        return result
 
     @classmethod
     def _verify_password(cls, username, pwd, salted_hash):
@@ -617,7 +617,9 @@ class Cork(object):
         :returns: bool
         """
         salt = b64decode(salted_hash)[:32]
-        return cls._hash(username, pwd, salt) == salted_hash
+        hashed = cls._hash(username, pwd, salt)
+        result = hashed == salted_hash
+        return result
 
     def _purge_expired_registrations(self, exp_time=96):
         """Purge expired registration requests.
@@ -777,4 +779,3 @@ class Mailer(object):
     def __del__(self):
         """Class destructor: wait for threads to terminate within a timeout"""
         self.join()
-
