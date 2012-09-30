@@ -105,9 +105,23 @@ def test_functional_login():
 @with_setup(setup_app, teardown)
 def test_functional_login_logout():
 
+    # Incorrect login using nonexistent user
+    p = app.post('/login', {'username': 'IAmNotHere', 'password': ''})
+    assert p.status == REDIR, "Redirect expected"
+    assert p.location == 'http://localhost:80/login', \
+        "Incorrect redirect to %s" % p.location
+
+    # Incorrect login
+    p = app.post('/login', {'username': 'admin', 'password': 'BogusPassword'})
+    assert p.status == REDIR
+    assert p.location == 'http://localhost:80/login', \
+        "Incorrect redirect to %s" % p.location
+
     # log in and get a cookie
     p = app.post('/login', {'username': 'admin', 'password': 'admin'})
     assert p.status == REDIR
+    assert p.location == 'http://localhost:80/', \
+        "Incorrect redirect to %s" % p.location
 
     # fetch a page successfully
     assert app.get('/admin').status == '200 OK'
