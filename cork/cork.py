@@ -199,8 +199,8 @@ class Cork(object):
                     bottle.redirect(success_redirect)
                 return True
 
-            if fail_redirect:
-                bottle.redirect(fail_redirect)
+        if fail_redirect:
+            bottle.redirect(fail_redirect)
 
         return False
 
