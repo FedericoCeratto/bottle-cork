@@ -163,6 +163,12 @@ def test_incorrect_password_hashing():
     assert aaa._verify_password('###', 'bogus_pwd', shash) == False, \
         "Hashing verification should fail"
 
+@with_setup(setup_mockedadmin, teardown_dir)
+def test_password_hashing_collision():
+    salt = 'S' * 32
+    hash1 = aaa._hash('user_foo', 'bogus_pwd', salt=salt)
+    hash2 = aaa._hash('user_foobogus', '_pwd', salt=salt)
+    assert hash1 != hash2, "Hash collision"
 
 @with_setup(setup_mockedadmin, teardown_dir)
 def test_unauth_create_role():
