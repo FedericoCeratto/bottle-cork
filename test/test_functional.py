@@ -103,14 +103,42 @@ def test_functional_login():
     assert app.get('/admin').status == '200 OK'
 
 @with_setup(setup_app, teardown)
-def test_functional_login_logout():
+def test_login_existent_user_none_password():
+    p = app.post('/login', {'username': 'admin', 'password': None})
+    assert p.status == REDIR, "Redirect expected"
+    assert p.location == 'http://localhost:80/login', \
+        "Incorrect redirect to %s" % p.location
 
-    # Incorrect login using nonexistent user
+@with_setup(setup_app, teardown)
+def test_login_nonexistent_user_none_password():
+    p = app.post('/login', {'username': 'IAmNotHere', 'password': None})
+    assert p.status == REDIR, "Redirect expected"
+    assert p.location == 'http://localhost:80/login', \
+        "Incorrect redirect to %s" % p.location
+
+@with_setup(setup_app, teardown)
+def test_login_existent_user_empty_password():
+    p = app.post('/login', {'username': 'admin', 'password': ''})
+    assert p.status == REDIR, "Redirect expected"
+    assert p.location == 'http://localhost:80/login', \
+        "Incorrect redirect to %s" % p.location
+
+@with_setup(setup_app, teardown)
+def test_login_nonexistent_user_empty_password():
     p = app.post('/login', {'username': 'IAmNotHere', 'password': ''})
     assert p.status == REDIR, "Redirect expected"
     assert p.location == 'http://localhost:80/login', \
         "Incorrect redirect to %s" % p.location
 
+@with_setup(setup_app, teardown)
+def test_login_existent_user_wrong_password():
+    p = app.post('/login', {'username': 'admin', 'password': 'BogusPassword'})
+    assert p.status == REDIR, "Redirect expected"
+    assert p.location == 'http://localhost:80/login', \
+        "Incorrect redirect to %s" % p.location
+
+@with_setup(setup_app, teardown)
+def test_functional_login_logout():
     # Incorrect login
     p = app.post('/login', {'username': 'admin', 'password': 'BogusPassword'})
     assert p.status == REDIR
