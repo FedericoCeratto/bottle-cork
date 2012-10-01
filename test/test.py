@@ -9,6 +9,7 @@ import shutil
 
 from cork import Cork, AAAException, AuthException
 from cork import Mailer
+from cork import JsonBackend
 
 testdir = None # Test directory
 aaa = None # global Cork instance
@@ -54,7 +55,7 @@ def setup_empty_dir():
     global testdir
     testdir = get_test_dir()
     os.mkdir(testdir)
-    os.mkdir(testdir + '/view')
+    os.mkdir(testdir + '/views')
     print "setup done in %s" % testdir
 
 def setup_dir():
@@ -80,7 +81,10 @@ def setup_mockedadmin():
     global aaa
     global cookie_name
     setup_dir()
-    aaa = MockedAdminCork(testdir, smtp_server='localhost', email_sender='test@localhost')
+    backend = JsonBackend(
+        testdir, users_fname='users',
+        roles_fname='roles', pending_reg_fname='register')
+    aaa = MockedAdminCork(backend, smtp_server='localhost', email_sender='test@localhost')
     cookie_name = None
 
 def setup_mocked_unauthenticated():
@@ -88,7 +92,10 @@ def setup_mocked_unauthenticated():
     global aaa
     global cookie_name
     setup_dir()
-    aaa = MockedUnauthenticatedCork(testdir)
+    backend = JsonBackend(
+        testdir, users_fname='users',
+        roles_fname='roles', pending_reg_fname='register')
+    aaa = MockedUnauthenticatedCork(backend)
     cookie_name = None
 
 def teardown_dir():
@@ -105,7 +112,10 @@ def test_init():
 
 @with_setup(setup_dir, teardown_dir)
 def test_initialize_storage():
-    aaa = Cork(testdir, initialize=True)
+    backend = JsonBackend(testdir, users_fname='users',
+        roles_fname='roles', pending_reg_fname='register',
+        initialize=True)
+    aaa = Cork(backend)
     with open("%s/users.json" % testdir) as f:
         assert f.readlines() == ['{}']
     with open("%s/roles.json" % testdir) as f:
@@ -123,7 +133,10 @@ def test_initialize_storage():
 @with_setup(setup_dir, teardown_dir)
 def test_unable_to_save():
     bogus_dir = '/___inexisting_directory___'
-    aaa = Cork(bogus_dir, initialize=True)
+    backend = JsonBackend(bogus_dir, users_fname='users',
+        roles_fname='roles', pending_reg_fname='register',
+        initialize=True)
+    aaa = Cork(backend)
 
 @with_setup(setup_mockedadmin, teardown_dir)
 def test_mockedadmin():
@@ -349,7 +362,7 @@ def test_update_pwd():
 @with_setup(setup_mockedadmin, teardown_dir)
 def test_update_email():
     aaa.current_user.update(email_addr='foo')
-    assert aaa._store.users['admin']['email'] == 'foo'
+    assert aaa._store.users['admin']['email_addr'] == 'foo'
 
 @raises(AAAException)
 @with_setup(setup_mocked_unauthenticated, teardown_dir)
