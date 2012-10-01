@@ -1,0 +1,12 @@
+Beaker==1.6.4
+WebOb==1.2.2
+WebTest==1.4.0
+bottle==0.10.11
+distribute==0.6.27
+mock==1.0b1
+nose==1.2.1
+stevedore==0.4
+virtualenv==1.7.2
+virtualenv-clone==0.2.4
+virtualenvwrapper==3.6
+wsgiref==0.1.2
