@@ -48,7 +48,7 @@ try:
 except ImportError:  # pragma: no cover
     import simplejson as json
 
-__version__ = '0.1'
+__version__ = '0.2'
 
 log = getLogger(__name__)
 
@@ -440,8 +440,8 @@ class Cork(object):
                     bottle.redirect(success_redirect)
                 return True
 
-            if fail_redirect:
-                bottle.redirect(fail_redirect)
+        if fail_redirect:
+            bottle.redirect(fail_redirect)
 
         return False
 

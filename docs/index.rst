@@ -35,7 +35,7 @@ Features
 
 * User registration and password reset using email delivery and confirmation.
 
-* Unit-tested and almost fully `code covered <./cover/cork.html>`_
+* Unit-tested and almost fully `code covered <./cover/cork_cork.html>`_
 
 * Multiple backends support (e.g. storing users/roles in a key/value database).
 
