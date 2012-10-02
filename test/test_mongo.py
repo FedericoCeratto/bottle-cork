@@ -561,5 +561,25 @@ def test_perform_password_reset():
     token = aaa._reset_code('admin', 'admin@localhost.local')
     aaa.reset_password(token, 'newpassword')
 
-
+#
+# Coverage is 82%. Some test ideas:
+#
+# MongoDbBackend.Users.__delitem__
+# MongoDbBackend.Users.pop
+#   - With invalid key
+#   - With no key
+# MongoDbBackend.Users.items (currently not used)
+# MongoDbBackend.Users.keys  (currently not used)
+# MongoDbBackend.Users.values (currently not used)
+# MongoDbBackend.Users.get
+#   - By key
+#   - With no key
+# MongoDbBackend.Roles.__delitem__
+# MongoDbBackend.Roles.pop
+#   - With invalid key
+#   - With no key
+# MongoDbBackend.PendingRegistrations.__contains__
+# MongoDbBackend.PendingRegistrations.__delitem__
+# MongoDbBackend.PendingRegistrations.__iter__
+# MongoDbBackend.PendingRegistrations.keys
 
