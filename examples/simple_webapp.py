@@ -164,7 +164,7 @@ def configure(backend_type='jsonbackend'):
     backend = None
 
     # Use users.json and roles.json in the local example_conf directory
-    # Run init_backend.py to initialize the database
+    # Run recreate_example_conf.py to initialize the database
     if backend_type == 'jsonbackend':
         backend = JsonBackend(
             'example_conf',
@@ -175,7 +175,7 @@ def configure(backend_type='jsonbackend'):
         )
 
     # Use 'sampole_webapp' MongoDb database with 'users', 'roles' and 'register' collections.
-    # Run init_backend.py to initialize the database
+    # Run init_mongodb.py to initialize the database
     if backend_type == 'mongobackend':
         backend = MongoDbBackend(
             server = "localhost",
@@ -206,7 +206,9 @@ def main():
 
 if __name__ == "__main__":
 
-    backend_type = None
+    # default
+    backend_type = 'jsonbackend'
+
     if len( sys.argv ) == 2:
         if sys.argv[1] == 'jsonbackend':
             backend_type = 'jsonbackend'
@@ -219,8 +221,6 @@ if __name__ == "__main__":
             print 'jsonbackend: json files on the file system'
             print 'mongobackend: MongoDb database'
             print 'default: mongobackend'
-    else:
-        # default to jsonbackend
-        configure('jsonbackend')
 
+    configure(backend_type)
     main()
