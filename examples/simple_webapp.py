@@ -202,7 +202,7 @@ def configure(backend_type='jsonbackend'):
 def main():
     # Start the Bottle webapp
     bottle.debug(True)
-    bottle.run(app=app, quiet=False, reloader=True, port=8087)
+    bottle.run(app=app, quiet=False, reloader=True)
 
 if __name__ == "__main__":
 
