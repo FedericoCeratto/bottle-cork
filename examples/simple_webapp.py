@@ -15,7 +15,7 @@ logging.basicConfig(format='localhost - - [%(asctime)s] %(message)s', level=logg
 log = logging.getLogger(__name__)
 
 # Use users.json and roles.json in the local example_conf directory
-aaa = Cork('example_conf', email_sender='federico.ceratto@gmail.com', smtp_server='mail2.eircom.net')
+aaa = Cork('example_conf', email_sender='federico.ceratto@gmail.com', smtp_url='smtp://smtp.magnet.ie')
 
 import datetime
 app = bottle.app()

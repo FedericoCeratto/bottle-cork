@@ -41,6 +41,7 @@ from threading import Thread
 from time import time
 import bottle
 import os
+import re
 import uuid
 
 try:
@@ -153,9 +154,10 @@ class JsonBackend(object):
 
 class Cork(object):
 
-    def __init__(self, directory, email_sender=None, smtp_server=None,
+    def __init__(self, directory, email_sender=None,
         users_fname='users', roles_fname='roles', pending_reg_fname='register',
-        initialize=False, session_domain=None):
+        initialize=False, session_domain=None, smtp_url='localhost',
+        smtp_server=None):
         """Auth/Authorization/Accounting class
 
         :param directory: configuration directory
@@ -165,7 +167,9 @@ class Cork(object):
         :param roles_fname: roles filename (without .json), defaults to 'roles'
         :type roles_fname: str.
         """
-        self.mailer = Mailer(email_sender, smtp_server)
+        if smtp_server:
+            smtp_url = smtp_server
+        self.mailer = Mailer(email_sender, smtp_url)
         self._store = JsonBackend(directory, users_fname='users',
             roles_fname='roles', pending_reg_fname='register',
             initialize=initialize)
@@ -715,7 +719,7 @@ class User(object):
 
 class Mailer(object):
 
-    def __init__(self, sender, smtp_server, join_timeout=5):
+    def __init__(self, sender, smtp_url, join_timeout=5):
         """Send emails asyncronously
 
         :param sender: Sender email address
@@ -724,9 +728,43 @@ class Mailer(object):
         :type smtp_server: str.
         """
         self.sender = sender
-        self.smtp_server = smtp_server
         self.join_timeout = join_timeout
         self._threads = []
+        self._conf = self._parse_smtp_url(smtp_url)
+
+    def _parse_smtp_url(self, url):
+        """Parse SMTP URL"""
+        match = re.match(r"""
+            (                                   # Optional protocol
+                (?P<proto>smtp|starttls|ssl)    # Protocol name
+                ://
+            )?
+            (                                   # Optional user:pass@
+                (?P<user>.*?)
+                (: (?P<pass>.*?) )? @           # Optional :pass
+            )?
+            (?P<fqdn>.*?)                       # Required FQDN
+            (                                   # Optional :port
+                :
+                (?P<port>[0-9]{,5})             # Up to 5-digits port
+            )?
+            [/]?
+            $
+        """, url, re.VERBOSE)
+
+        if not match:
+            raise RuntimeError("SMTP URL seems incorrect")
+
+        d = match.groupdict()
+        if d['proto'] is None:
+            d['proto'] = 'smtp'
+
+        if d['port'] is None:
+            d['port'] = 25
+
+        return d
+
+
 
     def send_email(self, email_addr, subject, email_text):
         """Send an email
@@ -739,7 +777,7 @@ class Mailer(object):
         :type email_text: str.
         :raises: AAAException if smtp_server and/or sender are not set
         """
-        if not (self.smtp_server and self.sender):
+        if not (self._conf['fqdn'] and self.sender):
             raise AAAException("SMTP server or sender not set")
         msg = MIMEMultipart('alternative')
         msg['Subject'] = subject
@@ -748,7 +786,7 @@ class Mailer(object):
         part = MIMEText(email_text, 'html')
         msg.attach(part)
 
-        log.debug("Sending email using %s" % self.smtp_server)
+        log.debug("Sending email using %s" % self._conf['fqdn'])
         thread = Thread(target=self._send, args=(email_addr, msg.as_string()))
         thread.start()
         self._threads.append(thread)
@@ -762,10 +800,24 @@ class Mailer(object):
         :type msg: str.
         """
         try:
-            session = SMTP(self.smtp_server)
+            session = SMTP(self._conf['fqdn'])
+
+            if self._conf['proto'] == 'ssl':
+                raise NotImplementedError
+            elif self._conf['proto'] == 'starttls':
+                log.debug('Sending EHLO and STARTTLS')
+                session.ehlo()
+                session.starttls()
+                session.ehlo()
+
+            if self._conf['user'] is not None:
+                log.debug('Performing login')
+                session.login(self._conf['user'], self._conf['pass'])
+
+            log.debug('sending')
             session.sendmail(self.sender, email_addr, msg)
-            session.close()
-            log.debug('Email sent')
+            session.quit()
+            log.info('Email sent')
         except Exception, e:
             log.error("Error sending email: %s" % e, exc_info=True)
 
@@ -774,9 +826,11 @@ class Mailer(object):
 
         :returns: None
         """
+        log.debug('join')
         return [t.join(self.join_timeout) for t in self._threads]
 
     def __del__(self):
         """Class destructor: wait for threads to terminate within a timeout"""
+        log.debug('quit')
         self.join()
 
