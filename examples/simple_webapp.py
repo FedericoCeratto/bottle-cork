@@ -8,25 +8,27 @@
 
 import bottle
 from beaker.middleware import SessionMiddleware
-from cork import Cork
+from cork import Cork, JsonBackend, MongoDbBackend
 import logging
+import sys
 
 logging.basicConfig(format='localhost - - [%(asctime)s] %(message)s', level=logging.DEBUG)
 log = logging.getLogger(__name__)
 
-# Use users.json and roles.json in the local example_conf directory
-aaa = Cork('example_conf', email_sender='federico.ceratto@gmail.com', smtp_server='mail2.eircom.net')
 
-import datetime
-app = bottle.app()
-session_opts = {
-    'session.type': 'cookie',
-    'session.validate_key': True,
-    'session.cookie_expires': True,
-    'session.timeout': 3600 * 24, # 1 day
-    'session.encrypt_key': 'please use a random key and keep it secret!',
-}
-app = SessionMiddleware(app, session_opts)
+# Use users.json and roles.json in the local example_conf directory
+aaa = None
+app = None
+def configure_app(backend, session_opts):
+    assert backend
+
+    global aaa
+    aaa = Cork(backend, email_sender='federico.ceratto@gmail.com', smtp_server='mail2.eircom.net')
+
+    global app
+    app = bottle.app()
+    app = SessionMiddleware(app, session_opts)
+
 
 # #  Bottle methods  # #
 
@@ -157,11 +159,68 @@ def sorry_page():
 
 # #  Web application main  # #
 
-def main():
+def configure(backend_type='jsonbackend'):
 
+    backend = None
+
+    # Use users.json and roles.json in the local example_conf directory
+    # Run init_backend.py to initialize the database
+    if backend_type == 'jsonbackend':
+        backend = JsonBackend(
+            'example_conf',
+            users_fname='users',
+            roles_fname='roles',
+            pending_reg_fname='register',
+            initialize=False
+        )
+
+    # Use 'sampole_webapp' MongoDb database with 'users', 'roles' and 'register' collections.
+    # Run init_backend.py to initialize the database
+    if backend_type == 'mongobackend':
+        backend = MongoDbBackend(
+            server = "localhost",
+            port = 27017,
+            database = "sample_webapp",
+            initialize=False,
+            users_store="users",
+            roles_store="roles",
+            pending_regs_store="register",
+        )
+
+    session_opts = {
+        'session.type': 'cookie',
+        'session.validate_key': True,
+        'session.cookie_expires': True,
+        'session.timeout': 3600 * 24, # 1 day
+        'session.encrypt_key': 'please use a random key and keep it secret!',
+        }
+
+    configure_app(backend, session_opts)
+
+
+
+def main():
     # Start the Bottle webapp
     bottle.debug(True)
-    bottle.run(app=app, quiet=False, reloader=True)
+    bottle.run(app=app, quiet=False, reloader=True, port=8087)
 
 if __name__ == "__main__":
+
+    backend_type = None
+    if len( sys.argv ) == 2:
+        if sys.argv[1] == 'jsonbackend':
+            backend_type = 'jsonbackend'
+        elif sys.argv[1] == 'mongobackend':
+            backend_type = 'mongobackend'
+        else:
+            print 'usage:'
+            print 'python simpple_webapp.py [backend_type]'
+            print 'valid backend_types:'
+            print 'jsonbackend: json files on the file system'
+            print 'mongobackend: MongoDb database'
+            print 'default: mongobackend'
+    else:
+        # default to jsonbackend
+        configure('jsonbackend')
+
     main()
