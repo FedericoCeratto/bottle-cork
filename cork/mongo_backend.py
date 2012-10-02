@@ -8,17 +8,27 @@ class MongoException(Exception):
 class MongoDbBackend(object):
 
     def __init__(self, server, port, database, users_store='users',
-                 roles_store='roles', pending_regs_store='register', initialize=False, safe=False):
-        """Data storage class. Handles JSON files
+                 roles_store='roles', pending_regs_store='register', initialize=False, safe=True):
+        """Data storage class. Handles MongoDb database
 
-        :param users_fname: users file name (without .json)
-        :type users_fname: str.
-        :param roles_fname: roless file name (without .json)
-        :type roles_fname: str.
-        :param pending_reg_fnames: pending registrations file name (without .json)
-        :type pending_reg_fname: str.
-        :param initialize: create empty JSON files (defaults to False)
+        :param server: ip or host name of the mongodb server, e.g. "localhost"
+        :type server: str.
+        :param port: port used by mongod process
+        :type port: int.
+        :param database: Name of the database, e.g. "mydb"
+        :type database: str.
+        :param roles_store: Name of the roles collection
+        :type roles_store: str.
+        :param roles_store: Name of the roles collection
+        :type users_store: str.
+        :param users_store: Name of the users collection
+        :type users_store: str.
+        :param pending_regs_store: Name of the registrations collection
+        :type pending_regs_store: str.
+        :param initialize: flag, when True drops all the collections.
         :type initialize: bool.
+        :param safe: flag, when False changes to mongodb are not immediately written to disk.
+        :type safe: bool.
         """
         assert database, "Database must be valid"
         self._database = database
@@ -50,7 +60,9 @@ class MongoDbBackend(object):
         self._roles_collection.drop()
         self._pending_reg_collection.drop()
 
-    # dummy
+    # dummy. This lets us be compatible with JsonBackend. In other words,
+    # Cork calls this, but we don't need to do anything. Our changes
+    # are saved instantly on __setitem__ and the like.
     def _savejson(self, *arg, **kw):
         pass
 
@@ -58,6 +70,7 @@ class MongoDbBackend(object):
     def _loadjson(self, *arg, **kw):
         pass
 
+    # dummy
     def _save_users(self):
         pass
 
@@ -139,9 +152,7 @@ class MongoDbBackend(object):
 
         def __init__(self,roles_collection=None, *args, **kwargs):
             if roles_collection:
-                #dict.__init__(self, *args, **kwargs)
                 self._roles = roles_collection
-                #self.update()
             else:
                 raise MongoException("Roles collection not defined")
 
@@ -168,7 +179,6 @@ class MongoDbBackend(object):
         def __iter__(self):
             all_roles = self._roles.find()
             for u in all_roles:
-                #yield u["role"]
                 yield u
 
         def __len__(self):
@@ -229,8 +239,7 @@ class MongoDbBackend(object):
 
         def get_key_helper(self, index):
             """
-            For test_validate_registration we need a key
-            :param index: int, we discard this
+            For test_validate_registration we need a key, any key (there is only one).
             """
             reg = self._regs_coll.find_one()
             return reg["registration_code"]
