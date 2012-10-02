@@ -607,7 +607,9 @@ class Cork(object):
         if salt is None:
             salt = os.urandom(32)
         assert len(salt) == 32, "Incorrect salt length"
-        h = crypto.generateCryptoKeys(username + pwd, salt, 10)
+
+        cleartext = "%s\0%s" % (username, pwd)
+        h = crypto.generateCryptoKeys(cleartext, salt, 10)
         return b64encode(salt + h)
 
     @classmethod

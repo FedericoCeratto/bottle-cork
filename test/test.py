@@ -283,6 +283,23 @@ def test_failing_login():
     assert cookie_name == None
 
 @with_setup(setup_mockedadmin, teardown_dir)
+def test_login_nonexistent_user_empty_password():
+    login = aaa.login('IAmNotHome', '')
+    assert login == False, "Login must fail"
+    global cookie_name
+    assert cookie_name == None
+
+@with_setup(setup_mockedadmin, teardown_dir)
+def test_login_existing_user_empty_password():
+    aaa.create_user('phil', 'user', 'hunter123')
+    assert 'phil' in aaa._store.users
+    assert aaa._store.users['phil']['role'] == 'user'
+    login = aaa.login('phil', '')
+    assert login == False, "Login must fail"
+    global cookie_name
+    assert cookie_name == None
+
+@with_setup(setup_mockedadmin, teardown_dir)
 def test_create_and_validate_user():
     aaa.create_user('phil', 'user', 'hunter123')
     assert 'phil' in aaa._store.users
