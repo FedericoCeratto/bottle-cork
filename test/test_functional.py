@@ -13,17 +13,24 @@ from webtest import TestApp
 import glob
 import os
 import shutil
+import sys
 
 REDIR = '302 Found'
 app = None
 tmpdir = None
 orig_dir = None
+tmproot = None
+
+if sys.platform == 'darwin':
+    tmproot = "/tmp"
+else:
+    tmproot = "/dev/shm"
 
 def populate_conf_directory():
     """Populate a directory with valid configuration files, to be run just once
     The files are not modified by each test
     """
-    tmpdir = "/dev/shm/cork_functional_test_source"
+    tmpdir = "%s/cork_functional_test_source" % tmproot
     cork = Cork(tmpdir, initialize=True)
 
     cork._store.roles['admin'] = 100
@@ -62,13 +69,13 @@ def setup_app():
 
     # purge the temporary test directory
     if tmpdir is not None:
-        assert tmpdir.startswith('/dev/shm/cork_functional_test_')
+        assert tmpdir.startswith('%s/cork_functional_test_' % tmproot)
         shutil.rmtree(tmpdir)
         tmpdir = None
 
     # populate the temporary test dir
     tstamp = str(time())[5:]
-    tmpdir = "/dev/shm/cork_functional_test_%s" % tstamp
+    tmpdir = "%s/cork_functional_test_wd_%s" % (tmproot, tstamp)
     os.mkdir(tmpdir)
 
     # copy the needed files
@@ -91,7 +98,7 @@ def teardown():
     global tmpdir
     os.chdir(orig_dir)
     if tmpdir is not None:
-        assert tmpdir.startswith('/dev/shm/cork_functional_test_')
+        assert tmpdir.startswith('%s/cork_functional_test_' % tmproot)
         shutil.rmtree(tmpdir)
         tmpdir = None
     app = None
