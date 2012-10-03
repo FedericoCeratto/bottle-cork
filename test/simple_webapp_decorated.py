@@ -84,7 +84,7 @@ def change_password():
 
 
 @bottle.route('/')
-@authorize(role="king")
+@authorize(role="admin")
 def index():
     """Only authenticated users can see this"""
     #session = bottle.request.environ.get('beaker.session')
