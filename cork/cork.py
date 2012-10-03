@@ -222,7 +222,7 @@ class Cork(object):
     def require(self, username=None, role=None, fixed_role=False,
         fail_redirect=None):
         """Ensure the user is logged in has the required role (or higher).
-        Optionally redirect the user to another page (typically /login)
+        Optionally redirect the user to another page (tipically /login)
         If both `username` and `role` are specified, both conditions need to be
         satisfied.
         If none is specified, any authenticated user will be authorized.
@@ -259,7 +259,6 @@ class Cork(object):
             else:
                 bottle.redirect(fail_redirect)
 
-        # Authorization
         if cu.role not in self._store.roles:
             raise AAAException("Role not found for the current user")
 
@@ -583,30 +582,6 @@ class Cork(object):
         if user is None:
             raise AAAException("Nonexistent user.")
         user.update(pwd=password)
-
-    def make_auth_decorator(self, username=None, role=None, fixed_role=False, fail_redirect='/login'):
-        '''
-        Create a decorator to be used for authentication and authorization
-
-        :param username: A resource can be protected for a specific user
-        :param role: Minimum role level required for authorization
-        :param fixed_role: Only this role gets authorized
-        :param fail_redirect: The URL to redirect to if a login is required.
-        '''
-        session_manager = self
-        def auth_require(username=username, role=role, fixed_role=fixed_role,
-                         fail_redirect=fail_redirect):
-            def decorator(func):
-                import functools
-                @functools.wraps(func)
-                def wrapper(*a, **ka):
-                    session_manager.require(username=username, role=role, fixed_role=fixed_role,
-                        fail_redirect=fail_redirect)
-                    return func(*a, **ka)
-                return wrapper
-            return decorator
-        return(auth_require)
-
 
     ## Private methods
 
