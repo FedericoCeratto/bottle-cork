@@ -84,12 +84,44 @@ def change_password():
 
 
 @bottle.route('/')
-@authorize(role="admin")
+@authorize()
 def index():
     """Only authenticated users can see this"""
     #session = bottle.request.environ.get('beaker.session')
     #aaa.require(fail_redirect='/login')
     return 'Welcome! <a href="/admin">Admin page</a> <a href="/logout">Logout</a>'
+
+
+# Resources used by tests designed to test decorators specifically
+
+@bottle.route('/for_kings_only')
+@authorize(role="king")
+def page_for_kings():
+    """
+    This resource is used to test a non-existing role.
+    Only kings or higher (e.g. gods) can see this
+    """
+    return 'Welcome! <a href="/admin">Admin page</a> <a href="/logout">Logout</a>'
+
+@bottle.route('/page_for_specific_user_admin')
+@authorize(username="admin")
+def page_for_username_admin():
+    """Only a user named 'admin' can see this"""
+    return 'Welcome! <a href="/admin">Admin page</a> <a href="/logout">Logout</a>'
+
+@bottle.route('/page_for_specific_user_fred_who_doesnt_exist')
+@authorize(username="fred")
+def page_for_user_fred():
+    """Only authenticated users by the name of 'fred' can see this"""
+    return 'Welcome! <a href="/admin">Admin page</a> <a href="/logout">Logout</a>'
+
+@bottle.route('/page_for_admins')
+@authorize(role="admin")
+def page_for_role_admin():
+    """Only authenticated users (role=user or role=admin) can see this"""
+    return 'Welcome! <a href="/admin">Admin page</a> <a href="/logout">Logout</a>'
+
+
 
 @bottle.route('/restricted_download')
 @authorize()
