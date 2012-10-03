@@ -9,16 +9,18 @@
 
 from nose.tools import assert_raises, raises, with_setup
 from time import time
+from datetime import datetime
 from webtest import TestApp
 import glob
-import os
+import os, sys
 import shutil
-import sys
+
+from cork import Cork
 
 REDIR = '302 Found'
 app = None
 tmpdir = None
-orig_dir = None
+orig_dir = os.getcwd()
 tmproot = None
 
 if sys.platform == 'darwin':
@@ -30,8 +32,16 @@ def populate_conf_directory():
     """Populate a directory with valid configuration files, to be run just once
     The files are not modified by each test
     """
+    global tmpdir
     tmpdir = "%s/cork_functional_test_source" % tmproot
-    cork = Cork(tmpdir, initialize=True)
+
+    # only do this once, as advertised
+    if os.path.exists(tmpdir): return
+
+    os.mkdir(tmpdir)
+    os.mkdir(tmpdir + "/example_conf")
+
+    cork = Cork(tmpdir + "/example_conf", initialize=True)
 
     cork._store.roles['admin'] = 100
     cork._store.roles['editor'] = 60
@@ -57,21 +67,21 @@ def populate_conf_directory():
     }
     cork._store._save_users()
 
+def remove_temp_dir():
+    for f in glob.glob('%s/cork_functional_test_wd*' % tmproot, ):
+        shutil.rmtree(f)
+
 def setup_app():
+
     # create test dir and populate it using the example files
     global tmpdir
     global orig_dir
 
-    # save the directory where the unit testing has been run
-    if orig_dir is None:
-        orig_dir = os.getcwd()
-    os.chdir(orig_dir)
+    # create json files to be used by Cork
+    populate_conf_directory()
 
     # purge the temporary test directory
-    if tmpdir is not None:
-        assert tmpdir.startswith('%s/cork_functional_test_' % tmproot)
-        shutil.rmtree(tmpdir)
-        tmpdir = None
+    remove_temp_dir()
 
     # populate the temporary test dir
     tstamp = str(time())[5:]
@@ -79,14 +89,19 @@ def setup_app():
     os.mkdir(tmpdir)
 
     # copy the needed files
-    shutil.copytree('test/example_conf', tmpdir + '/example_conf')
-    shutil.copytree('test/views', tmpdir + '/views')
+    tmp_source = "%s/cork_functional_test_source" % tmproot
+    shutil.copytree(tmp_source + '/example_conf', tmpdir + '/example_conf')
+    shutil.copytree(orig_dir + '/test/views', tmpdir + '/views')
+
+    # change to the temporary test directory
+    # cork relies on this being the current directory
     os.chdir(tmpdir)
 
     # create global TestApp instance
     global app
     import simple_webapp
     app = TestApp(simple_webapp.app)
+
 
 def login():
     """run setup_app and log in"""
@@ -95,12 +110,7 @@ def login():
     p = app.post('/login', {'username': 'admin', 'password': 'admin'})
 
 def teardown():
-    global tmpdir
-    os.chdir(orig_dir)
-    if tmpdir is not None:
-        assert tmpdir.startswith('%s/cork_functional_test_' % tmproot)
-        shutil.rmtree(tmpdir)
-        tmpdir = None
+    remove_temp_dir()
     app = None
 
 
