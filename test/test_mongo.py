@@ -18,6 +18,11 @@ testdir = None # Test directory
 aaa = None # global Cork instance
 cookie_name = None # global variable to track cookie status
 
+if sys.platform == 'darwin':
+    tmproot = "/tmp"
+else:
+    tmproot = "/dev/shm"
+
 class RoAttrDict(dict):
     """Read-only attribute-accessed dictionary.
     Used to mock beaker's session objects

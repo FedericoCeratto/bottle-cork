@@ -15,6 +15,11 @@ testdir = None # Test directory
 aaa = None # global Cork instance
 cookie_name = None # global variable to track cookie status
 
+if sys.platform == 'darwin':
+    tmproot = "/tmp"
+else:
+    tmproot = "/dev/shm"
+
 class RoAttrDict(dict):
     """Read-only attribute-accessed dictionary.
     Used to mock beaker's session objects
@@ -43,17 +48,11 @@ class MockedUnauthenticatedCork(Cork):
         global cookie_name
         cookie_name = username
 
-def get_test_dir():
-    tstamp = "%f" % time()
-    if sys.platform == 'darwin':
-        return "/tmp/fl_%s" % tstamp
-    else:
-        return "/dev/shm/fl_%s" % tstamp
-
 def setup_empty_dir():
     """Setup test directory without JSON files"""
     global testdir
-    testdir = get_test_dir()
+    tstamp = "%f" % time()
+    testdir = "%s/fl_%s" % (tmproot, tstamp)
     os.mkdir(testdir)
     os.mkdir(testdir + '/views')
     print "setup done in %s" % testdir
@@ -61,7 +60,8 @@ def setup_empty_dir():
 def setup_dir():
     """Setup test directory with valid JSON files"""
     global testdir
-    testdir = get_test_dir()
+    tstamp = "%f" % time()
+    testdir = "%s/fl_%s" % (tmproot, tstamp)
     os.mkdir(testdir)
     os.mkdir(testdir + '/views')
     with open("%s/users.json" % testdir, 'w') as f:
@@ -80,6 +80,7 @@ def setup_mockedadmin():
     """Setup test directory and a MockedAdminCork instance"""
     global aaa
     global cookie_name
+    global testdir
     setup_dir()
     backend = JsonBackend(
         testdir, users_fname='users',
@@ -91,6 +92,7 @@ def setup_mocked_unauthenticated():
     """Setup test directory and a MockedAdminCork instance"""
     global aaa
     global cookie_name
+    global testdir
     setup_dir()
     backend = JsonBackend(
         testdir, users_fname='users',
@@ -108,7 +110,10 @@ def teardown_dir():
 
 @with_setup(setup_dir, teardown_dir)
 def test_init():
-    aaa = Cork(testdir)
+    backend = JsonBackend(testdir, users_fname='users',
+        roles_fname='roles', pending_reg_fname='register',
+        initialize=True)
+    aaa = Cork(backend)
 
 @with_setup(setup_dir, teardown_dir)
 def test_initialize_storage():

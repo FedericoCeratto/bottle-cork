@@ -4,7 +4,7 @@
 # Requires WebTest http://webtest.pythonpaste.org/
 # sudo aptitude install python-webtest
 #
-# Run as: nosetests functional_test.py
+# Run as: nosetests functional_test_mongo.py
 #
 
 from nose.tools import assert_raises, raises, with_setup
@@ -20,7 +20,7 @@ from cork import Cork, MongoDbBackend
 REDIR = '302 Found'
 app = None
 tmpdir = None
-orig_dir = None
+orig_dir = os.getcwd()
 tmproot = None
 
 if sys.platform == 'darwin':
@@ -78,12 +78,8 @@ def setup_app():
     global tmpdir
     global orig_dir
 
+    # Initialize the MongoDb database
     initialize_database()
-
-    # save the directory where the unit testing has been run
-    if orig_dir is None:
-        orig_dir = os.getcwd()
-    os.chdir(orig_dir)
 
     # purge the temporary test directory
     remove_temp_dir()
@@ -94,7 +90,8 @@ def setup_app():
     os.mkdir(tmpdir)
 
     # copy the needed files
-    shutil.copytree('test/views', tmpdir + '/views')
+    tmp_source = "%s/cork_functional_test_source" % tmproot
+    shutil.copytree(orig_dir + '/test/views', tmpdir + '/views')
     os.chdir(tmpdir)
 
     # create global TestApp instance
@@ -110,14 +107,8 @@ def login():
     p = app.post('/login', {'username': 'admin', 'password': 'admin'})
 
 def teardown():
-    global tmpdir
-    os.chdir(orig_dir)
-    if tmpdir is not None:
-        assert tmpdir.startswith('%s/cork_functional_test_' % tmproot)
-        shutil.rmtree(tmpdir, ignore_errors=True)
-        tmpdir = None
+    remove_temp_dir()
     app = None
-
 
 @with_setup(login, teardown)
 def test_functional_login():
