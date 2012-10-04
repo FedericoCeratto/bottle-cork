@@ -3,3 +3,10 @@
 *.priv
 .coverage
 build
+.idea
+.DS_Store
+cover
+examples/example_conf
+examples/views
+test/example_conf
+test/views

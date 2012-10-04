@@ -4,10 +4,19 @@
 # Regenerate files in example_conf
 
 from datetime import datetime
-from cork import Cork
+from cork import Cork, JsonBackend
 
 def populate_conf_directory():
-    cork = Cork('example_conf', initialize=True)
+
+    backend = JsonBackend(
+        'example_conf',
+        users_fname='users',
+        roles_fname='roles',
+        pending_reg_fname='register',
+        initialize=True
+    )
+
+    cork = Cork(backend)
 
     cork._store.roles['admin'] = 100
     cork._store.roles['editor'] = 60
@@ -23,6 +32,7 @@ def populate_conf_directory():
         'desc': username + ' test user',
         'creation_date': tstamp
     }
+
     username = password = ''
     cork._store.users[username] = {
         'role': 'user',
@@ -33,6 +43,9 @@ def populate_conf_directory():
     }
     cork._store._save_users()
 
+    print "Json files created. "
+
 if __name__ == '__main__':
     populate_conf_directory()
+
 

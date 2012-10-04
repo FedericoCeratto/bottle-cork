@@ -78,7 +78,13 @@ class JsonBackend(object):
         :param initialize: create empty JSON files (defaults to False)
         :type initialize: bool.
         """
-        assert directory, "Directory name must be valid"
+
+        # load default backend params
+        if not directory:
+            self._directory = os.path.abspath("example_conf")
+        self._backend_kind='JsonBackend'
+
+        #assert directory, "Directory name must be valid"
         self._directory = directory
         self.users = {}
         self._users_fname = users_fname
@@ -153,9 +159,7 @@ class JsonBackend(object):
 
 class Cork(object):
 
-    def __init__(self, directory, email_sender=None, smtp_server=None,
-        users_fname='users', roles_fname='roles', pending_reg_fname='register',
-        initialize=False, session_domain=None):
+    def __init__(self, backend, email_sender=None, smtp_server=None, session_domain=None):
         """Auth/Authorization/Accounting class
 
         :param directory: configuration directory
@@ -165,10 +169,10 @@ class Cork(object):
         :param roles_fname: roles filename (without .json), defaults to 'roles'
         :type roles_fname: str.
         """
+        assert backend
+        self._store = backend
+
         self.mailer = Mailer(email_sender, smtp_server)
-        self._store = JsonBackend(directory, users_fname='users',
-            roles_fname='roles', pending_reg_fname='register',
-            initialize=initialize)
         self.password_reset_timeout = 3600 * 24
         self.session_domain = session_domain
 
@@ -334,7 +338,11 @@ class Cork(object):
         :returns: (role, role_level) generator (sorted by role)
         """
         for role in sorted(self._store.roles):
-            yield (role, self._store.roles[role])
+            if isinstance(role, dict):
+                # mongodb style, it stores documents, not strings
+                yield (role["role"], role["level"])
+            else:
+                yield (role, self._store.roles[role])
 
     def create_user(self, username, role, password, email_addr=None,
         description=None):
@@ -362,6 +370,7 @@ class Cork(object):
             raise AAAException("Nonexistent user role.")
         tstamp = str(datetime.utcnow())
         self._store.users[username] = {
+            'username':username,
             'role': role,
             'hash': self._hash(username, password),
             'email_addr': email_addr,
@@ -391,8 +400,12 @@ class Cork(object):
         username)
         """
         for un in sorted(self._store.users):
-            d = self._store.users[un]
-            yield (un, d['role'], d['email_addr'], d['desc'])
+            # for mongo style backend
+            if isinstance(un, dict):
+                yield (un["username"], un["role"], un["email_addr"], un["desc"])
+            else:
+                d = self._store.users[un]
+                yield (un, d['role'], d['email_addr'], d['desc'])
 
     @property
     def current_user(self):
@@ -469,6 +482,7 @@ class Cork(object):
 
         # store pending registration
         self._store.pending_registrations[registration_code] = {
+            'registration_code': registration_code,
             'username': username,
             'role': role,
             'hash': self._hash(username, password),
@@ -495,6 +509,7 @@ class Cork(object):
         # the user data is moved from pending_registrations to _users
         username = data['username']
         self._store.users[username] = {
+            'username': data['username'],
             'role': data['role'],
             'hash': data['hash'],
             'email_addr': data['email_addr'],
@@ -666,6 +681,8 @@ class User(object):
         self.username = username
         self.role = self._cork._store.users[username]['role']
         self.level = self._cork._store.roles[self.role]
+        if isinstance(self.level, dict):
+            self.level = self.level["level"]
 
         if session is not None:
             try:
@@ -674,6 +691,10 @@ class User(object):
                 self.session_id = session['_id']
             except:
                 pass
+
+    # added to support test_get_current_user_unauth
+    def __getitem__(self, item):
+        raise AAAException
 
     def update(self, role=None, pwd=None, email_addr=None):
         """Update an user account data
@@ -692,12 +713,28 @@ class User(object):
         if role is not None:
             if role not in self._cork._store.roles:
                 raise AAAException("Nonexistent role.")
-            self._cork._store.users[username]['role'] = role
+            # TODO: Rework this when other backends besides mongodb are supported
+            if isinstance(self._cork._store, JsonBackend):
+                self._cork._store.users[username]['role'] = role
+            else:
+                # mongodb
+                self._cork._store.users.update({"username": username, "role":role})
         if pwd is not None:
-            self._cork._store.users[username]['hash'] = self._cork._hash(
-                username, pwd)
+            # TODO: Rework this when other backends besides mongodb are supported
+            if isinstance(self._cork._store, JsonBackend):
+                self._cork._store.users[username]['hash'] = self._cork._hash(
+                    username, pwd)
+            else:
+                self._cork._store.users.update({"username": username,
+                                                "hash":self._cork._hash(username, pwd)})
         if email_addr is not None:
-            self._cork._store.users[username]['email'] = email_addr
+            # TODO: Rework this when other backends besides mongodb are supported
+            if isinstance(self._cork._store, JsonBackend):
+                self._cork._store.users[username]['email_addr'] = email_addr
+            else:
+
+                self._cork._store.users.update({"username": username,
+                                                "email_addr": email_addr})
         self._cork._store._save_users()
 
     def delete(self):
