@@ -422,18 +422,69 @@ def test_register(mocked):
     assert len(aaa._store.pending_registrations) == 1, repr(aaa._store.pending_registrations)
 
 
+@with_setup(setup_mockedadmin, teardown_dir)
+def test_smtp_url_parsing_1():
+    c = aaa.mailer._parse_smtp_url('')
+    assert c['proto'] == 'smtp'
+    assert c['user'] == None
+    assert c['pass'] == None
+    assert c['fqdn'] == ''
+    assert c['port'] == 25
+
+@with_setup(setup_mockedadmin, teardown_dir)
+def test_smtp_url_parsing_2():
+    c = aaa.mailer._parse_smtp_url('starttls://foo')
+    assert c['proto'] == 'starttls'
+    assert c['user'] == None
+    assert c['pass'] == None
+    assert c['fqdn'] == 'foo'
+    assert c['port'] == 25
+
+@with_setup(setup_mockedadmin, teardown_dir)
+def test_smtp_url_parsing_3():
+    c = aaa.mailer._parse_smtp_url('foo:443')
+    assert c['proto'] == 'smtp'
+    assert c['user'] == None
+    assert c['pass'] == None
+    assert c['fqdn'] == 'foo'
+    assert c['port'] == 443
+
+@with_setup(setup_mockedadmin, teardown_dir)
+def test_smtp_url_parsing_4():
+    c = aaa.mailer._parse_smtp_url('ssl://user:pass@foo:443/')
+    assert c['proto'] == 'ssl'
+    assert c['user'] == 'user'
+    assert c['pass'] == 'pass'
+    assert c['fqdn'] == 'foo'
+    assert c['port'] == 443
+
+@with_setup(setup_mockedadmin, teardown_dir)
+def test_smtp_url_parsing_1():
+    c = aaa.mailer._parse_smtp_url('')
+    assert c['proto'] == 'smtp'
+    assert c['user'] == None
+    assert c['pass'] == None
+    assert c['fqdn'] == ''
+    assert c['port'] == 25
+
 # Patch the mailer _send() method to prevent network interactions
 @with_setup(setup_mockedadmin, teardown_dir)
 @mock.patch.object(Mailer, '_send')
 def test_send_email(mocked):
-    assert aaa.mailer.smtp_server == 'localhost'
+    assert aaa.mailer._conf == {
+        'fqdn': 'localhost',
+        'pass': None,
+        'port': 25,
+        'proto': 'smtp',
+        'user': None,
+    }
     aaa.mailer.send_email('address',' sbj', 'text')
     aaa.mailer.join()
 
 @raises(AAAException)
 @with_setup(setup_mockedadmin, teardown_dir)
 def test_do_not_send_email():
-    aaa.mailer.smtp_server = None # disable email delivery
+    aaa.mailer._conf['fqdn'] = None # disable email delivery
     aaa.mailer.send_email('address', 'sbj', 'text')
     aaa.mailer.join()
 

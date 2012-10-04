@@ -761,6 +761,8 @@ class Mailer(object):
 
         if d['port'] is None:
             d['port'] = 25
+        else:
+            d['port'] = int(d['port'])
 
         return d
 
@@ -826,11 +828,9 @@ class Mailer(object):
 
         :returns: None
         """
-        log.debug('join')
         return [t.join(self.join_timeout) for t in self._threads]
 
     def __del__(self):
         """Class destructor: wait for threads to terminate within a timeout"""
-        log.debug('quit')
         self.join()
 
