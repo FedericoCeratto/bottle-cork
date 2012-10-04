@@ -149,7 +149,9 @@ class MongoDbBackend(object):
             return self._users.find_one({"username":item})
 
     class Roles(dict):
-
+        """Role document: {"special": 200, "admin": 100, "user": 50}
+           This means we want to make sure to store int, not str
+        """
         def __init__(self,roles_collection=None, *args, **kwargs):
             if roles_collection:
                 self._roles = roles_collection
@@ -167,8 +169,8 @@ class MongoDbBackend(object):
             # roles['admin'] = 10
             # means: {"role":"admin", "level":10}
             doc = value
-            if isinstance(doc, int):
-                doc = {"$set": {"level":value}}
+            if not isinstance(doc, dict):
+                doc = {"$set": {"level":int(value)}}
             self._roles.update({"role":key}, doc, safe=True, upsert=True)
 
         def __contains__(self, item):
