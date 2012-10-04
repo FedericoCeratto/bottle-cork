@@ -4,7 +4,7 @@
 # Requires WebTest http://webtest.pythonpaste.org/
 # sudo aptitude install python-webtest
 #
-# Run as: nosetests functional_test_mongo.py
+# Run as: nosetests functional_test_decorated.py
 #
 
 from nose.tools import assert_raises, raises, with_setup
@@ -12,15 +12,15 @@ from time import time
 from datetime import datetime
 from webtest import TestApp
 import glob
-import os, sys, inspect
+import os, sys
 import shutil
 
-from cork import Cork, MongoDbBackend
+from cork import Cork
 
 REDIR = '302 Found'
 app = None
 tmpdir = None
-orig_dir = None
+orig_dir = os.getcwd()
 tmproot = None
 
 if sys.platform == 'darwin':
@@ -28,58 +28,44 @@ if sys.platform == 'darwin':
 else:
     tmproot = "/dev/shm"
 
-# somehow previous test forgets the directory we started from.
-# http://stackoverflow.com/questions/2632199/how-do-i-get-the-path-of-the-current-executed-file-in-python
-#def foo():
-#    pass
-#def module_path(local_function):
-#    ''' returns the module path without the use of __file__.  Requires a function defined
-#   locally in the module.
-#   from http://stackoverflow.com/questions/729583/getting-file-path-of-imported-module'''
-#    return os.path.abspath(inspect.getsourcefile(local_function))
-#orig_dir = module_path(foo)
-
-orig_dir = os.path.abspath(os.path.dirname(__file__))
-
-def initialize_database():
+def populate_conf_directory():
     """Populate a directory with valid configuration files, to be run just once
     The files are not modified by each test
     """
-    backend = MongoDbBackend(
-        server = "localhost",
-        port = 27017,
-        database = "sample_webapp",
-        initialize=True,
-        users_store="users",
-        roles_store="roles",
-        pending_regs_store="register",
-    )
-    cork = Cork(backend)
+    global tmpdir
+    tmpdir = "%s/cork_functional_test_source" % tmproot
+
+    # only do this once, as advertised
+    if os.path.exists(tmpdir): return
+
+    os.mkdir(tmpdir)
+    os.mkdir(tmpdir + "/example_conf")
+
+    cork = Cork(tmpdir + "/example_conf", initialize=True)
 
     cork._store.roles['admin'] = 100
     cork._store.roles['editor'] = 60
     cork._store.roles['user'] = 50
+    cork._store._savejson('roles', cork._store.roles)
 
     tstamp = str(datetime.utcnow())
     username = password = 'admin'
     cork._store.users[username] = {
-        'username': username,
         'role': 'admin',
         'hash': cork._hash(username, password),
         'email_addr': username + '@localhost.local',
         'desc': username + ' test user',
         'creation_date': tstamp
     }
-    username = password = 'user'
+    username = password = ''
     cork._store.users[username] = {
-        'username': username,
         'role': 'user',
         'hash': cork._hash(username, password),
         'email_addr': username + '@localhost.local',
         'desc': username + ' test user',
         'creation_date': tstamp
     }
-
+    cork._store._save_users()
 
 def remove_temp_dir():
     for f in glob.glob('%s/cork_functional_test_wd*' % tmproot, ):
@@ -91,8 +77,8 @@ def setup_app():
     global tmpdir
     global orig_dir
 
-    # Initialize the MongoDb database
-    initialize_database()
+    # create json files to be used by Cork
+    populate_conf_directory()
 
     # purge the temporary test directory
     remove_temp_dir()
@@ -104,14 +90,18 @@ def setup_app():
 
     # copy the needed files
     tmp_source = "%s/cork_functional_test_source" % tmproot
-    shutil.copytree(orig_dir + '/views', tmpdir + '/views')
+    shutil.copytree(tmp_source + '/example_conf', tmpdir + '/example_conf')
+    shutil.copytree(orig_dir + '/test/views', tmpdir + '/views')
+
+    # change to the temporary test directory
+    # cork relies on this being the current directory
     os.chdir(tmpdir)
 
     # create global TestApp instance
     global app
-    import simple_webapp
-    simple_webapp.configure(backend_type="mongobackend")
-    app = TestApp(simple_webapp.app)
+    import simple_webapp_decorated
+    app = TestApp(simple_webapp_decorated.app)
+
 
 def login():
     """run setup_app and log in"""
@@ -122,6 +112,46 @@ def login():
 def teardown():
     remove_temp_dir()
     app = None
+
+@with_setup(setup_app, teardown)
+def test_unauthorized_page_access():
+    # fetch a page successfully
+    assert app.get('/admin').status == REDIR
+
+@with_setup(setup_app, teardown)
+def test_resource_protected_with_non_existing_role():
+    # fetch a page successfully
+    assert app.get('/for_kings_only', status=500, expect_errors=True).status_code == 500
+
+@with_setup(login, teardown)
+def test_resource_protected_for_user_admin_only():
+    # fetch a page successfully
+    assert app.get('/page_for_specific_user_admin').status == '200 OK'
+    # log out
+    assert app.get('/logout').status == REDIR
+    # drop the cookie
+    app.reset()
+    assert app.cookies == {}, "The cookie should be gone"
+    # fetch the same page, unsuccessfully
+    assert app.get('/page_for_specific_user_admin').status == REDIR
+
+@with_setup(setup_app(), teardown)
+def test_resource_protected_for_user_fred_only():
+
+    assert app.get('/page_for_specific_user_fred_who_doesnt_exist', status=500, expect_errors=True).status_code == 500
+
+@with_setup(login, teardown)
+def test_resource_protected_with_minimum_role_admin():
+    assert app.get('/page_for_admins').status == '200 OK'
+    # log out
+    assert app.get('/logout').status == REDIR
+    # drop the cookie
+    app.reset()
+    assert app.cookies == {}, "The cookie should be gone"
+    #login with user who has role 'user'
+    p = app.post('/login', {'username': 'user', 'password': "user"})
+    assert app.get('/page_for_admins').status == REDIR
+
 
 @with_setup(login, teardown)
 def test_functional_login():

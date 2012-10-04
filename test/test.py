@@ -12,6 +12,7 @@ from cork import Mailer
 from cork import JsonBackend
 
 testdir = None # Test directory
+tmproot = None
 aaa = None # global Cork instance
 cookie_name = None # global variable to track cookie status
 
