@@ -605,6 +605,7 @@ class Cork(object):
     @staticmethod
     def _hash(username, pwd, salt=None):
         """Hash username and password, generating salt value if required
+        Use PBKDF2 from Beaker
 
         :returns: base-64 encoded str.
         """
@@ -614,7 +615,8 @@ class Cork(object):
 
         cleartext = "%s\0%s" % (username, pwd)
         h = crypto.generateCryptoKeys(cleartext, salt, 10)
-        return b64encode(salt + h)
+        # 'p' for PBKDF2
+        return b64encode('p' + salt + h)
 
     @classmethod
     def _verify_password(cls, username, pwd, salted_hash):
@@ -622,7 +624,12 @@ class Cork(object):
 
         :returns: bool
         """
-        salt = b64decode(salted_hash)[:32]
+        decoded = b64decode(salted_hash)
+        hash_type = decoded[0]
+        if hash_type != 'p': # 'p' for PBKDF2
+            return False # Only PBKDF2 is supported
+
+        salt = decoded[1:33]
         return cls._hash(username, pwd, salt) == salted_hash
 
     def _purge_expired_registrations(self, exp_time=96):

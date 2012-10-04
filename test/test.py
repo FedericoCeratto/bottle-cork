@@ -148,16 +148,16 @@ def test_loadjson_unchanged():
 @with_setup(setup_mockedadmin, teardown_dir)
 def test_password_hashing():
     shash = aaa._hash('user_foo', 'bogus_pwd')
-    assert len(shash) == 88, "hash length should be 88"
-    assert shash.endswith('=='), "hash should end with '=='"
+    assert len(shash) == 88, "hash length should be 88 and is %d" % len(shash)
+    assert shash.endswith('='), "hash should end with '='"
     assert aaa._verify_password('user_foo', 'bogus_pwd', shash) == True, \
         "Hashing verification should succeed"
 
 @with_setup(setup_mockedadmin, teardown_dir)
 def test_incorrect_password_hashing():
     shash = aaa._hash('user_foo', 'bogus_pwd')
-    assert len(shash) == 88, "hash length should be 88"
-    assert shash.endswith('=='), "hash should end with '=='"
+    assert len(shash) == 88, "hash length should be 88 and is %d" % len(shash)
+    assert shash.endswith('='), "hash should end with '='"
     assert aaa._verify_password('user_foo', '####', shash) == False, \
         "Hashing verification should fail"
     assert aaa._verify_password('###', 'bogus_pwd', shash) == False, \
