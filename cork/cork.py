@@ -341,7 +341,7 @@ class Cork(object):
         for role in sorted(self._store.roles):
             if isinstance(role, dict):
                 # mongodb style, it stores documents, not strings
-                yield (role, self._store.roles[role["role"]])
+                yield (role["role"], role["level"])
             else:
                 yield (role, self._store.roles[role])
 
