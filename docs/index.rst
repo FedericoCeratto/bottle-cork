@@ -17,7 +17,13 @@ It is designed to stay out of the way and let you focus on what your application
 
 News:
 
-* 2012-07-09: **Version 0.1 is out!** - Improved installation
+* 2012-10-04: **Version 0.2 is out!**
+
+  * SMTP URL added: support for STARTTLS, SSL and configurable port numbers
+  * Bugfix: login() redirects to fail_redirect if an username is not provided
+  * Better password hashing, multiple hash formats supported
+
+* 2012-07-09: Version 0.1 - Improved installation
 * 2012-06-10: Version 0.1~beta3 - Improved registration and password reset
 
 Cork is under development - contributions are welcome.

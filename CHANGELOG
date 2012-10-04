@@ -1,3 +1,8 @@
+v0.2 2012-10-04
+ * SMTP URL added: support for STARTTLS, SSL and configurable port numbers
+ * Bug #10 fixed: login() redirects to fail_redirect if an username
+   is not provided
+ * Bug #11 fixed: better password hashing, multiple hash formats supported
 v0.1 2012-07-09
  * Improved package layout
 v0.1~beta3 2012-06-10
