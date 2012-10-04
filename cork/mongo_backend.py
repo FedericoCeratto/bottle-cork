@@ -158,7 +158,9 @@ class MongoDbBackend(object):
 
         def __getitem__(self, item):
             role = self._roles.find_one({"role":item})
-            return role["level"]
+            if role:
+                return role["level"]
+            return None
 
         def __setitem__(self, key, value):
             # allow the following syntax:
