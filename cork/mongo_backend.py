@@ -33,7 +33,7 @@ class MongoDbBackend(object):
         assert database, "Database must be valid"
         self._database = database
 
-        self._connection = pymongo.Connection("localhost",27017)
+        self._connection = pymongo.Connection(server,port)
         self._database = self._connection[database]
 
         self._users_collection = self._database[users_store]
