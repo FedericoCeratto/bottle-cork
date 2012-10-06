@@ -28,6 +28,7 @@ setup(
     install_requires = [
         'bottle',
         'beaker',
+        'pycrypto',
         'setuptools',
     ],
     packages = ['cork'],
