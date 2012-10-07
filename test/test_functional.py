@@ -12,8 +12,9 @@ from time import time
 from datetime import datetime
 from webtest import TestApp
 import glob
-import os, sys
+import os
 import shutil
+import sys
 
 from cork import Cork
 
@@ -26,7 +27,8 @@ tmproot = None
 if sys.platform == 'darwin':
     tmproot = "/tmp"
 else:
-    tmproot = "/dev/shm"
+    tmproot = "/dev/shm" # In-memory filesystem allows faster testing.
+                         # Not available in OSX.
 
 def populate_conf_directory():
     """Populate a directory with valid configuration files, to be run just once
@@ -77,6 +79,11 @@ def setup_app():
     global tmpdir
     global orig_dir
 
+    # save the directory where the unit testing has been run
+    if orig_dir is None:
+        orig_dir = os.getcwd()
+    #os.chdir(orig_dir)
+
     # create json files to be used by Cork
     populate_conf_directory()
 
@@ -113,6 +120,7 @@ def login():
         "Incorrect redirect to %s" % p.location
 
 def teardown():
+    os.chdir(orig_dir)
     remove_temp_dir()
     app = None
 
