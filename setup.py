@@ -1,7 +1,6 @@
 #!/usr/bin/env python
 
 from setuptools import setup
-from cork.cork import __version__
 
 CLASSIFIERS = map(str.strip,
 """Environment :: Console
@@ -16,7 +15,7 @@ Topic :: Software Development :: Libraries :: Python Modules
 
 setup(
     name="bottle-cork",
-    version = __version__,
+    version = "0.2",
     author = "Federico Ceratto",
     author_email = "federico.ceratto@gmail.com",
     description = "Authentication/Authorization library for Bottle",
@@ -28,6 +27,7 @@ setup(
     install_requires = [
         'bottle',
         'beaker',
+        'pycrypto',
         'setuptools',
     ],
     packages = ['cork'],
