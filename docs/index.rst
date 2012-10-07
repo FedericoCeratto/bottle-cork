@@ -134,7 +134,7 @@ Code documentation
    :maxdepth: 2
 
 
-.. automodule:: cork
+.. automodule:: cork.cork
     :members:
     :inherited-members:
     :undoc-members:

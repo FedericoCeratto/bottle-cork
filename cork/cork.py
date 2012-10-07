@@ -49,7 +49,6 @@ try:
 except ImportError:  # pragma: no cover
     import simplejson as json
 
-__version__ = '0.2'
 
 log = getLogger(__name__)
 

@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 from setuptools import setup
-from cork.cork import __version__
+from cork import __version__
 
 CLASSIFIERS = map(str.strip,
 """Environment :: Console
