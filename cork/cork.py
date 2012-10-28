@@ -614,6 +614,9 @@ class Cork(object):
 
         cleartext = "%s\0%s" % (username, pwd)
         h = crypto.generateCryptoKeys(cleartext, salt, 10)
+        if len(h) != 32:
+            raise RuntimeError("The PBKDF2 hash is not 32bytes long")
+
         # 'p' for PBKDF2
         return b64encode('p' + salt + h)
 
