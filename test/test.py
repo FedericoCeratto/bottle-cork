@@ -1,7 +1,6 @@
 from base64 import b64encode, b64decode
 from nose import SkipTest
 from nose.tools import assert_raises, raises, with_setup
-from tempfile import mkdtemp
 from time import time
 import mock
 import os, sys
@@ -9,16 +8,13 @@ import shutil
 
 from cork import Cork, AAAException, AuthException
 from cork import Mailer
+import testutils
 
 testdir = None # Test directory
-tmproot = None
 aaa = None # global Cork instance
 cookie_name = None # global variable to track cookie status
 
-if sys.platform == 'darwin':
-    tmproot = "/tmp"
-else:
-    tmproot = "/dev/shm"
+tmproot = testutils.pick_conf_directory()
 
 class RoAttrDict(dict):
     """Read-only attribute-accessed dictionary.

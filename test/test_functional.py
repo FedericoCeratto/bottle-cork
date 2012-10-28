@@ -12,23 +12,19 @@ from time import time
 from datetime import datetime
 from webtest import TestApp
 import glob
+import json
 import os
 import shutil
 import sys
 
+import testutils
 from cork import Cork
 
 REDIR = '302 Found'
 app = None
 tmpdir = None
-orig_dir = os.getcwd()
 tmproot = None
-
-if sys.platform == 'darwin':
-    tmproot = "/tmp"
-else:
-    tmproot = "/dev/shm" # In-memory filesystem allows faster testing.
-                         # Not available in OSX.
+orig_dir = os.getcwd()
 
 def populate_conf_directory():
     """Populate a directory with valid configuration files, to be run just once
@@ -77,6 +73,7 @@ def setup_app():
 
     # create test dir and populate it using the example files
     global tmpdir
+    global tmproot
     global orig_dir
 
     # save the directory where the unit testing has been run
@@ -85,6 +82,7 @@ def setup_app():
     #os.chdir(orig_dir)
 
     # create json files to be used by Cork
+    tmproot = testutils.pick_conf_directory()
     populate_conf_directory()
 
     # purge the temporary test directory
@@ -192,10 +190,73 @@ def test_functional_login_logout():
     # fetch the same page, unsuccessfully
     assert app.get('/admin').status == REDIR
 
+@with_setup(setup_app, teardown)
+def test_functional_user_creation_login_deletion():
+    assert app.cookies == {}, "The cookie should be not set"
+
+    # Log in as Admin
+    p = app.post('/login', {'username': 'admin', 'password': 'admin'})
+    assert p.status == REDIR
+    assert p.location == 'http://localhost:80/', \
+        "Incorrect redirect to %s" % p.location
+
+    # Create new user
+    username = 'BrandNewUser'
+    password = '42IsTheAnswer'
+    ret = app.post('/create_user', {
+        'username': username,
+        'password': password,
+        'role': 'user'
+    })
+    retj = json.loads(ret.body)
+    assert 'ok' in retj and retj['ok'] == True, "Failed user creation: %s" % \
+        ret.body
+
+    # log out
+    assert app.get('/logout').status == REDIR
+    app.reset()
+    assert app.cookies == {}, "The cookie should be gone"
+
+    # Log in as user
+    p = app.post('/login', {'username': username, 'password': password})
+    assert p.status == REDIR and p.location == 'http://localhost:80/', \
+        "Failed user login"
+
+    # log out
+    assert app.get('/logout').status == REDIR
+    app.reset()
+    assert app.cookies == {}, "The cookie should be gone"
+
+    # Log in as user with empty password
+    p = app.post('/login', {'username': username, 'password': ''})
+    assert p.status == REDIR and p.location == 'http://localhost:80/login', \
+        "User login should fail"
+    assert app.cookies == {}, "The cookie should not be set"
+
+
+#@with_setup(setup_app, teardown)
+#def test_functional_user_registration():
+#    assert app.cookies == {}, "The cookie should be not set"
+#
+#    # Register new user
+#    username = 'BrandNewUser'
+#    password = '42IsTheAnswer'
+#    ret = app.post('/register', {
+#        'username': username,
+#        'password': password,
+#        'email_address': 'test@localhost.local'
+#    })
+
+
+
+
 @with_setup(login, teardown)
 def test_functional_expiration():
     assert app.get('/admin').status == '200 OK'
     # change the cookie expiration in order to expire it
     app.app.options['timeout'] = 0
     assert app.get('/admin').status == REDIR, "The cookie should have expired"
+
+
+
 
