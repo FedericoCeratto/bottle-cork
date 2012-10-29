@@ -31,6 +31,7 @@
 #    (e.g. a key/value database)
 
 from base64 import b64encode, b64decode
+import shutil
 from beaker import crypto
 from datetime import datetime, timedelta
 from email.mime.multipart import MIMEMultipart
@@ -141,7 +142,7 @@ class JsonBackend(object):
             with open("%s.tmp" % fname, 'wb') as f:
                 f.write(s)
                 f.flush()
-            os.rename("%s.tmp" % fname, fname)
+            shutil.move("%s.tmp" % fname, fname)
         except Exception as e:
             raise AAAException("""Unable to save JSON file %s: %s
                 """ % (fname, e))
