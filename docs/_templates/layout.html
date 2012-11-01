@@ -22,6 +22,21 @@ the JavaScript coming from www.google-analytics.com.
     ga.setAttribute('async', 'true');
     document.documentElement.firstChild.appendChild(ga);
   })();
+  $('img#logo').click(function() {
+    $("html").scrollTop(0);
+  });
 </script>
+<style>
+  img#logo {
+    z-index: 3;
+    position: fixed;
+    top: 1.5em;
+    right: 5%;
+    opacity: 0.6;
+  }
+  img#logo:hover {
+    opacity: 0.8;
+  }
+</style>
 </div>
 {% endblock %}
