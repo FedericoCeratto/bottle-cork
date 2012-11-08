@@ -1,7 +1,8 @@
 import sys
 import tempfile
+import shutil
 
-def pick_conf_directory():
+def pick_test_directory():
     """Select a temporary directory for the test files.
     Set the tmproot global variable.
     """
@@ -11,3 +12,6 @@ def pick_conf_directory():
 
     return  tempfile.mkdtemp()
 
+def purge_test_directory(test_dir):
+    """Remove the test directory"""
+    shutil.rmtree(test_dir)

@@ -31,7 +31,6 @@
 #    (e.g. a key/value database)
 
 from base64 import b64encode, b64decode
-import shutil
 from beaker import crypto
 from datetime import datetime, timedelta
 from email.mime.multipart import MIMEMultipart
@@ -43,6 +42,7 @@ from time import time
 import bottle
 import os
 import re
+import shutil
 import uuid
 
 try:
