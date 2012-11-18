@@ -1,3 +1,5 @@
+v0.3 2012-11-18
+ * PBKDF2 hash length check added
 v0.2 2012-10-04
  * SMTP URL added: support for STARTTLS, SSL and configurable port numbers
  * Bug #10 fixed: login() redirects to fail_redirect if an username
