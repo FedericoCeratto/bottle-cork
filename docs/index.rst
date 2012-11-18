@@ -20,7 +20,12 @@ It is designed to stay out of the way and let you focus on what your application
 
 News:
 
-* 2012-10-04: **Version 0.2 is out!**
+* 2012-11-18: **Version 0.3 is out!**
+
+  * PBKDF2 hash length check added
+  * Multi-platform unit testing
+
+* 2012-10-04: Version 0.2
 
   * SMTP URL added: support for STARTTLS, SSL and configurable port numbers
   * Bugfix: login() redirects to fail_redirect if an username is not provided
