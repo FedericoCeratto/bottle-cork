@@ -13,6 +13,7 @@ import logging
 
 logging.basicConfig(format='localhost - - [%(asctime)s] %(message)s', level=logging.DEBUG)
 log = logging.getLogger(__name__)
+bottle.debug(True)
 
 # Use users.json and roles.json in the local example_conf directory
 aaa = Cork('example_conf', email_sender='federico.ceratto@gmail.com', smtp_url='smtp://smtp.magnet.ie')
@@ -45,7 +46,7 @@ def login():
 
 @bottle.route('/logout')
 def logout():
-    aaa.logout()
+    aaa.logout(success_redirect='/login')
 
 @bottle.post('/register')
 def register():
@@ -84,7 +85,6 @@ def change_password():
 @bottle.route('/')
 def index():
     """Only authenticated users can see this"""
-    session = bottle.request.environ.get('beaker.session')
     aaa.require(fail_redirect='/login')
     return 'Welcome! <a href="/admin">Admin page</a> <a href="/logout">Logout</a>'
 
@@ -94,7 +94,14 @@ def restricted_download():
     aaa.require(fail_redirect='/login')
     return bottle.static_file('static_file', root='.')
 
-
+@bottle.route('/my_role')
+def show_current_user_role():
+    """Show current user role"""
+    session = bottle.request.environ.get('beaker.session')
+    print "Session from simple_webapp", repr(session)
+    
+    aaa.require(fail_redirect='/login')
+    return aaa.current_user.role
 
 # Admin-only pages
 
