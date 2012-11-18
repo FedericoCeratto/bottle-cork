@@ -14,7 +14,7 @@ testdir = None # Test directory
 aaa = None # global Cork instance
 cookie_name = None # global variable to track cookie status
 
-tmproot = testutils.pick_test_directory()
+tmproot = testutils.pick_temp_directory()
 
 class RoAttrDict(dict):
     """Read-only attribute-accessed dictionary.
