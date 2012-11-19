@@ -512,6 +512,8 @@ def test_validate_registration(mocked):
     # test login
     login = aaa.login('user_foo', 'pwd')
     assert login == True, "Login must succed"
+    # The registration should have been removed
+    assert len(aaa._store.pending_registrations) == 0, repr(aaa._store.pending_registrations)
 
 
 # Patch the mailer _send() method to prevent network interactions
@@ -530,6 +532,45 @@ def test_purge_expired_registration(mocked):
     aaa._purge_expired_registrations(exp_time=0)
     assert len(aaa._store.pending_registrations) == 0, "The registration should " \
         "have been removed"
+
+# Patch the mailer _send() method to prevent network interactions
+@with_setup(setup_mockedadmin, teardown_dir)
+@mock.patch.object(Mailer, '_send')
+def test_prevent_double_registration(mocked):
+    # Create two registration requests, then validate them.
+    # The first should succeed, the second one fail as the account has been created.
+
+    # create first registration
+    old_dir = os.getcwd()
+    os.chdir(testdir)
+    aaa.register('user_foo', 'first_pwd', 'a@a.a')
+    assert len(aaa._store.pending_registrations) == 1, repr(aaa._store.pending_registrations)
+
+    # create second registration
+    aaa.register('user_foo', 'second_pwd', 'b@b.b')
+    assert len(aaa._store.pending_registrations) == 2, repr(aaa._store.pending_registrations)
+    os.chdir(old_dir)
+
+    # get the first registration code, and run validate_registration
+    code = aaa._store.pending_registrations.keys()[0]
+    user_data = aaa._store.pending_registrations[code]
+    aaa.validate_registration(code)
+    assert user_data['username'] in aaa._store.users, "Account should have been added"
+    # test login
+    login = aaa.login('user_foo', 'first_pwd')
+    assert login == True, "Login must succed"
+    assert len(aaa._store.pending_registrations) == 1, repr(aaa._store.pending_registrations)
+
+
+    # get the second registration code, and run validate_registration
+    code = aaa._store.pending_registrations.keys()[0]
+    user_data = aaa._store.pending_registrations[code]
+
+    # The second registration should fail as the user account exists
+    assert_raises(AuthException, aaa.validate_registration, code)
+    # test login
+    login = aaa.login('user_foo', 'second_pwd')
+    assert login == False, "Login must fail"
 
 
 @raises(AAAException)
