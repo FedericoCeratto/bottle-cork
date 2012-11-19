@@ -567,7 +567,7 @@ def test_prevent_double_registration(mocked):
     user_data = aaa._store.pending_registrations[code]
 
     # The second registration should fail as the user account exists
-    assert_raises(AuthException, aaa.validate_registration, code)
+    assert_raises(AAAException, aaa.validate_registration, code)
     # test login
     login = aaa.login('user_foo', 'second_pwd')
     assert login == False, "Login must fail"

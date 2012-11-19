@@ -496,8 +496,11 @@ class Cork(object):
         except KeyError:
             raise AuthException("Invalid registration code.")
 
-        # the user data is moved from pending_registrations to _users
         username = data['username']
+        if username in self._store.users:
+            raise AAAException("User is already existing.")
+
+        # the user data is moved from pending_registrations to _users
         self._store.users[username] = {
             'role': data['role'],
             'hash': data['hash'],
