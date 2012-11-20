@@ -307,7 +307,7 @@ def test_create_and_validate_user():
     assert 'phil' in aaa._store.users
     assert aaa._store.users['phil']['role'] == 'user'
     login = aaa.login('phil', 'hunter123')
-    assert login == True, "Login must succed"
+    assert login == True, "Login must succeed"
     global cookie_name
     assert cookie_name == 'phil'
 
@@ -511,7 +511,7 @@ def test_validate_registration(mocked):
     assert user_data['username'] in aaa._store.users, "Account should have been added"
     # test login
     login = aaa.login('user_foo', 'pwd')
-    assert login == True, "Login must succed"
+    assert login == True, "Login must succeed"
     # The registration should have been removed
     assert len(aaa._store.pending_registrations) == 0, repr(aaa._store.pending_registrations)
 
@@ -545,29 +545,41 @@ def test_prevent_double_registration(mocked):
     os.chdir(testdir)
     aaa.register('user_foo', 'first_pwd', 'a@a.a')
     assert len(aaa._store.pending_registrations) == 1, repr(aaa._store.pending_registrations)
+    first_registration_code = aaa._store.pending_registrations.keys()[0]
 
     # create second registration
     aaa.register('user_foo', 'second_pwd', 'b@b.b')
-    assert len(aaa._store.pending_registrations) == 2, repr(aaa._store.pending_registrations)
     os.chdir(old_dir)
+    assert len(aaa._store.pending_registrations) == 2, repr(aaa._store.pending_registrations)
+    registration_codes = aaa._store.pending_registrations.keys()
+    if first_registration_code == registration_codes[0]:
+        second_registration_code = registration_codes[1]
+    else:
+        second_registration_code = registration_codes[0]
 
-    # get the first registration code, and run validate_registration
-    code = aaa._store.pending_registrations.keys()[0]
-    user_data = aaa._store.pending_registrations[code]
-    aaa.validate_registration(code)
-    assert user_data['username'] in aaa._store.users, "Account should have been added"
-    # test login
+    # Only the 'admin' account exists
+    assert len(aaa._store.users) == 1
+
+    # Run validate_registration with the first registration
+    aaa.validate_registration(first_registration_code)
+    assert 'user_foo' in aaa._store.users, "Account should have been added"
+    assert len(aaa._store.users) == 2
+
+    # After the first registration only one pending registration should be left
+    # The registration having 'a@a.a' email address should be gone
+    assert len(aaa._store.pending_registrations) == 1, repr(aaa._store.pending_registrations)
+    pr_code, pr_data = aaa._store.pending_registrations.items()[0]
+    assert pr_data['email_addr'] == 'b@b.b', "Incorrect registration in the datastore"
+
+    # Logging in using the first login should succeed
     login = aaa.login('user_foo', 'first_pwd')
     assert login == True, "Login must succed"
     assert len(aaa._store.pending_registrations) == 1, repr(aaa._store.pending_registrations)
 
 
-    # get the second registration code, and run validate_registration
-    code = aaa._store.pending_registrations.keys()[0]
-    user_data = aaa._store.pending_registrations[code]
-
+    # Run validate_registration with the second registration code
     # The second registration should fail as the user account exists
-    assert_raises(AAAException, aaa.validate_registration, code)
+    assert_raises(AAAException, aaa.validate_registration, second_registration_code)
     # test login
     login = aaa.login('user_foo', 'second_pwd')
     assert login == False, "Login must fail"
