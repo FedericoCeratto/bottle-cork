@@ -20,7 +20,11 @@ It is designed to stay out of the way and let you focus on what your application
 
 News:
 
-* 2012-11-18: **Version 0.3 is out!**
+* 2012-11-25: **Version 0.4 is out!**
+
+  * Check added to prevent multiple registrations of the same account
+
+* 2012-11-18: Version 0.3
 
   * PBKDF2 hash length check added
   * Multi-platform unit testing
