@@ -461,13 +461,26 @@ def test_smtp_url_parsing_4():
     assert c['port'] == 443
 
 @with_setup(setup_mockedadmin, teardown_dir)
-def test_smtp_url_parsing_1():
-    c = aaa.mailer._parse_smtp_url('')
-    assert c['proto'] == 'smtp'
-    assert c['user'] == None
-    assert c['pass'] == None
-    assert c['fqdn'] == ''
-    assert c['port'] == 25
+def test_smtp_url_parsing_email_as_username():
+    # the username contains an at sign '@'
+    c = aaa.mailer._parse_smtp_url('ssl://us.se@somewhere.net:pass@foo:443/')
+    assert c['proto'] == 'ssl'
+    assert c['user'] == 'us.er@somewhere.net', \
+        "Username is incorrectly parsed as '%s'" % c['user']
+    assert c['pass'] == 'pass'
+    assert c['fqdn'] == 'foo'
+    assert c['port'] == 443
+
+@with_setup(setup_mockedadmin, teardown_dir)
+def test_smtp_url_parsing_email_as_username_2():
+    # the username and the password contains an at sign '@'
+    c = aaa.mailer._parse_smtp_url('ssl://us.se@somewhere.net:pass@word@foo:443/')
+    assert c['proto'] == 'ssl'
+    assert c['user'] == 'us.er@somewhere.net', \
+        "Username is incorrectly parsed as '%s'" % c['user']
+    assert c['pass'] == 'pass@word'
+    assert c['fqdn'] == 'foo'
+    assert c['port'] == 443
 
 # Patch the mailer _send() method to prevent network interactions
 @with_setup(setup_mockedadmin, teardown_dir)
