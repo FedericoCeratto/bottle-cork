@@ -840,7 +840,7 @@ class Mailer(object):
             session.quit()
             log.info('Email sent')
 
-        except Exception, e:
+        except Exception as e:
             log.error("Error sending email: %s" % e, exc_info=True)
 
     def join(self):

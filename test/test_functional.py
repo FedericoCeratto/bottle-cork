@@ -166,30 +166,25 @@ class Test(object):
         assert p.status == REDIR, "Redirect expected"
         assert p.location == 'http://localhost:80/', \
             "Incorrect redirect to %s" % p.location
-        print repr(p)
 
         assert 'beaker.session.id' in self._app.cookies, "Cookie not found"
-
-        print "TO", repr(self._bottle_app.session)
-        print "TO", dir(self._bottle_app)
 
         a = self._app.app
         for n in 'app', 'environ_key', 'options', 'session', 'wrap_app':
             print
-            print n
-            print "REP",  repr(getattr(a,n))
-            print "DIR", dir(getattr(a,n))
+            print(n)
+            print("REP %s" % repr(getattr(a,n)))
+            print("DIR %s" % dir(getattr(a,n)))
 
         import bottle
         session = bottle.request.environ.get('beaker.session')
-        print "Session from func. test", repr(session)
+        print("Session from func. test", repr(session))
 
-        print 'running GET myrole'
+        print('running GET myrole')
         p = self._app.get('/my_role')
-        print 'myrole', repr(p)
+        print('myrole', repr(p))
 
         p = self._app.get('/admin')
-        print 'admin', repr(p)
         assert 'Welcome' in p.body, repr(p)
 
         p = self._app.get('/my_role', status=200)

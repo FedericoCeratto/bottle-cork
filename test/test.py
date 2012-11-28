@@ -51,7 +51,7 @@ def setup_empty_dir():
     testdir = "%s/fl_%s" % (tmproot, tstamp)
     os.mkdir(testdir)
     os.mkdir(testdir + '/view')
-    print "setup done in %s" % testdir
+    print("setup done in %s" % testdir)
 
 def setup_dir():
     """Setup test directory with valid JSON files"""
@@ -70,7 +70,7 @@ def setup_dir():
         f.write("""Username:{{username}} Email:{{email_addr}} Code:{{registration_code}}""")
     with open("%s/views/password_reset_email.tpl" % testdir, 'w') as f:
         f.write("""Username:{{username}} Email:{{email_addr}} Code:{{reset_code}}""")
-    print "setup done in %s" % testdir
+    print("setup done in %s" % testdir)
 
 def setup_mockedadmin():
     """Setup test directory and a MockedAdminCork instance"""
@@ -374,7 +374,6 @@ def test_update_email():
 @raises(AAAException)
 @with_setup(setup_mocked_unauthenticated, teardown_dir)
 def test_get_current_user_unauth():
-    print repr(aaa._beaker_session)
     aaa.current_user['username']
 
 @raises(AuthException)
