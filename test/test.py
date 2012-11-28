@@ -461,9 +461,20 @@ def test_smtp_url_parsing_4():
     assert c['port'] == 443
 
 @with_setup(setup_mockedadmin, teardown_dir)
+def test_smtp_url_parsing_email_as_username_no_password():
+    # the username contains an at sign '@'
+    c = aaa.mailer._parse_smtp_url('ssl://us.er@somewhere.net@foo:443/')
+    assert c['proto'] == 'ssl'
+    assert c['user'] == 'us.er@somewhere.net', \
+        "Username is incorrectly parsed as '%s'" % c['user']
+    assert c['pass'] == None
+    assert c['fqdn'] == 'foo'
+    assert c['port'] == 443
+
+@with_setup(setup_mockedadmin, teardown_dir)
 def test_smtp_url_parsing_email_as_username():
     # the username contains an at sign '@'
-    c = aaa.mailer._parse_smtp_url('ssl://us.se@somewhere.net:pass@foo:443/')
+    c = aaa.mailer._parse_smtp_url('ssl://us.er@somewhere.net:pass@foo:443/')
     assert c['proto'] == 'ssl'
     assert c['user'] == 'us.er@somewhere.net', \
         "Username is incorrectly parsed as '%s'" % c['user']
@@ -472,13 +483,26 @@ def test_smtp_url_parsing_email_as_username():
     assert c['port'] == 443
 
 @with_setup(setup_mockedadmin, teardown_dir)
+def test_smtp_url_parsing_at_sign_in_password():
+    # the password contains at signs '@'
+    c = aaa.mailer._parse_smtp_url('ssl://username:pass@w@rd@foo:443/')
+    assert c['proto'] == 'ssl'
+    assert c['user'] == 'username', \
+        "Username is incorrectly parsed as '%s'" % c['user']
+    assert c['pass'] == 'pass@w@rd', \
+        "Password is incorrectly parsed as '%s'" % c['pass']
+    assert c['fqdn'] == 'foo'
+    assert c['port'] == 443
+
+@with_setup(setup_mockedadmin, teardown_dir)
 def test_smtp_url_parsing_email_as_username_2():
-    # the username and the password contains an at sign '@'
-    c = aaa.mailer._parse_smtp_url('ssl://us.se@somewhere.net:pass@word@foo:443/')
+    # both the username and the password contains an at sign '@'
+    c = aaa.mailer._parse_smtp_url('ssl://us.er@somewhere.net:pass@word@foo:443/')
     assert c['proto'] == 'ssl'
     assert c['user'] == 'us.er@somewhere.net', \
         "Username is incorrectly parsed as '%s'" % c['user']
-    assert c['pass'] == 'pass@word'
+    assert c['pass'] == 'pass@word', \
+        "Password is incorrectly parsed as '%s'" % c['pass']
     assert c['fqdn'] == 'foo'
     assert c['port'] == 443
 

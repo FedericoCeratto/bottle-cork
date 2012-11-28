@@ -753,8 +753,8 @@ class Mailer(object):
                 ://
             )?
             (                                   # Optional user:pass@
-                (?P<user>.*?)
-                (: (?P<pass>.*?) )? @           # Optional :pass
+                (?P<user>[^:]*)                 # Match every char except ':'
+                (: (?P<pass>.*) )? @           # Optional :pass
             )?
             (?P<fqdn>.*?)                       # Required FQDN
             (                                   # Optional :port
