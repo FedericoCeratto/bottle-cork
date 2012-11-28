@@ -36,7 +36,7 @@ from datetime import datetime, timedelta
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 from logging import getLogger
-from smtplib import SMTP
+from smtplib import SMTP, SMTP_SSL
 from threading import Thread
 from time import time
 import bottle
@@ -123,7 +123,7 @@ class JsonBackend(object):
             with open(fname) as f:
                 json_data = f.read()
         except Exception as e:
-            raise AAAException("Unable read json file %s: %s" % (fname, e))
+            raise AAAException("Unable to read json file %s: %s" % (fname, e))
 
         try:
             json_obj = json.loads(json_data)
@@ -814,12 +814,18 @@ class Mailer(object):
         :param msg: email text
         :type msg: str.
         """
-        try:
-            session = SMTP(self._conf['fqdn'])
+        proto = self._conf['proto']
+        assert proto in ('smtp', 'starttls', 'ssl'), \
+            "Incorrect protocol: %s" % proto
 
-            if self._conf['proto'] == 'ssl':
-                raise NotImplementedError
-            elif self._conf['proto'] == 'starttls':
+        try:
+            if proto == 'ssl':
+                log.debug("Setting up SSL")
+                session = SMTP_SSL(self._conf['fqdn'])
+            else:
+                session = SMTP(self._conf['fqdn'])
+
+            if proto == 'starttls':
                 log.debug('Sending EHLO and STARTTLS')
                 session.ehlo()
                 session.starttls()
@@ -829,10 +835,11 @@ class Mailer(object):
                 log.debug('Performing login')
                 session.login(self._conf['user'], self._conf['pass'])
 
-            log.debug('sending')
+            log.debug('Sending')
             session.sendmail(self.sender, email_addr, msg)
             session.quit()
             log.info('Email sent')
+
         except Exception, e:
             log.error("Error sending email: %s" % e, exc_info=True)
 
