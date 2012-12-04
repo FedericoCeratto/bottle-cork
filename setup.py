@@ -1,7 +1,8 @@
 #!/usr/bin/env python
 
 from setuptools import setup
-from cork import __version__
+
+__version__ = '0.5'
 
 CLASSIFIERS = map(str.strip,
 """Environment :: Console
@@ -26,8 +27,8 @@ setup(
         "for the Bottle web framework.",
     classifiers=CLASSIFIERS,
     install_requires = [
-        'bottle',
-        'beaker',
+        'Bottle',
+        'Beaker',
         'setuptools',
     ],
     packages = ['cork'],

@@ -20,7 +20,8 @@ import time
 # documentation root, use os.path.abspath to make it absolute, like shown here.
 sys.path.insert(0, os.path.abspath('.'))
 sys.path.insert(0, os.path.abspath('../'))
-from cork import __version__
+
+__version__ = '0.5'
 
 # -- General configuration -----------------------------------------------------
 
