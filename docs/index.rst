@@ -20,7 +20,12 @@ It is designed to stay out of the way and let you focus on what your application
 
 News:
 
-* 2012-11-25: **Version 0.4 is out!**
+* 2012-12-04: **Version 0.5 is out!**
+
+  * SMTP SSL support added, smtp_url parsing improved
+  * requirements.txt added.
+
+* 2012-11-25: Version 0.4
 
   * Check added to prevent multiple registrations of the same account
 
