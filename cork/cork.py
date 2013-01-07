@@ -714,7 +714,7 @@ class User(object):
             self._cork._store.users[username]['hash'] = self._cork._hash(
                 username, pwd)
         if email_addr is not None:
-            self._cork._store.users[username]['email'] = email_addr
+            self._cork._store.users[username]['email_addr'] = email_addr
         self._cork._store._save_users()
 
     def delete(self):

@@ -369,7 +369,7 @@ def test_update_pwd():
 @with_setup(setup_mockedadmin, teardown_dir)
 def test_update_email():
     aaa.current_user.update(email_addr='foo')
-    assert aaa._store.users['admin']['email'] == 'foo'
+    assert aaa._store.users['admin']['email_addr'] == 'foo'
 
 @raises(AAAException)
 @with_setup(setup_mocked_unauthenticated, teardown_dir)
