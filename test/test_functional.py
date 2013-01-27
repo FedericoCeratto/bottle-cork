@@ -51,7 +51,7 @@ class Test(object):
         cork._store.roles['admin'] = 100
         cork._store.roles['editor'] = 60
         cork._store.roles['user'] = 50
-        cork._store._savejson('roles', cork._store.roles)
+        cork._store.save_roles()
 
         tstamp = str(datetime.utcnow())
         username = password = 'admin'
@@ -70,7 +70,7 @@ class Test(object):
             'desc': username + ' test user',
             'creation_date': tstamp
         }
-        cork._store._save_users()
+        cork._store.save_users()
 
     def remove_temp_dir(self):
         p = os.path.join(self._tmproot, 'cork_functional_test_wd')

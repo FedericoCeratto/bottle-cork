@@ -72,9 +72,9 @@ class JsonBackend(object):
 
         :param users_fname: users file name (without .json)
         :type users_fname: str.
-        :param roles_fname: roless file name (without .json)
+        :param roles_fname: roles file name (without .json)
         :type roles_fname: str.
-        :param pending_reg_fnames: pending registrations file name (without .json)
+        :param pending_reg_fname: pending registrations file name (without .json)
         :type pending_reg_fname: str.
         :param initialize: create empty JSON files (defaults to False)
         :type initialize: bool.
@@ -147,9 +147,17 @@ class JsonBackend(object):
             raise AAAException("""Unable to save JSON file %s: %s
                 """ % (fname, e))
 
-    def _save_users(self):
+    def save_users(self):
         """Save users in a JSON file"""
-        self._savejson('users', self.users)
+        self._savejson(self._users_fname, self.users)
+
+    def save_roles(self):
+        """Save roles in a JSON file"""
+        self._savejson(self._roles_fname, self.roles)
+
+    def save_pending_registrations(self):
+        """Save pending registrations in a JSON file"""
+        self._savejson(self._pending_reg_fname, self.pending_registrations)
 
 
 class Cork(object):
@@ -170,8 +178,8 @@ class Cork(object):
         if smtp_server:
             smtp_url = smtp_server
         self.mailer = Mailer(email_sender, smtp_url)
-        self._store = JsonBackend(directory, users_fname='users',
-            roles_fname='roles', pending_reg_fname='register',
+        self._store = JsonBackend(directory, users_fname=users_fname,
+            roles_fname=roles_fname, pending_reg_fname=pending_reg_fname,
             initialize=initialize)
         self.password_reset_timeout = 3600 * 24
         self.session_domain = session_domain
@@ -316,7 +324,7 @@ class Cork(object):
         except ValueError:
             raise AAAException("The level must be numeric.")
         self._store.roles[role] = level
-        self._store._savejson('roles', self._store.roles)
+        self._store.save_roles()
 
     def delete_role(self, role):
         """Deleta a role.
@@ -330,7 +338,7 @@ class Cork(object):
         if role not in self._store.roles:
             raise AAAException("Nonexistent role.")
         self._store.roles.pop(role)
-        self._store._savejson(self._store._roles_fname, self._store.roles)
+        self._store.save_roles()
 
     def list_roles(self):
         """List roles.
@@ -372,7 +380,7 @@ class Cork(object):
             'desc': description,
             'creation_date': tstamp
         }
-        self._store._save_users()
+        self._store.save_users()
 
     def delete_user(self, username):
         """Delete a user account.
@@ -480,8 +488,7 @@ class Cork(object):
             'desc': description,
             'creation_date': creation_date,
         }
-        self._store._savejson(self._store._pending_reg_fname,
-            self._store.pending_registrations)
+        self._store.save_pending_registrations()
 
 
     def validate_registration(self, registration_code):
@@ -508,7 +515,7 @@ class Cork(object):
             'desc': data['desc'],
             'creation_date': data['creation_date']
         }
-        self._store._save_users()
+        self._store.save_users()
 
     def send_password_reset_email(self, username=None, email_addr=None,
         subject="Password reset confirmation",
@@ -715,7 +722,7 @@ class User(object):
                 username, pwd)
         if email_addr is not None:
             self._cork._store.users[username]['email_addr'] = email_addr
-        self._cork._store._save_users()
+        self._cork._store.save_users()
 
     def delete(self):
         """Delete user account
@@ -726,7 +733,7 @@ class User(object):
             self._cork._store.users.pop(self.username)
         except KeyError:
             raise AAAException("Nonexistent user.")
-        self._cork._store._save_users()
+        self._cork._store.save_users()
 
 
 
