@@ -20,14 +20,20 @@ It is designed to stay out of the way and let you focus on what your application
 
 News:
 
-* 2012-12-04: **Version 0.5 is out!**
+* 2013-01-27: Version 0.6
 
-  * SMTP SSL support added, smtp_url parsing improved
+  * More flexible file naming in JsonBackend.
+  * Fixed function to update user's email address.
+  * More informative log message for missing Pycrypto.
+
+* 2012-12-04: Version 0.5
+
+  * SMTP SSL support added, smtp_url parsing improved.
   * requirements.txt added.
 
 * 2012-11-25: Version 0.4
 
-  * Check added to prevent multiple registrations of the same account
+  * Check added to prevent multiple registrations of the same account.
 
 * 2012-11-18: Version 0.3
 
