@@ -421,6 +421,23 @@ class Cork(object):
             return User(username, self, session=session)
         raise AuthException("Unknown user: %s" % username)
 
+    @property
+    def user_is_anonymous(self):
+        """Check if the current user is anonymous.
+
+        :returns: True if the user is anonymous, False otherwise
+        :raises: AuthException if the session username is unknown
+        """
+        try:
+            username = self._beaker_session['username']
+        except KeyError:
+            return True
+
+        if username not in self._store.users:
+            raise AuthException("Unknown user: %s" % username)
+
+        return False
+
     def user(self, username):
         """Existing user
 

@@ -346,6 +346,9 @@ def test_successful_require_role():
     aaa.require(username='admin', role='admin', fixed_role=True)
     aaa.require(username='admin', role='user')
 
+@with_setup(setup_mockedadmin, teardown_dir)
+def test_authenticated_is_not__anonymous():
+    assert not aaa.user_is_anonymous
 
 @with_setup(setup_mockedadmin, teardown_dir)
 def test_update_nonexistent_role():
@@ -375,6 +378,10 @@ def test_update_email():
 @with_setup(setup_mocked_unauthenticated, teardown_dir)
 def test_get_current_user_unauth():
     aaa.current_user['username']
+
+@with_setup(setup_mocked_unauthenticated, teardown_dir)
+def test_unauth_is_anonymous():
+    assert aaa.user_is_anonymous
 
 @raises(AuthException)
 @with_setup(setup_mockedadmin, teardown_dir)
