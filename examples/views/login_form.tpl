@@ -6,7 +6,7 @@
   <div class="box">
       <h2>Login</h2>
       <p>Please insert your credentials:</p>
-      <form action="login" method="post">
+      <form action="login" method="post" name="login">
           <input type="text" name="username" />
           <input type="password" name="password" />
 
@@ -19,7 +19,7 @@
   <div class="box">
       <h2>Signup</h2>
       <p>Please insert your credentials:</p>
-      <form action="register" method="post">
+      <form action="register" method="post" name="signup">
           <input type="text" name="username" value="username"/>
           <input type="password" name="password" />
           <input type="text" name="email_address" value="email address"/>
@@ -33,7 +33,7 @@
   <div class="box">
       <h2>Password reset</h2>
       <p>Please insert your credentials:</p>
-      <form action="reset_password" method="post">
+      <form action="reset_password" method="post" name="password_reset">
           <input type="text" name="username" value="username"/>
           <input type="text" name="email_address" value="email address"/>
 
