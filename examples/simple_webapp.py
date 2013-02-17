@@ -44,6 +44,13 @@ def login():
     password = post_get('password')
     aaa.login(username, password, success_redirect='/', fail_redirect='/login')
 
+@bottle.route('/user_is_anonymous')
+def user_is_anonymous():
+    if aaa.user_is_anonymous:
+        return 'True'
+
+    return 'False'
+
 @bottle.route('/logout')
 def logout():
     aaa.logout(success_redirect='/login')
