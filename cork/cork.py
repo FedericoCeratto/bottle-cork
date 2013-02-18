@@ -225,10 +225,10 @@ class Cork(object):
         :type fail_redirect: str.
         """
         try:
-            session = bottle.request.environ.get('beaker.session')
+            session = self._beaker_session
             session.delete()
             bottle.redirect(success_redirect)
-        except:
+        except Exception, e:
             bottle.redirect(fail_redirect)
 
     def require(self, username=None, role=None, fixed_role=False,
@@ -368,6 +368,7 @@ class Cork(object):
         assert username, "Username must be provided."
         if self.current_user.level < 100:
             raise AuthException("The current user is not authorized to ")
+
         if username in self._store.users:
             raise AAAException("User is already existing.")
         if role not in self._store.roles:
@@ -623,7 +624,7 @@ class Cork(object):
 
     def _setup_cookie(self, username):
         """Setup cookie for a user that just logged in"""
-        session = bottle.request.environ.get('beaker.session')
+        session = self._beaker_session
         session['username'] = username
         if self.session_domain is not None:
             session.domain = self.session_domain
