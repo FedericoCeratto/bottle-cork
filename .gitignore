@@ -3,3 +3,5 @@
 *.priv
 .coverage
 build
+
+cover
