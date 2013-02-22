@@ -17,24 +17,22 @@ Topic :: Software Development :: Libraries :: Python Modules
 
 setup(
     name="bottle-cork",
-    version = __version__,
-    author = "Federico Ceratto",
-    author_email = "federico.ceratto@gmail.com",
-    description = "Authentication/Authorization library for Bottle",
-    license = "LGPLv3+",
-    url = "http://cork.firelet.net/",
-    long_description = "Cork is a simple Authentication/Authorization library" \
+    version=__version__,
+    author="Federico Ceratto",
+    author_email="federico.ceratto@gmail.com",
+    description="Authentication/Authorization library for Bottle",
+    license="LGPLv3+",
+    url="http://cork.firelet.net/",
+    long_description="Cork is a simple Authentication/Authorization library" \
         "for the Bottle web framework.",
     classifiers=CLASSIFIERS,
-    install_requires = [
+    install_requires=[
         'Bottle',
         'Beaker',
         'setuptools',
     ],
-    packages = ['cork'],
-    platforms = ['Linux'],
+    packages=['cork'],
+    platforms=['Linux'],
     test_suite='nose.collector',
     tests_require=['nose'],
 )
-
-

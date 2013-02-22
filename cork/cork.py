@@ -507,7 +507,6 @@ class Cork(object):
         }
         self._store.save_pending_registrations()
 
-
     def validate_registration(self, registration_code):
         """Validate pending account registration, create a new account if
         successful.
@@ -565,7 +564,7 @@ class Cork(object):
                     break
                 raise AAAException("Email address not found.")
 
-        else: # username is provided
+        else:  # username is provided
             if username not in self._store.users:
                 raise AAAException("Nonexistent user.")
             if email_addr is None:
@@ -657,8 +656,8 @@ class Cork(object):
         """
         decoded = b64decode(salted_hash)
         hash_type = decoded[0]
-        if hash_type != 'p': # 'p' for PBKDF2
-            return False # Only PBKDF2 is supported
+        if hash_type != 'p':  # 'p' for PBKDF2
+            return False  # Only PBKDF2 is supported
 
         salt = decoded[1:33]
         return cls._hash(username, pwd, salt) == salted_hash
@@ -691,13 +690,14 @@ class Cork(object):
         reset_code = ':'.join((username, email_addr, t, h))
         return b64encode(reset_code)
 
+
 class User(object):
 
     def __init__(self, username, cork_obj, session=None):
         """Represent an authenticated user, exposing useful attributes:
-        username, role, level, session_creation_time, session_accessed_time,
-        session_id. The session-related attributes are available for the
-        current user only.
+        username, role, level, description, email_addr, session_creation_time,
+        session_accessed_time, session_id. The session-related attributes are
+        available for the current user only.
 
         :param username: username
         :type username: str.
@@ -707,6 +707,8 @@ class User(object):
         assert username in self._cork._store.users, "Unknown user"
         self.username = username
         self.role = self._cork._store.users[username]['role']
+        self.description = self._cork._store.users[username]['desc']
+        self.email_addr = self._cork._store.users[username]['email_addr']
         self.level = self._cork._store.roles[self.role]
 
         if session is not None:
@@ -752,7 +754,6 @@ class User(object):
         except KeyError:
             raise AAAException("Nonexistent user.")
         self._cork._store.save_users()
-
 
 
 class Mailer(object):
@@ -804,8 +805,6 @@ class Mailer(object):
 
         return d
 
-
-
     def send_email(self, email_addr, subject, email_text):
         """Send an email
 
@@ -831,7 +830,7 @@ class Mailer(object):
         thread.start()
         self._threads.append(thread)
 
-    def _send(self, email_addr, msg): # pragma: no cover
+    def _send(self, email_addr, msg):  # pragma: no cover
         """Deliver an email using SMTP
 
         :param email_addr: recipient
@@ -878,4 +877,3 @@ class Mailer(object):
     def __del__(self):
         """Class destructor: wait for threads to terminate within a timeout"""
         self.join()
-
