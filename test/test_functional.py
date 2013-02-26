@@ -8,7 +8,6 @@
 #
 
 from nose import SkipTest
-from nose.tools import assert_raises, raises
 from time import time
 from datetime import datetime
 from webtest import TestApp
@@ -16,7 +15,6 @@ import glob
 import json
 import os
 import shutil
-import sys
 
 import testutils
 from cork import Cork
@@ -24,6 +22,7 @@ from cork import Cork
 REDIR = '302 Found'
 
 #FIXME: fix skipped tests
+
 
 class Test(object):
     def __init__(self):
@@ -38,10 +37,11 @@ class Test(object):
         """Populate a directory with valid configuration files, to be run just once
         The files are not modified by each test
         """
-        self._tmpdir = os.path.join(self,_tmproot, "cork_functional_test_source")
+        self._tmpdir = os.path.join(self._tmproot, "cork_functional_test_source")
 
         # only do this once, as advertised
-        if os.path.exists(self._tmpdir): return
+        if os.path.exists(self._tmpdir):
+            return
 
         os.mkdir(self._tmpdir)
         os.mkdir(self._tmpdir + "/example_conf")
@@ -138,7 +138,6 @@ class Test(object):
 
         print("Test directory set up")
 
-
     def create_app_instance(self):
         """create TestApp instance"""
         assert self._app is None
@@ -154,7 +153,6 @@ class Test(object):
         dest = "/%s" % dest
         assert dest == redir_page, "%s redirects to %s instead of %s" % \
             (page, dest, redir_page)
-
 
     def login_as_admin(self):
         """perform log in"""
@@ -173,8 +171,8 @@ class Test(object):
         for n in 'app', 'environ_key', 'options', 'session', 'wrap_app':
             print
             print(n)
-            print("REP %s" % repr(getattr(a,n)))
-            print("DIR %s" % dir(getattr(a,n)))
+            print("REP %s" % repr(getattr(a, n)))
+            print("DIR %s" % dir(getattr(a, n)))
 
         import bottle
         session = bottle.request.environ.get('beaker.session')
@@ -222,13 +220,11 @@ class Test(object):
         r = self._app.get('/admin')
         assert r.status == '200 OK', repr(r)
 
-
     def test_login_existing_user_none_password(self):
         p = self._app.post('/login', {'username': 'admin', 'password': None})
         assert p.status == REDIR, "Redirect expected"
         assert p.location == 'http://localhost:80/login', \
             "Incorrect redirect to %s" % p.location
-
 
     def test_login_nonexistent_user_none_password(self):
         p = self._app.post('/login', {'username': 'IAmNotHere', 'password': None})
@@ -236,13 +232,11 @@ class Test(object):
         assert p.location == 'http://localhost:80/login', \
             "Incorrect redirect to %s" % p.location
 
-
     def test_login_existing_user_empty_password(self):
         p = self._app.post('/login', {'username': 'admin', 'password': ''})
         assert p.status == REDIR, "Redirect expected"
         assert p.location == 'http://localhost:80/login', \
             "Incorrect redirect to %s" % p.location
-
 
     def test_login_nonexistent_user_empty_password(self):
         p = self._app.post('/login', {'username': 'IAmNotHere', 'password': ''})
@@ -250,13 +244,11 @@ class Test(object):
         assert p.location == 'http://localhost:80/login', \
             "Incorrect redirect to %s" % p.location
 
-
     def test_login_existing_user_wrong_password(self):
         p = self._app.post('/login', {'username': 'admin', 'password': 'BogusPassword'})
         assert p.status == REDIR, "Redirect expected"
         assert p.location == 'http://localhost:80/login', \
             "Incorrect redirect to %s" % p.location
-
 
     @SkipTest
     def test_functional_login_logout(self):
@@ -284,7 +276,6 @@ class Test(object):
 
         # fetch the same page, unsuccessfully
         assert self._app.get('/admin').status == REDIR
-
 
     @SkipTest
     def test_functional_user_creation_login_deletion(self):
@@ -329,8 +320,6 @@ class Test(object):
             "User login should fail"
         assert self._app.cookies == {}, "The cookie should not be set"
 
-
-    #
     #def test_functional_user_registration(self):
     #    assert self._app.cookies == {}, "The cookie should be not set"
     #
@@ -343,7 +332,6 @@ class Test(object):
     #        'email_address': 'test@localhost.local'
     #    })
 
-    #
     def test_functionalxxx(self):
         assert self._app is not None
 
@@ -354,5 +342,3 @@ class Test(object):
         # change the cookie expiration in order to expire it
         self._app.app.options['timeout'] = 0
         assert self._app.get('/admin').status == REDIR, "The cookie should have expired"
-
-
