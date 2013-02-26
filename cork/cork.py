@@ -707,9 +707,10 @@ class User(object):
         self._cork = cork_obj
         assert username in self._cork._store.users, "Unknown user"
         self.username = username
-        self.role = self._cork._store.users[username]['role']
-        self.description = self._cork._store.users[username]['desc']
-        self.email_addr = self._cork._store.users[username]['email_addr']
+        user_data = self._cork._store.users[username]
+        self.role = user_data['role']
+        self.description = user_data['desc']
+        self.email_addr = user_data['email_addr']
         self.level = self._cork._store.roles[self.role]
 
         if session is not None:
