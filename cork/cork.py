@@ -186,6 +186,9 @@ class Cork(object):
                 roles_fname='roles', pending_reg_fname='register',
                 initialize=initialize)
 
+        else:
+            self._store = backend
+
     def login(self, username, password, success_redirect=None,
         fail_redirect=None):
         """Check login credentials for an existing user.
@@ -737,15 +740,20 @@ class User(object):
         username = self.username
         if username not in self._cork._store.users:
             raise AAAException("User does not exist.")
+
         if role is not None:
             if role not in self._cork._store.roles:
                 raise AAAException("Nonexistent role.")
+
             self._cork._store.users[username]['role'] = role
+
         if pwd is not None:
             self._cork._store.users[username]['hash'] = self._cork._hash(
                 username, pwd)
+
         if email_addr is not None:
             self._cork._store.users[username]['email_addr'] = email_addr
+
         self._cork._store.save_users()
 
     def delete(self):
