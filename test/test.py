@@ -10,7 +10,7 @@ import mock
 import os
 import shutil
 
-from cork import Cork, AAAException, AuthException
+from cork import Cork, JsonBackend, AAAException, AuthException
 from cork import Mailer
 import testutils
 
@@ -115,7 +115,8 @@ def test_init():
 
 @with_setup(setup_dir, teardown_dir)
 def test_initialize_storage():
-    Cork(testdir, initialize=True)
+    jb = JsonBackend(testdir, initialize=True)
+    Cork(backend=jb)
     with open("%s/users.json" % testdir) as f:
         assert f.readlines() == ['{}']
     with open("%s/roles.json" % testdir) as f:

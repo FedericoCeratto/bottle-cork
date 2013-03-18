@@ -162,10 +162,9 @@ class JsonBackend(object):
 
 class Cork(object):
 
-    def __init__(self, directory, email_sender=None,
-        users_fname='users', roles_fname='roles', pending_reg_fname='register',
-        initialize=False, session_domain=None, smtp_url='localhost',
-        smtp_server=None):
+    def __init__(self, directory=None, backend=None, email_sender=None,
+        initialize=False, session_domain=None, smtp_server=None,
+        smtp_url='localhost'):
         """Auth/Authorization/Accounting class
 
         :param directory: configuration directory
@@ -178,11 +177,14 @@ class Cork(object):
         if smtp_server:
             smtp_url = smtp_server
         self.mailer = Mailer(email_sender, smtp_url)
-        self._store = JsonBackend(directory, users_fname=users_fname,
-            roles_fname=roles_fname, pending_reg_fname=pending_reg_fname,
-            initialize=initialize)
         self.password_reset_timeout = 3600 * 24
         self.session_domain = session_domain
+
+        # Setup JsonBackend by default for backward compatibility.
+        if backend is None:
+            self._store = JsonBackend(directory, users_fname='users',
+                roles_fname='roles', pending_reg_fname='register',
+                initialize=initialize)
 
     def login(self, username, password, success_redirect=None,
         fail_redirect=None):
