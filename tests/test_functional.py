@@ -127,11 +127,11 @@ class Test(object):
 
         # copy the needed files
         shutil.copytree(
-            os.path.join(self._starting_dir, 'test/example_conf'),
+            os.path.join(self._starting_dir, 'tests/example_conf'),
             os.path.join(self._tmpdir, 'example_conf')
         )
         shutil.copytree(
-            os.path.join(self._starting_dir, 'test/views'),
+            os.path.join(self._starting_dir, 'tests/views'),
             os.path.join(self._tmpdir, 'views')
         )
 
