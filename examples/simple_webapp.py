@@ -1,5 +1,7 @@
 #!/usr/bin/env python
 #
+# Copyright (C) 2013 Federico Ceratto and others, see AUTHORS file.
+# Released under GPLv3+ license, see LICENSE.txt
 #
 # Cork example web application
 #
