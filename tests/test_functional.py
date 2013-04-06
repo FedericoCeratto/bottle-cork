@@ -2,10 +2,9 @@
 # Copyright (C) 2013 Federico Ceratto and others, see AUTHORS file.
 # Released under GPLv3+ license, see LICENSE.txt
 #
-# Functional test
+# Functional test using Json backend
 #
 # Requires WebTest http://webtest.pythonpaste.org/
-# sudo aptitude install python-webtest
 #
 # Run as: nosetests functional_test.py
 #
