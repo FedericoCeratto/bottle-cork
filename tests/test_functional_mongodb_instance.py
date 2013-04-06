@@ -28,6 +28,12 @@ class RoAttrDict(dict):
     def __getattr__(self, name):
         return self[name]
 
+    def delete(self):
+        """Used during logout to delete the current session"""
+        global cookie_name
+        cookie_name = None
+
+
 
 class MockedAdminCork(Cork):
     """Mocked module where the current user is always 'admin'"""
@@ -280,6 +286,24 @@ def test_create_and_validate_user():
     assert login == True, "Login must succeed"
     global cookie_name
     assert cookie_name == 'phil'
+
+@with_setup(setup_mockedadmin, purge_test_db)
+def test_create_user_login_logout():
+    global cookie_name
+    assert 'phil' not in aaa._store.users
+    aaa.create_user('phil', 'user', 'hunter123')
+    assert 'phil' in aaa._store.users
+    login = aaa.login('phil', 'hunter123')
+    assert login == True, "Login must succeed"
+    assert cookie_name == 'phil'
+    try:
+        aaa.logout(fail_redirect='/failed_logout')
+    except Exception, e:
+        assert e.status_code == 302
+        redir_location = e._headers['Location'][0]
+        assert redir_location == 'http://127.0.0.1/login', redir_location
+
+    assert cookie_name == None
 
 @with_setup(setup_mockedadmin, purge_test_db)
 def test_modify_user_using_overwrite():
