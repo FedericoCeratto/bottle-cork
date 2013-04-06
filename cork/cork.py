@@ -232,9 +232,11 @@ class Cork(object):
         try:
             session = self._beaker_session
             session.delete()
-            bottle.redirect(success_redirect)
         except Exception, e:
+            log.debug("Exception %s while logging out." % repr(e))
             bottle.redirect(fail_redirect)
+
+        bottle.redirect(success_redirect)
 
     def require(self, username=None, role=None, fixed_role=False,
         fail_redirect=None):
