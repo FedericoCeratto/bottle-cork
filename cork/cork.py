@@ -547,7 +547,7 @@ class Cork(object):
         """Email the user with a link to reset his/her password
         If only one parameter is passed, fetch the other from the users
         database. If both are passed they will be matched against the users
-        database as a security check
+        database as a security check.
 
         :param username: username
         :type username: str.
