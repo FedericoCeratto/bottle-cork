@@ -28,6 +28,12 @@ class RoAttrDict(dict):
     def __getattr__(self, name):
         return self[name]
 
+    def delete(self):
+        """Used during logout to delete the current session"""
+        global cookie_name
+        cookie_name = None
+
+
 
 class MockedAdminCork(Cork):
     """Mocked module where the current user is always 'admin'"""
@@ -152,6 +158,10 @@ def test_unauth_create_role():
 def test_create_existing_role():
     assert_raises(AAAException, aaa.create_role, 'user', 33)
 
+@raises(KeyError)
+@with_setup(setup_mockedadmin, purge_test_db)
+def test_access_nonexisting_role():
+    aaa._store.roles['NotThere']
 
 @raises(AAAException)
 @with_setup(setup_mockedadmin, purge_test_db)
@@ -246,6 +256,17 @@ def test_list_users():
     users = list(aaa.list_users())
     assert len(users) == 1, "Incorrect. Users are: %s" % repr(aaa._store.users)
 
+@with_setup(setup_mockedadmin, purge_test_db)
+def test_iteritems_on_users():
+    for k, v in aaa._store.users.iteritems():
+        assert isinstance(k, str)
+        assert isinstance(v, dict)
+        dkeys = ('hash', 'email_addr', 'role', 'creation_date', 'desc')
+        for dk in dkeys:
+            assert dk in v, "Missing key '%s' in %s" % (dk, repr(v))
+
+        assert len(v) == len(dkeys)
+
 
 @with_setup(setup_mockedadmin, purge_test_db)
 def test_failing_login():
@@ -283,6 +304,24 @@ def test_create_and_validate_user():
     assert login == True, "Login must succeed"
     global cookie_name
     assert cookie_name == 'phil'
+
+@with_setup(setup_mockedadmin, purge_test_db)
+def test_create_user_login_logout():
+    global cookie_name
+    assert 'phil' not in aaa._store.users
+    aaa.create_user('phil', 'user', 'hunter123')
+    assert 'phil' in aaa._store.users
+    login = aaa.login('phil', 'hunter123')
+    assert login == True, "Login must succeed"
+    assert cookie_name == 'phil'
+    try:
+        aaa.logout(fail_redirect='/failed_logout')
+    except Exception, e:
+        assert e.status_code == 302
+        redir_location = e._headers['Location'][0]
+        assert redir_location == 'http://127.0.0.1/login', redir_location
+
+    assert cookie_name == None
 
 @with_setup(setup_mockedadmin, purge_test_db)
 def test_modify_user_using_overwrite():
@@ -446,12 +485,79 @@ def test_register_role_too_high():
     assert_raises(AAAException, aaa.register, 'foo', 'pwd', 'a@a.a', role='admin')
 
 
+@with_setup(setup_mockedadmin, purge_test_db)
+def test_register_valid():
+    aaa.mailer.send_email = mock.Mock()
+    aaa.register('foo', 'pwd', 'email@email.org', role='user',
+        email_template='examples/views/registration_email.tpl'
+    )
+    assert aaa.mailer.send_email.called
+    r = aaa._store.pending_registrations
+    assert len(r) == 1
+    reg_code = list(r)[0]
+    assert r[reg_code]['username'] == 'foo'
+    assert r[reg_code]['email_addr'] == 'email@email.org'
+    assert r[reg_code]['role'] == 'user'
 
 
 @with_setup(setup_mockedadmin, purge_test_db)
 def test_validate_registration_no_code():
     assert_raises(AAAException, aaa.validate_registration, 'not_a_valid_code')
 
+@with_setup(setup_mockedadmin, purge_test_db)
+def test_validate_registration():
+    aaa.mailer.send_email = mock.Mock()
+    aaa.register('foo', 'pwd', 'email@email.org', role='user',
+        email_template='examples/views/registration_email.tpl'
+    )
+    r = aaa._store.pending_registrations
+    reg_code = list(r)[0]
+
+    assert len(aaa._store.users) == 1, "Only the admin user should be present"
+    aaa.validate_registration(reg_code)
+    assert len(aaa._store.users) == 2, "The new user should be present"
+    assert len(aaa._store.pending_registrations) == 0, \
+        "The registration entry should be removed"
+
+
+
+@raises(AAAException)
+@with_setup(setup_mockedadmin, purge_test_db)
+def test_send_password_reset_email_no_data():
+    aaa.send_password_reset_email()
+
+@raises(AAAException)
+@with_setup(setup_mockedadmin, purge_test_db)
+def test_send_password_reset_email_incorrect_data():
+    aaa.send_password_reset_email(username='NotThere', email_addr='NoEmail')
+
+@raises(AAAException)
+@with_setup(setup_mockedadmin, purge_test_db)
+def test_send_password_reset_email_incorrect_data2():
+    # The username is valid but the email address is not matching
+    aaa.send_password_reset_email(username='admin', email_addr='NoEmail')
+
+@raises(AAAException)
+@with_setup(setup_mockedadmin, purge_test_db)
+def test_send_password_reset_email_only_incorrect_email():
+    aaa.send_password_reset_email(email_addr='NoEmail')
+
+@raises(AAAException)
+@with_setup(setup_mockedadmin, purge_test_db)
+def test_send_password_reset_email_only_incorrect_username():
+    aaa.send_password_reset_email(username='NotThere')
+
+@with_setup(setup_mockedadmin, purge_test_db)
+def test_send_password_reset_email_only_email():
+    aaa.mailer.send_email = mock.Mock()
+    aaa.send_password_reset_email(email_addr='admin@localhost.local',
+        email_template='examples/views/password_reset_email')
+
+@with_setup(setup_mockedadmin, purge_test_db)
+def test_send_password_reset_email_only_username():
+    aaa.mailer.send_email = mock.Mock()
+    aaa.send_password_reset_email(username='admin',
+        email_template='examples/views/password_reset_email')
 
 
 

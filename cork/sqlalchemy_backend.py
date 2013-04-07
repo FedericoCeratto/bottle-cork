@@ -13,8 +13,9 @@ try:
     from sqlalchemy import create_engine, delete, func, select, \
         Column, ForeignKey, Integer, MetaData, String, Table
     sqlalchemy_available = True
-except ImportError:
+except ImportError:  # pragma: no cover
     sqlalchemy_available = False
+
 
 class SqlRowProxy(dict):
     def __init__(self, sql_dict, key, *args, **kwargs):
@@ -26,6 +27,7 @@ class SqlRowProxy(dict):
         dict.__setitem__(self, key, value)
         if self.sql_dict is not None:
             self.sql_dict[self.key] = {key: value}
+
 
 class SqlTable(base_backend.Table):
     """Provides dictionary-like access to an SQL table."""
@@ -78,6 +80,15 @@ class SqlTable(base_backend.Table):
             key = row[0]
             yield key
 
+    def iteritems(self):
+        """Iterate over table rows"""
+        query = select([self._table])
+        result = self._engine.execute(query)
+        for row in result:
+            key = row[0]
+            d = self._row_to_value(row)[1]
+            yield (key, d)
+
     def pop(self, key):
         query = select([self._table], self._key_col == key)
         row = self._engine.execute(query).fetchone()
@@ -98,6 +109,7 @@ class SqlTable(base_backend.Table):
         self._engine.execute(query)
         log.info("Table purged")
 
+
 class SqlSingleValueTable(SqlTable):
     def __init__(self, engine, table, key_col_name, col_name):
         SqlTable.__init__(self, engine, table, key_col_name)
@@ -109,12 +121,7 @@ class SqlSingleValueTable(SqlTable):
     def __setitem__(self, key, value):
         SqlTable.__setitem__(self, key, {self._col_name: value})
 
-    def iteritems(self): #FIXME
-        result = self._engine.execute(self._table.select())
-        for row in result.fetchall():
-            t = self._row_to_value(row)
-            yield t
-            yield self._row_to_value(row)
+
 
 class SqlAlchemyBackend(base_backend.Backend):
 
@@ -123,12 +130,14 @@ class SqlAlchemyBackend(base_backend.Backend):
 
         self._metadata = MetaData()
         if initialize:
-            db_url, db_name = db_url.rsplit('/',1)
+            # Create new database if needed.
+            db_url, db_name = db_url.rsplit('/', 1)
             self._engine = create_engine(db_url)
             try:
                 self._engine.execute("CREATE DATABASE %s" % db_name)
-            except:
-                pass
+            except Exception, e:
+                log.info("Failed DB creation: %s" % e)
+
             self._engine.execute("USE %s" % db_name)
 
         else:
