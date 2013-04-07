@@ -251,6 +251,19 @@ def test_list_users():
     users = list(aaa.list_users())
     assert len(users) == 1, "Incorrect. Users are: %s" % repr(aaa._store.users)
 
+@with_setup(setup_mockedadmin, purge_test_db)
+def test_iteritems_on_users():
+    for k, v in aaa._store.users.iteritems():
+        assert isinstance(v, dict)
+        expected_dkeys = set(('hash', 'email_addr', 'role', 'creation_date', 'desc'))
+        dkeys = set(v.keys())
+
+        extra = dkeys - expected_dkeys
+        assert not extra, "Unexpected extra keys: %s" % repr(extra)
+
+        missing = expected_dkeys - dkeys
+        assert not missing, "Missing keys: %s" % repr(missing)
+
 
 @with_setup(setup_mockedadmin, purge_test_db)
 def test_failing_login():

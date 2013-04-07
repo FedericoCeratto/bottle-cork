@@ -61,6 +61,7 @@ class MongoTable(Table):
         for i in r:
             d = i.copy()
             d.pop(self._key_name)
+            d.pop('_id')
             yield (i[self._key_name], d)
 
     def pop(self, key_val):

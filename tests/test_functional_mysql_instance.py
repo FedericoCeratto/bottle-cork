@@ -261,11 +261,8 @@ def test_iteritems_on_users():
     for k, v in aaa._store.users.iteritems():
         assert isinstance(k, str)
         assert isinstance(v, dict)
-        dkeys = ('hash', 'email_addr', 'role', 'creation_date', 'desc')
-        for dk in dkeys:
-            assert dk in v, "Missing key '%s' in %s" % (dk, repr(v))
-
-        assert len(v) == len(dkeys)
+        expected_dkeys = set(('hash', 'email_addr', 'role', 'creation_date', 'desc'))
+        assert expected_dkeys == set(v.keys())
 
 
 @with_setup(setup_mockedadmin, purge_test_db)
