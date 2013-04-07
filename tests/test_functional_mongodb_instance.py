@@ -155,6 +155,10 @@ def test_unauth_create_role():
 def test_create_existing_role():
     assert_raises(AAAException, aaa.create_role, 'user', 33)
 
+@raises(KeyError)
+@with_setup(setup_mockedadmin, purge_test_db)
+def test_access_nonexisting_role():
+    aaa._store.roles['NotThere']
 
 @raises(AAAException)
 @with_setup(setup_mockedadmin, purge_test_db)
@@ -219,8 +223,6 @@ def test_create_user():
     assert len(aaa._store.users) == 1, repr(aaa._store.users)
     aaa.create_user('phil', 'user', 'user')
     assert len(aaa._store.users) == 2, repr(aaa._store.users)
-
-    aaa._store.users._dump()
     assert 'phil' in aaa._store.users
 
 
@@ -466,13 +468,79 @@ def test_register_no_role():
 def test_register_role_too_high():
     assert_raises(AAAException, aaa.register, 'foo', 'pwd', 'a@a.a', role='admin')
 
-
+@with_setup(setup_mockedadmin, purge_test_db)
+def test_register_valid():
+    aaa.mailer.send_email = mock.Mock()
+    aaa.register('foo', 'pwd', 'email@email.org', role='user',
+        email_template='examples/views/registration_email.tpl'
+    )
+    assert aaa.mailer.send_email.called
+    r = aaa._store.pending_registrations
+    assert len(r) == 1
+    reg_code = list(r)[0]
+    assert r[reg_code]['username'] == 'foo'
+    assert r[reg_code]['email_addr'] == 'email@email.org'
+    assert r[reg_code]['role'] == 'user'
 
 
 @with_setup(setup_mockedadmin, purge_test_db)
 def test_validate_registration_no_code():
     assert_raises(AAAException, aaa.validate_registration, 'not_a_valid_code')
 
+@with_setup(setup_mockedadmin, purge_test_db)
+def test_validate_registration():
+    aaa.mailer.send_email = mock.Mock()
+    aaa.register('foo', 'pwd', 'email@email.org', role='user',
+        email_template='examples/views/registration_email.tpl'
+    )
+    r = aaa._store.pending_registrations
+    reg_code = list(r)[0]
+
+    assert len(aaa._store.users) == 1, "Only the admin user should be present"
+    aaa.validate_registration(reg_code)
+    assert len(aaa._store.users) == 2, "The new user should be present"
+    assert len(aaa._store.pending_registrations) == 0, \
+        "The registration entry should be removed"
+
+
+
+@raises(AAAException)
+@with_setup(setup_mockedadmin, purge_test_db)
+def test_send_password_reset_email_no_data():
+    aaa.send_password_reset_email()
+
+@raises(AAAException)
+@with_setup(setup_mockedadmin, purge_test_db)
+def test_send_password_reset_email_incorrect_data():
+    aaa.send_password_reset_email(username='NotThere', email_addr='NoEmail')
+
+@raises(AAAException)
+@with_setup(setup_mockedadmin, purge_test_db)
+def test_send_password_reset_email_incorrect_data2():
+    # The username is valid but the email address is not matching
+    aaa.send_password_reset_email(username='admin', email_addr='NoEmail')
+
+@raises(AAAException)
+@with_setup(setup_mockedadmin, purge_test_db)
+def test_send_password_reset_email_only_incorrect_email():
+    aaa.send_password_reset_email(email_addr='NoEmail')
+
+@raises(AAAException)
+@with_setup(setup_mockedadmin, purge_test_db)
+def test_send_password_reset_email_only_incorrect_username():
+    aaa.send_password_reset_email(username='NotThere')
+
+@with_setup(setup_mockedadmin, purge_test_db)
+def test_send_password_reset_email_only_email():
+    aaa.mailer.send_email = mock.Mock()
+    aaa.send_password_reset_email(email_addr='admin@localhost.local',
+        email_template='examples/views/password_reset_email')
+
+@with_setup(setup_mockedadmin, purge_test_db)
+def test_send_password_reset_email_only_username():
+    aaa.mailer.send_email = mock.Mock()
+    aaa.send_password_reset_email(username='admin',
+        email_template='examples/views/password_reset_email')
 
 
 
@@ -538,4 +606,6 @@ def test_perform_password_reset_mangled_email():
 def test_perform_password_reset():
     token = aaa._reset_code('admin', 'admin@localhost.local')
     aaa.reset_password(token, 'newpassword')
+
+
 
