@@ -15,6 +15,7 @@ import shutil
 
 from cork import Cork, JsonBackend, AAAException, AuthException
 from cork import Mailer
+from cork.base_backend import BackendIOException
 import testutils
 
 testdir = None  # Test directory
@@ -134,7 +135,7 @@ def test_initialize_storage():
             'Username:{{username}} Email:{{email_addr}} Code:{{reset_code}}']
 
 
-@raises(AAAException)
+@raises(BackendIOException)
 @with_setup(setup_dir, teardown_dir)
 def test_unable_to_save():
     bogus_dir = '/___inexisting_directory___'
@@ -146,13 +147,12 @@ def test_mockedadmin():
     assert len(aaa._store.users) == 1, repr(aaa._store.users)
     assert 'admin' in aaa._store.users, repr(aaa._store.users)
 
-
+@raises(BackendIOException)
 @with_setup(setup_mockedadmin, teardown_dir)
 def test_loadjson_missing_file():
-    assert_raises(AAAException, aaa._store._loadjson, 'nonexistent_file', {})
+    aaa._store._loadjson('nonexistent_file', {})
 
-
-@raises(AAAException)
+@raises(BackendIOException)
 @with_setup(setup_mockedadmin, teardown_dir)
 def test_loadjson_broken_file():
     with open(testdir + '/broken_file.json', 'w') as f:

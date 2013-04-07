@@ -5,6 +5,10 @@
 # Base Backend.
 #
 
+class BackendIOException(Exception):
+    """Generic Backend I/O Exception"""
+    pass
+
 def ni(*args, **kwargs):
     raise NotImplementedError
 
