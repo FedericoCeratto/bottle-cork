@@ -791,10 +791,10 @@ def test_perform_password_reset_nonexistent_user():
 # The following test should fail
 # an user can change the password reset timestamp by b64-decoding the token,
 # editing the field and b64-encoding it
+@SkipTest
 @raises(AuthException)
 @with_setup(setup_mockedadmin, teardown_dir)
 def test_perform_password_reset_mangled_timestamp():
-    raise SkipTest
     token = aaa._reset_code('admin', 'admin@localhost.local')
     username, email_addr, tstamp, h = b64decode(token).split(':', 3)
     tstamp = str(int(tstamp) + 100)

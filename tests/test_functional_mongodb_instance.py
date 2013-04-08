@@ -75,6 +75,7 @@ def setup_test_db():
     })
 
     # Create users
+    mb.roles._coll.insert({'role': 'special', 'val': 200})
     mb.roles._coll.insert({'role': 'admin', 'val': 100})
     mb.roles._coll.insert({'role': 'editor', 'val': 60})
     mb.roles._coll.insert({'role': 'user', 'val': 50})
@@ -168,9 +169,9 @@ def test_create_role_with_incorrect_level():
 
 @with_setup(setup_mockedadmin, purge_test_db)
 def test_create_role():
-    assert len(aaa._store.roles) == 3, repr(aaa._store.roles)
-    aaa.create_role('user33', 33)
     assert len(aaa._store.roles) == 4, repr(aaa._store.roles)
+    aaa.create_role('user33', 33)
+    assert len(aaa._store.roles) == 5, repr(aaa._store.roles)
 
 
 @with_setup(setup_mockedadmin, purge_test_db)
@@ -186,19 +187,19 @@ def test_delete_nonexistent_role():
 
 @with_setup(setup_mockedadmin, purge_test_db)
 def test_create_delete_role():
-    assert len(aaa._store.roles) == 3, repr(aaa._store.roles)
-    aaa.create_role('user33', 33)
     assert len(aaa._store.roles) == 4, repr(aaa._store.roles)
+    aaa.create_role('user33', 33)
+    assert len(aaa._store.roles) == 5, repr(aaa._store.roles)
 
     assert aaa._store.roles['user33'] == 33
     aaa.delete_role('user33')
-    assert len(aaa._store.roles) == 3, repr(aaa._store.roles)
+    assert len(aaa._store.roles) == 4, repr(aaa._store.roles)
 
 
 @with_setup(setup_mockedadmin, purge_test_db)
 def test_list_roles():
     roles = list(aaa.list_roles())
-    assert len(roles) == 3, "Incorrect. Users are: %s" % repr(aaa._store.roles)
+    assert len(roles) == 4, "Incorrect. Users are: %s" % repr(aaa._store.roles)
 
 
 @with_setup(setup_mockedadmin, purge_test_db)
@@ -371,11 +372,11 @@ def test_require_missing_parameter():
 def test_require_nonexistent_role():
     assert_raises(AAAException, aaa.require, role='clown')
 
-@SkipTest #FIXME
+@raises(AuthException)
 @with_setup(setup_mockedadmin, purge_test_db)
 def test_require_failing_role():
     # Requesting level >= 100
-    assert_raises(AuthException, aaa.require, role='special')
+    aaa.require(role='special')
 
 
 @with_setup(setup_mockedadmin, purge_test_db)
@@ -581,10 +582,10 @@ def test_perform_password_reset_nonexistent_user():
 # The following test should fail
 # an user can change the password reset timestamp by b64-decoding the token,
 # editing the field and b64-encoding it
+@SkipTest
 @raises(AuthException)
 @with_setup(setup_mockedadmin, purge_test_db)
 def test_perform_password_reset_mangled_timestamp():
-    raise SkipTest
     token = aaa._reset_code('admin', 'admin@localhost.local')
     username, email_addr, tstamp, h = b64decode(token).split(':', 3)
     tstamp = str(int(tstamp) + 100)
