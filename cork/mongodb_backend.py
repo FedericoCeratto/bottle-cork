@@ -12,15 +12,16 @@ from .base_backend import Backend, Table
 
 try:
     import pymongo
+    try:
+        from pymongo import MongoClient
+    except ImportError:  # pragma: no cover
+        # Backward compatibility with PyMongo 2.2
+        from pymongo import Connection as MongoClient
+
     pymongo_available = True
 except ImportError:  # pragma: no cover
     pymongo_available = False
 
-try:
-    from pymongo import MongoClient
-except ImportError:  # pragma: no cover
-    # Backward compatibility with PyMongo 2.2
-    from pymongo import Connection as MongoClient
 
 
 class MongoTable(Table):
