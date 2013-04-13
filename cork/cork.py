@@ -259,7 +259,8 @@ class Cork(object):
         """
         assert username, "Username must be provided."
         if self.current_user.level < 100:
-            raise AuthException("The current user is not authorized to ")
+            raise AuthException("The current user is not authorized" \
+                " to create users.")
 
         if username in self._store.users:
             raise AAAException("User is already existing.")
