@@ -125,13 +125,13 @@ class SqlSingleValueTable(SqlTable):
 
 class SqlAlchemyBackend(base_backend.Backend):
 
-    def __init__(self, db_url, users_tname='users', roles_tname='roles',
+    def __init__(self, db_full_url, users_tname='users', roles_tname='roles',
             pending_reg_tname='register', initialize=False):
 
         self._metadata = MetaData()
         if initialize:
             # Create new database if needed.
-            db_url, db_name = db_url.rsplit('/', 1)
+            db_url, db_name = db_full_url.rsplit('/', 1)
             self._engine = create_engine(db_url)
             try:
                 self._engine.execute("CREATE DATABASE %s" % db_name)
@@ -141,7 +141,7 @@ class SqlAlchemyBackend(base_backend.Backend):
             self._engine.execute("USE %s" % db_name)
 
         else:
-            self._engine = create_engine(db_url)
+            self._engine = create_engine(db_full_url)
 
 
         self._users = Table(users_tname, self._metadata,
@@ -170,8 +170,10 @@ class SqlAlchemyBackend(base_backend.Backend):
         self.roles = SqlSingleValueTable(self._engine, self._roles, 'role', 'level')
         self.pending_registrations = SqlTable(self._engine, self._pending_reg, 'code')
 
-        self._initialize_storage(db_name)
-        log.debug("Tables created")
+        if initialize:
+            self._initialize_storage(db_name)
+            log.debug("Tables created")
+
 
     def _initialize_storage(self, db_name):
         self._metadata.create_all(self._engine)
