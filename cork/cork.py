@@ -145,32 +145,32 @@ class Cork(object):
         # Parameter validation
         if username is not None:
             if username not in self._store.users:
-                raise AAAException("Nonexistent user")
+                raise AAAException("Nonexistent user.")
 
         if fixed_role and role is None:
             raise AAAException(
-                """A role must be specified if fixed_role has been set""")
+                """A role must be specified if fixed_role has been set.""")
 
         if role is not None and role not in self._store.roles:
-            raise AAAException("Role not found")
+            raise AAAException("Role not found.")
 
         # Authentication
         try:
             cu = self.current_user
         except AAAException:
             if fail_redirect is None:
-                raise AuthException("Unauthenticated user")
+                raise AuthException("Unauthenticated user.")
             else:
                 bottle.redirect(fail_redirect)
 
         if cu.role not in self._store.roles:
-            raise AAAException("Role not found for the current user")
+            raise AAAException("The current user's role does not exist.")
 
         if username is not None:
             if username != self.current_user.username:
                 if fail_redirect is None:
                     raise AuthException("""Unauthorized access: incorrect
-                        username""")
+                        username.""")
                 else:
                     bottle.redirect(fail_redirect)
 
@@ -179,7 +179,7 @@ class Cork(object):
                 return
 
             if fail_redirect is None:
-                raise AuthException("Unauthorized access: incorrect role")
+                raise AuthException("Unauthorized access: incorrect role.")
             else:
                 bottle.redirect(fail_redirect)
 
@@ -192,7 +192,8 @@ class Cork(object):
                     return
 
                 if fail_redirect is None:
-                    raise AuthException("Unauthorized access: ")
+                    raise AuthException("Unauthorized access: insufficient " \
+                                        "permissions.")
                 else:
                     bottle.redirect(fail_redirect)
 
@@ -208,9 +209,10 @@ class Cork(object):
         :raises: AuthException on errors
         """
         if self.current_user.level < 100:
-            raise AuthException("The current user is not authorized to ")
+            raise AuthException("The current user is not authorized to " \
+                                "create roles.")
         if role in self._store.roles:
-            raise AAAException("The role is already existing")
+            raise AAAException("The role already exists.")
         try:
             int(level)
         except ValueError:
@@ -226,7 +228,8 @@ class Cork(object):
         :raises: AuthException on errors
         """
         if self.current_user.level < 100:
-            raise AuthException("The current user is not authorized to ")
+            raise AuthException("The current user is not authorized to " \
+                                "delete roles.")
         if role not in self._store.roles:
             raise AAAException("Nonexistent role.")
         self._store.roles.pop(role)
@@ -263,9 +266,9 @@ class Cork(object):
                 " to create users.")
 
         if username in self._store.users:
-            raise AAAException("User is already existing.")
+            raise AAAException("That user already exists.")
         if role not in self._store.roles:
-            raise AAAException("Nonexistent user role.")
+            raise AAAException("Nonexistent role requested.")
         tstamp = str(datetime.utcnow())
         self._store.users[username] = {
             'role': role,
@@ -285,7 +288,8 @@ class Cork(object):
         :raises: Exceptions on errors
         """
         if self.current_user.level < 100:
-            raise AuthException("The current user is not authorized to ")
+            raise AuthException("The current user is not authorized to " \
+                                "delete a user.")
         if username not in self._store.users:
             raise AAAException("Nonexistent user.")
         self.user(username).delete()
@@ -310,10 +314,10 @@ class Cork(object):
         session = self._beaker_session
         username = session.get('username', None)
         if username is None:
-            raise AuthException("Unauthenticated user")
+            raise AuthException("Unauthenticated user.")
         if username is not None and username in self._store.users:
             return User(username, self, session=session)
-        raise AuthException("Unknown user: %s" % username)
+        raise AuthException("Unknown user: %s." % username)
 
     @property
     def user_is_anonymous(self):
@@ -328,7 +332,7 @@ class Cork(object):
             return True
 
         if username not in self._store.users:
-            raise AuthException("Unknown user: %s" % username)
+            raise AuthException("Unknown user: %s." % username)
 
         return False
 
@@ -371,11 +375,11 @@ class Cork(object):
         assert password, "A password must be provided."
         assert email_addr, "An email address must be provided."
         if username in self._store.users:
-            raise AAAException("User is already existing.")
+            raise AAAException("That user already exists.")
         if role not in self._store.roles:
-            raise AAAException("Nonexistent role")
+            raise AAAException("Nonexistent role.")
         if self._store.roles[role] > max_level:
-            raise AAAException("Unauthorized role")
+            raise AAAException("Unauthorized role.")
 
         registration_code = uuid.uuid4().hex
         creation_date = str(datetime.utcnow())
@@ -415,7 +419,7 @@ class Cork(object):
 
         username = data['username']
         if username in self._store.users:
-            raise AAAException("User is already existing.")
+            raise AAAException("The registration has already been confirmed.")
 
         # the user data is moved from pending_registrations to _users
         self._store.users[username] = {
@@ -627,7 +631,7 @@ class User(object):
         """
         username = self.username
         if username not in self._cork._store.users:
-            raise AAAException("User does not exist.")
+            raise AAAException("Nonexistent user.")
 
         if role is not None:
             if role not in self._cork._store.roles:
@@ -717,7 +721,7 @@ class Mailer(object):
         :raises: AAAException if smtp_server and/or sender are not set
         """
         if not (self._conf['fqdn'] and self.sender):
-            raise AAAException("SMTP server or sender not set")
+            raise AAAException("SMTP server or sender not set.")
         msg = MIMEMultipart('alternative')
         msg['Subject'] = subject
         msg['From'] = self.sender
