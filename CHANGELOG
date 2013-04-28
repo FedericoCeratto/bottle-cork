@@ -1,5 +1,7 @@
 v0.7 2013-04-08
- * MongoDB and SQLAlchemy backends added. Bugfixes.
+ * Configurable backend support added.
+ * SQLAlchemy and MongoDB support added.
+ * Closes: #8 #27 #28
 v0.6 2013-01-27
  * More flexible file naming in JsonBackend.
  * Fixed function to update user's email address.
@@ -11,6 +13,7 @@ v0.4 2012-11-25
  * Check added to prevent multiple registrations of the same account
 v0.3 2012-11-18
  * PBKDF2 hash length check added
+  * Multi-platform unit testing
 v0.2 2012-10-04
  * SMTP URL added: support for STARTTLS, SSL and configurable port numbers
  * Bug #10 fixed: login() redirects to fail_redirect if an username
