@@ -21,7 +21,7 @@ import time
 sys.path.insert(0, os.path.abspath('.'))
 sys.path.insert(0, os.path.abspath('../'))
 
-__version__ = '0.5'
+__version__ = '0.8a'
 
 # -- General configuration -----------------------------------------------------
 
@@ -30,8 +30,23 @@ __version__ = '0.5'
 
 # Add any Sphinx extension module names here, as strings. They can be extensions
 # coming with Sphinx (named 'sphinx.ext.*') or your custom ones.
-extensions = ['sphinx.ext.autodoc', 'sphinx.ext.doctest', 'sphinx.ext.todo',
-'sphinx.ext.coverage', 'sphinx.ext.viewcode']
+extensions = [
+    'sphinx.ext.autodoc',
+    'sphinx.ext.coverage',
+    'sphinx.ext.doctest',
+    'sphinx.ext.todo',
+    'sphinx.ext.viewcode',
+    'sphinxcontrib.blockdiag',
+    'sphinxcontrib.issuetracker',
+    'sphinxcontrib.spelling',
+]
+
+### Extensions configuration
+
+issuetracker = 'github'
+issuetracker_project = 'FedericoCeratto/bottle-cork'
+
+### End of extensions configuration
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['_templates']

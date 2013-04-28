@@ -20,34 +20,17 @@ It is designed to stay out of the way and let you focus on what your application
 
 News:
 
+* 2013-04-08: Version 0.7
+
+  * Configurable backend support added.
+  * SQLAlchemy and MongoDB support added.
+  * Closes: #8 #27 #28
+
 * 2013-01-27: Version 0.6
 
   * More flexible file naming in JsonBackend.
   * Fixed function to update user's email address.
   * More informative log message for missing Pycrypto.
-
-* 2012-12-04: Version 0.5
-
-  * SMTP SSL support added, smtp_url parsing improved.
-  * requirements.txt added.
-
-* 2012-11-25: Version 0.4
-
-  * Check added to prevent multiple registrations of the same account.
-
-* 2012-11-18: Version 0.3
-
-  * PBKDF2 hash length check added
-  * Multi-platform unit testing
-
-* 2012-10-04: Version 0.2
-
-  * SMTP URL added: support for STARTTLS, SSL and configurable port numbers
-  * Bugfix: login() redirects to fail_redirect if an username is not provided
-  * Better password hashing, multiple hash formats supported
-
-* 2012-07-09: Version 0.1 - Improved installation
-* 2012-06-10: Version 0.1~beta3 - Improved registration and password reset
 
 Cork is under development - contributions are welcome.
 

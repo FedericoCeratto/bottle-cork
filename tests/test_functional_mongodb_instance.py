@@ -315,9 +315,7 @@ def test_create_user_login_logout():
     try:
         aaa.logout(fail_redirect='/failed_logout')
     except Exception, e:
-        assert e.status_code == 302
-        redir_location = e._headers['Location'][0]
-        assert redir_location == 'http://127.0.0.1/login', redir_location
+        testutils.assert_is_redirect(e, 'login')
 
     assert cookie_name == None
 
