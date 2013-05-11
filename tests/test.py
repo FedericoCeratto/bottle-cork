@@ -177,6 +177,29 @@ def test_password_hashing():
     assert aaa._verify_password('user_foo', 'bogus_pwd', shash) == True, \
         "Hashing verification should succeed"
 
+@with_setup(setup_mockedadmin, teardown_dir)
+def test_password_hashing_known_hash():
+    salt = 's' * 32
+    shash = aaa._hash('user_foo', 'bogus_pwd', salt=salt)
+    assert shash == 'cHNzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzax44AxQgK6uD9q1YWxLos1ispCe1Z7T7pOFK1PwdWEs='
+
+@with_setup(setup_mockedadmin, teardown_dir)
+def test_password_hashing_known_hash_2():
+    salt = '\0' * 32
+    shash = aaa._hash('user_foo', 'bogus_pwd', salt=salt)
+    assert shash == 'cAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA/8Uh4pyEOHoRz4j0lDzAmqb7Dvmo8GpeXwiKTDsuYFw='
+
+@with_setup(setup_mockedadmin, teardown_dir)
+def test_password_hashing_known_hash_3():
+    salt = 'x' * 32
+    shash = aaa._hash('user_foo', 'bogus_pwd', salt=salt)
+    assert shash == 'cHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4MEaIU5Op97lmvwX5NpVSTBP8jg8OlrN7c2K8K8tnNks='
+
+@raises(AssertionError)
+@with_setup(setup_mockedadmin, teardown_dir)
+def test_password_hashing_incorrect_hash_len():
+    salt = 'x' * 31 # Incorrect length
+    shash = aaa._hash('user_foo', 'bogus_pwd', salt=salt)
 
 @with_setup(setup_mockedadmin, teardown_dir)
 def test_incorrect_password_hashing():
