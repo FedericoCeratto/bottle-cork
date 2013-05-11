@@ -29,6 +29,10 @@ prepare-cover-dir:
 coverage: prepare-cover-dir
 	nosetests tests/$(TESTGLOB) --with-coverage --cover-erase --cover-package=$(PROJ) --cover-html
 
+# target: coverage-base - Run base functional testing + code coverage
+coverage-base: TESTGLOB=test.py
+coverage-base: coverage
+
 # target: coverage-mongodb - Run MongoDB functional testing + code coverage
 coverage-mongodb: TESTGLOB=test_functional_mongodb_instance.py
 coverage-mongodb: coverage
