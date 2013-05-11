@@ -24,7 +24,7 @@ def assert_is_redirect(e, path):
     :param path: relative path without leading slash.
     :type path: str
     """
-    assert e.status == 302, "HTTPResponse status should be 302 but is %d" % e.status
+    assert e.status_code == 302, "HTTPResponse status should be 302 but is '%s'" % e.status
     redir_location = e.headers['Location'].rsplit('/', 1)[1]
     assert redir_location == path, "Redirected to %s instead of %s" % (redir_location, path)
 
