@@ -169,8 +169,10 @@ def test_loadjson_unchanged():
     assert mtimes == aaa._store._mtimes
 
 
+# Test PBKDF2-based password hashing
+
 @with_setup(setup_mockedadmin, teardown_dir)
-def test_password_hashing():
+def test_password_hashing_PBKDF2():
     shash = aaa._hash('user_foo', 'bogus_pwd')
     assert len(shash) == 88, "hash length should be 88 and is %d" % len(shash)
     assert shash.endswith('='), "hash should end with '='"
@@ -178,31 +180,31 @@ def test_password_hashing():
         "Hashing verification should succeed"
 
 @with_setup(setup_mockedadmin, teardown_dir)
-def test_password_hashing_known_hash():
+def test_password_hashing_PBKDF2_known_hash():
     salt = 's' * 32
     shash = aaa._hash('user_foo', 'bogus_pwd', salt=salt)
     assert shash == 'cHNzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzax44AxQgK6uD9q1YWxLos1ispCe1Z7T7pOFK1PwdWEs='
 
 @with_setup(setup_mockedadmin, teardown_dir)
-def test_password_hashing_known_hash_2():
+def test_password_hashing_PBKDF2_known_hash_2():
     salt = '\0' * 32
     shash = aaa._hash('user_foo', 'bogus_pwd', salt=salt)
     assert shash == 'cAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA/8Uh4pyEOHoRz4j0lDzAmqb7Dvmo8GpeXwiKTDsuYFw='
 
 @with_setup(setup_mockedadmin, teardown_dir)
-def test_password_hashing_known_hash_3():
+def test_password_hashing_PBKDF2_known_hash_3():
     salt = 'x' * 32
     shash = aaa._hash('user_foo', 'bogus_pwd', salt=salt)
     assert shash == 'cHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4MEaIU5Op97lmvwX5NpVSTBP8jg8OlrN7c2K8K8tnNks='
 
 @raises(AssertionError)
 @with_setup(setup_mockedadmin, teardown_dir)
-def test_password_hashing_incorrect_hash_len():
+def test_password_hashing_PBKDF2_incorrect_hash_len():
     salt = 'x' * 31 # Incorrect length
     shash = aaa._hash('user_foo', 'bogus_pwd', salt=salt)
 
 @with_setup(setup_mockedadmin, teardown_dir)
-def test_incorrect_password_hashing():
+def test_password_hashing_PBKDF2_incorrect_hash_value():
     shash = aaa._hash('user_foo', 'bogus_pwd')
     assert len(shash) == 88, "hash length should be 88 and is %d" % len(shash)
     assert shash.endswith('='), "hash should end with '='"
@@ -211,13 +213,79 @@ def test_incorrect_password_hashing():
     assert aaa._verify_password('###', 'bogus_pwd', shash) == False, \
         "Hashing verification should fail"
 
-
 @with_setup(setup_mockedadmin, teardown_dir)
-def test_password_hashing_collision():
+def test_password_hashing_PBKDF2_collision():
     salt = 'S' * 32
     hash1 = aaa._hash('user_foo', 'bogus_pwd', salt=salt)
     hash2 = aaa._hash('user_foobogus', '_pwd', salt=salt)
     assert hash1 != hash2, "Hash collision"
+
+# Test scrypt-based password hashing
+
+@with_setup(setup_mockedadmin, teardown_dir)
+def test_password_hashing_scrypt():
+    shash = aaa._hash('user_foo', 'bogus_pwd', algo='scrypt')
+    assert len(shash) == 132, "hash length should be 132 and is %d" % len(shash)
+    assert shash.endswith('='), "hash should end with '='"
+    assert aaa._verify_password('user_foo', 'bogus_pwd', shash) == True, \
+        "Hashing verification should succeed"
+
+@with_setup(setup_mockedadmin, teardown_dir)
+def test_password_hashing_scrypt_known_hash():
+    salt = 's' * 32
+    shash = aaa._hash('user_foo', 'bogus_pwd', salt=salt, algo='scrypt')
+    assert shash == 'c3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3NzeLt/2Ta8vJOVqimNpN9G1WWxN1hxlUOJDPgH+0wqPpG20XQHFHLlksDIUo2BL4P8BMLBZj7F+cq6UP6pc304LQ=='
+
+@with_setup(setup_mockedadmin, teardown_dir)
+def test_password_hashing_scrypt_known_hash_2():
+    salt = '\0' * 32
+    shash = aaa._hash('user_foo', 'bogus_pwd', salt=salt, algo='scrypt')
+    assert shash == 'cwAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAmu5jQskr2/yX13Yxmc4TYL0MIuSxwo41SVJwn/QueiDdLGkNaEsxlKL37i98YofXxs8xJJAJlC3Xj/9Nx0RNBw=='
+
+@with_setup(setup_mockedadmin, teardown_dir)
+def test_password_hashing_scrypt_known_hash_3():
+    salt = 'x' * 32
+    shash = aaa._hash('user_foo', 'bogus_pwd', salt=salt, algo='scrypt')
+    assert shash == 'c3h4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4yKuT1e8lovFZnaaOctivIvYBPkLoKDXX72kf5/nRuGIgyyhiKxxKE4LVYFKFCeVNPQM5m/+LulQkWhO0aB89lA=='
+
+@raises(AssertionError)
+@with_setup(setup_mockedadmin, teardown_dir)
+def test_password_hashing_scrypt_incorrect_hash_len():
+    salt = 'x' * 31 # Incorrect length
+    shash = aaa._hash('user_foo', 'bogus_pwd', salt=salt, algo='scrypt')
+
+@with_setup(setup_mockedadmin, teardown_dir)
+def test_password_hashing_scrypt_incorrect_hash_value():
+    shash = aaa._hash('user_foo', 'bogus_pwd', algo='scrypt')
+    assert len(shash) == 132, "hash length should be 132 and is %d" % len(shash)
+    assert shash.endswith('='), "hash should end with '='"
+    assert aaa._verify_password('user_foo', '####', shash) == False, \
+        "Hashing verification should fail"
+    assert aaa._verify_password('###', 'bogus_pwd', shash) == False, \
+        "Hashing verification should fail"
+
+
+@with_setup(setup_mockedadmin, teardown_dir)
+def test_password_hashing_scrypt_collision():
+    salt = 'S' * 32
+    hash1 = aaa._hash('user_foo', 'bogus_pwd', salt=salt, algo='scrypt')
+    hash2 = aaa._hash('user_foobogus', '_pwd', salt=salt, algo='scrypt')
+    assert hash1 != hash2, "Hash collision"
+
+# Test password hashing for inexistent algorithms
+
+@raises(Exception)
+@with_setup(setup_mockedadmin, teardown_dir)
+def test_password_hashing_bogus_algo():
+    aaa._hash('user_foo', 'bogus_pwd', algo='bogus_algo')
+
+@raises(Exception)
+@with_setup(setup_mockedadmin, teardown_dir)
+def test_password_hashing_bogus_algo_during_verify():
+    shash = 'x' + '\0' * 32 # Incorrect hash algo followed by 32 bytes
+    aaa._verify_password('user_foo', 'bogus_pwd', shash)
+
+# End of password hashing tests
 
 
 @with_setup(setup_mockedadmin, teardown_dir)

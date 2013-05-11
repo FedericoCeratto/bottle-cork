@@ -31,6 +31,12 @@ import os
 import re
 import uuid
 
+try:
+    import scrypt
+    scrypt_available = True
+except ImportError:
+    scrypt_available = False
+
 from backends import JsonBackend
 
 log = getLogger(__name__)
@@ -64,6 +70,7 @@ class Cork(object):
         self.mailer = Mailer(email_sender, smtp_url)
         self.password_reset_timeout = 3600 * 24
         self.session_domain = session_domain
+        self.preferred_hashing_algorithm = 'PBKDF2'
 
         # Setup JsonBackend by default for backward compatibility.
         if backend is None:
@@ -522,8 +529,44 @@ class Cork(object):
             session.domain = self.session_domain
         session.save()
 
+    def _hash(self, username, pwd, salt=None, algo=None):
+        """Hash username and password, generating salt value if required
+        """
+        if algo is None:
+            algo = self.preferred_hashing_algorithm
+
+        if algo == 'PBKDF2':
+            return self._hash_pbkdf2(username, pwd, salt=salt)
+
+        if algo == 'scrypt':
+            return self._hash_scrypt(username, pwd, salt=salt)
+
+        raise RuntimeError("Unknown hashing algorithm requested: %s" % algo)
+
     @staticmethod
-    def _hash(username, pwd, salt=None):
+    def _hash_scrypt(username, pwd, salt=None):
+        """Hash username and password, generating salt value if required
+        Use scrypt.
+
+        :returns: base-64 encoded str.
+        """
+        if not scrypt_available:
+            raise Exception("scrypt.hash required."
+                " Please install the scrypt library.")
+
+        if salt is None:
+            salt = os.urandom(32)
+
+        assert len(salt) == 32, "Incorrect salt length"
+
+        cleartext = "%s\0%s" % (username, pwd)
+        h = scrypt.hash(cleartext, salt)
+
+        # 's' for scrypt
+        return b64encode('s' + salt + h)
+
+    @staticmethod
+    def _hash_pbkdf2(username, pwd, salt=None):
         """Hash username and password, generating salt value if required
         Use PBKDF2 from Beaker
 
@@ -542,19 +585,24 @@ class Cork(object):
         # 'p' for PBKDF2
         return b64encode('p' + salt + h)
 
-    @classmethod
-    def _verify_password(cls, username, pwd, salted_hash):
+    def _verify_password(self, username, pwd, salted_hash):
         """Verity username/password pair against a salted hash
 
         :returns: bool
         """
         decoded = b64decode(salted_hash)
         hash_type = decoded[0]
-        if hash_type != 'p':  # 'p' for PBKDF2
-            return False  # Only PBKDF2 is supported
-
         salt = decoded[1:33]
-        return cls._hash(username, pwd, salt) == salted_hash
+
+        if hash_type == 'p':  # PBKDF2
+            h = self._hash_pbkdf2(username, pwd, salt)
+            return salted_hash == h
+
+        if hash_type == 's':  # scrypt
+            h = self._hash_scrypt(username, pwd, salt)
+            return salted_hash == h
+
+        raise RuntimeError("Unknown hashing algorithm: %s" % hash_type)
 
     def _purge_expired_registrations(self, exp_time=96):
         """Purge expired registration requests.
