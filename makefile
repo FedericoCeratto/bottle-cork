@@ -45,7 +45,7 @@ doc:
 # target: docwithcoverage - Build sphinx docs
 docwithcoverage: coverage doc
 
-# target: rsync - Publish docs
+# target: rsync - Build docs with coverage and publish them
 rsync: build docwithcoverage
 	echo rsync -avz _build/html/ firelet.net:~/websites/$(PROJ)
 
