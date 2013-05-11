@@ -536,8 +536,8 @@ class Cork(object):
         cleartext = "%s\0%s" % (username, pwd)
         h = crypto.generateCryptoKeys(cleartext, salt, 10)
         if len(h) != 32:
-            raise RuntimeError("The PBKDF2 hash is not 32 bytes long."
-                " The pycrypto library might be missing.")
+            raise RuntimeError("The PBKDF2 hash is %d bytes long instead"
+                "of 32. The pycrypto library might be missing." % len(h))
 
         # 'p' for PBKDF2
         return b64encode('p' + salt + h)
