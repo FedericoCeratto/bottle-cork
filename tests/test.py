@@ -315,6 +315,10 @@ def test_create_role():
         data = f.read()
         assert 'user33' in data, repr(data)
 
+@raises(AAAException)
+@with_setup(setup_mockedadmin, teardown_dir)
+def test_create_empty_role():
+    aaa.create_role('', 42)
 
 @with_setup(setup_mockedadmin, teardown_dir)
 def test_unauth_delete_role():
@@ -351,7 +355,6 @@ def test_list_roles():
 def test_unauth_create_user():
     aaa._store.roles['admin'] = 10  # lower admin level
     assert_raises(AuthException, aaa.create_user, 'phil', 'user', 'hunter123')
-
 
 @with_setup(setup_mockedadmin, teardown_dir)
 def test_create_existing_user():
