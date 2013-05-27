@@ -1,3 +1,5 @@
+v0.8 2013-05-27
+ * scrypt implemented, bugfixes #34 #35 #32
 v0.7 2013-04-08
  * Configurable backend support added.
  * SQLAlchemy and MongoDB support added.
