@@ -315,6 +315,7 @@ def test_create_role():
         data = f.read()
         assert 'user33' in data, repr(data)
 
+@SkipTest
 @raises(AAAException)
 @with_setup(setup_mockedadmin, teardown_dir)
 def test_create_empty_role():
