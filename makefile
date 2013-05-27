@@ -27,6 +27,8 @@ prepare-cover-dir:
 
 # target: coverage - Run unit testing + code coverage
 coverage: prepare-cover-dir
+	pgrep -c mysqld || sudo /etc/init.d/mysql start
+	pgrep -c mongod || sudo /etc/init.d/mongodb start
 	nosetests tests/$(TESTGLOB) --with-coverage --cover-erase --cover-package=$(PROJ) --cover-html
 
 # target: coverage-base - Run base functional testing + code coverage
