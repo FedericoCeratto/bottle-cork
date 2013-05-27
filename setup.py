@@ -2,7 +2,7 @@
 
 from setuptools import setup
 
-__version__ = '0.8a'
+__version__ = '0.8'
 
 CLASSIFIERS = map(str.strip,
 """Environment :: Console
@@ -31,6 +31,9 @@ setup(
         'Beaker',
         'setuptools',
     ],
+    extras_require = {
+        'scrypt': ["scrypt>=0.6.1"],
+    },
     packages=['cork'],
     platforms=['Linux'],
     test_suite='nose.collector',
