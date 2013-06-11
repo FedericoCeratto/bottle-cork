@@ -1,3 +1,10 @@
+# Cork - Authentication module for tyyhe Bottle web framework
+# Copyright (C) 2013 Federico Ceratto and others, see AUTHORS file.
+# Released under GPLv3+ license, see LICENSE.txt
+#
+# Unit testing - utility functions.
+#
+import bottle
 import sys
 import tempfile
 import shutil
@@ -24,6 +31,7 @@ def assert_is_redirect(e, path):
     :param path: relative path without leading slash.
     :type path: str
     """
+    assert isinstance(e, bottle.HTTPResponse), "Incorrect exception type passed to assert_is_redirect"
     assert e.status_code == 302, "HTTPResponse status should be 302 but is '%s'" % e.status
     redir_location = e.headers['Location'].rsplit('/', 1)[1]
     assert redir_location == path, "Redirected to %s instead of %s" % (redir_location, path)

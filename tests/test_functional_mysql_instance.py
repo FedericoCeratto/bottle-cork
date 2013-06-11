@@ -9,6 +9,7 @@ from base64 import b64encode, b64decode
 from nose import SkipTest
 from nose.tools import assert_raises, raises, with_setup
 from time import time
+import bottle
 import mock
 import os
 import shutil
@@ -314,7 +315,7 @@ def test_create_user_login_logout():
     assert cookie_name == 'phil'
     try:
         aaa.logout(fail_redirect='/failed_logout')
-    except Exception, e:
+    except bottle.HTTPResponse, e:
         testutils.assert_is_redirect(e, 'login')
 
     assert cookie_name == None
