@@ -5,4 +5,5 @@ python:
   - "3.2"
 install:
   - pip install -e . --use-mirrors
+  - pip install scrypt --use-mirrors
 script: nosetests tests/test.py
