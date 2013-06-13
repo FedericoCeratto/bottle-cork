@@ -3,4 +3,4 @@ python:
   - "2.7"
 install:
   - pip install -e . --use-mirrors
-script: nosetests -v
+script: nosetests tests/test.py
