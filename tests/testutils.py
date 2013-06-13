@@ -5,9 +5,10 @@
 # Unit testing - utility functions.
 #
 import bottle
+import os
+import shutil
 import sys
 import tempfile
-import shutil
 
 
 def pick_temp_directory():
