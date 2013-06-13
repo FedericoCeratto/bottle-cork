@@ -27,8 +27,9 @@ setup(
         "for the Bottle web framework.",
     classifiers=CLASSIFIERS,
     install_requires=[
-        'Bottle',
         'Beaker',
+        'Bottle',
+        'pycrypto',
         'setuptools',
     ],
     extras_require = {
