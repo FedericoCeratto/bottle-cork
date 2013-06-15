@@ -57,8 +57,24 @@ class MockedUnauthenticatedCork(Cork):
         global cookie_name
         cookie_name = username
 
+
+def connect_to_test_db():
+
+    if os.environ.get('TRAVIS', False):
+        # Using Travis-CI - https://travis-ci.org/
+        password = ''
+        db_name = 'myapp_test'
+    else:
+        password = ''
+        db_name = 'cork_functional_test'
+
+    uri = "mysql://root:%s@localhost/%s" % (password, db_name)
+    return SqlAlchemyBackend(uri, initialize=True)
+
+
 def setup_test_db():
-    mb = SqlAlchemyBackend('mysql://root:root@localhost/cork_functional_test', initialize=True)
+
+    mb = connect_to_test_db()
 
     ## Purge DB
     mb.users.empty_table()
@@ -90,7 +106,7 @@ def setup_test_db():
 
 def purge_test_db():
     # Purge DB
-    mb = SqlAlchemyBackend('mysql://root:root@localhost/cork_functional_test', initialize=True)
+    mb = connect_to_test_db()
     mb._drop_all_tables()
 
 def setup_mockedadmin():
@@ -112,7 +128,7 @@ def setup_mocked_unauthenticated():
 
 @with_setup(setup_test_db, purge_test_db)
 def test_initialize_storage():
-    mb = SqlAlchemyBackend('mysql://root:root@localhost/cork_functional_test', initialize=True)
+    mb = connect_to_test_db()
     Cork(backend=mb)
 
 

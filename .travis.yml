@@ -6,6 +6,16 @@ python:
 install:
   - pip install -e . --use-mirrors
   - pip install scrypt --use-mirrors
-script: nosetests tests/test.py
+
+before_script:
+  - mysql -e 'create database myapp_test;' # username: "root", password: ""
+  #- mongo mydb_test --eval 'db.addUser("travis", "test");'
+
+script: nosetests tests/test.py tests/test_functional_mysql_instance.py
+
+services:
+  # MySQL is started by default
+  - mongodb
+
 after_success:
   - coveralls
