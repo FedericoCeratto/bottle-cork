@@ -5,7 +5,7 @@ python:
   # - "3.2" Temporary disabling Python3
 install:
   - pip install -e . --use-mirrors
-  - pip install MySQLdb --use-mirrors
+  - pip install MySQL-python --use-mirrors
   - pip install SQLAlchemy --use-mirrors
   - pip install pymongo --use-mirrors
   - pip install scrypt --use-mirrors
@@ -14,7 +14,7 @@ before_script:
   - mysql -e 'create database myapp_test;' # username: "root", password: ""
   #- mongo mydb_test --eval 'db.addUser("travis", "test");'
 
-script: nosetests tests/test.py tests/test_functional_mysql_instance.py
+script: nosetests tests/test.py tests/test_functional_mysql_instance.py tests/test_functional_mongodb_instance.py
 
 services:
   # MySQL is started by default
