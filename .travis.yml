@@ -6,6 +6,7 @@ python:
 install:
   - pip install -e . --use-mirrors
   - pip install scrypt --use-mirrors
+  - pip install SQLAlchemy --use-mirrors
 
 before_script:
   - mysql -e 'create database myapp_test;' # username: "root", password: ""
