@@ -728,9 +728,21 @@ class Mailer(object):
             )?
             (                                   # Optional user:pass@
                 (?P<user>[^:]*)                 # Match every char except ':'
-                (: (?P<pass>.*) )? @           # Optional :pass
+                (: (?P<pass>.*) )? @            # Optional :pass
             )?
-            (?P<fqdn>.*?)                       # Required FQDN
+            (?P<fqdn>                           # Required FQDN on IP address
+                ([a-zA-Z0-9_\-]{,255})          # FQDN
+                |(                              # IPv4
+                    ([0-9]{1,3}\.){3}
+                    [0-9]{1,3}
+                 )
+                |(                              # IPv6
+                    \[                          # Square brackets
+                        ([0-9a-f]{,4}:){1,8}
+                        [0-9a-f]{,4}
+                    \]
+                )
+            )
             (                                   # Optional :port
                 :
                 (?P<port>[0-9]{,5})             # Up to 5-digits port
@@ -750,6 +762,9 @@ class Mailer(object):
             d['port'] = 25
         else:
             d['port'] = int(d['port'])
+
+        if not 0 < d['port'] < 65536:
+            raise RuntimeError("Incorrect SMTP port")
 
         return d
 

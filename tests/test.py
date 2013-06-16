@@ -683,6 +683,36 @@ def test_smtp_url_parsing_email_as_username_2():
     assert c['fqdn'] == 'foo'
     assert c['port'] == 443
 
+@raises(RuntimeError)
+@with_setup(setup_mockedadmin, teardown_dir)
+def test_smtp_url_parsing_incorrect_URL_port():
+    c = aaa.mailer._parse_smtp_url(':99999')
+
+@raises(RuntimeError)
+@with_setup(setup_mockedadmin, teardown_dir)
+def test_smtp_url_parsing_incorrect_URL_port_len():
+    c = aaa.mailer._parse_smtp_url(':123456')
+
+@raises(RuntimeError)
+@with_setup(setup_mockedadmin, teardown_dir)
+def test_smtp_url_parsing_incorrect_URL_len():
+    c = aaa.mailer._parse_smtp_url('a' * 256)
+
+@raises(RuntimeError)
+@with_setup(setup_mockedadmin, teardown_dir)
+def test_smtp_url_parsing_incorrect_URL_syntax():
+    c = aaa.mailer._parse_smtp_url('::')
+
+@with_setup(setup_mockedadmin, teardown_dir)
+def test_smtp_url_parsing_IPv4():
+    c = aaa.mailer._parse_smtp_url('127.0.0.1')
+    assert c['fqdn'] == '127.0.0.1'
+
+@with_setup(setup_mockedadmin, teardown_dir)
+def test_smtp_url_parsing_IPv6():
+    c = aaa.mailer._parse_smtp_url('[2001:0:0123:4567:89ab:cdef]')
+    assert c['fqdn'] == '[2001:0:0123:4567:89ab:cdef]'
+
 
 # Patch the mailer _send() method to prevent network interactions
 @with_setup(setup_mockedadmin, teardown_dir)
