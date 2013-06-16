@@ -274,15 +274,16 @@ def test_password_hashing_scrypt_collision():
 
 # Test password hashing for inexistent algorithms
 
-@raises(Exception)
+@raises(RuntimeError)
 @with_setup(setup_mockedadmin, teardown_dir)
 def test_password_hashing_bogus_algo():
     aaa._hash('user_foo', 'bogus_pwd', algo='bogus_algo')
 
-@raises(Exception)
+@raises(RuntimeError)
 @with_setup(setup_mockedadmin, teardown_dir)
 def test_password_hashing_bogus_algo_during_verify():
-    shash = 'x' + '\0' * 32 # Incorrect hash algo followed by 32 bytes
+    # Incorrect hash type (starts with "X")
+    shash = b64encode('X' + 'bogusstring')
     aaa._verify_password('user_foo', 'bogus_pwd', shash)
 
 # End of password hashing tests

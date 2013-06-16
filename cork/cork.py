@@ -34,7 +34,7 @@ import uuid
 try:
     import scrypt
     scrypt_available = True
-except ImportError:
+except ImportError:  # pragma: no cover
     scrypt_available = False
 
 from backends import JsonBackend
@@ -176,8 +176,8 @@ class Cork(object):
         if username is not None:
             if username != self.current_user.username:
                 if fail_redirect is None:
-                    raise AuthException("""Unauthorized access: incorrect
-                        username""")
+                    raise AuthException("Unauthorized access: incorrect"
+                        " username")
                 else:
                     bottle.redirect(fail_redirect)
 
