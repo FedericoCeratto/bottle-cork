@@ -128,6 +128,9 @@ class SqlAlchemyBackend(base_backend.Backend):
     def __init__(self, db_full_url, users_tname='users', roles_tname='roles',
             pending_reg_tname='register', initialize=False):
 
+        if not sqlalchemy_available:
+            raise RuntimeError("The SQLAlchemy library is not available.")
+
         self._metadata = MetaData()
         if initialize:
             # Create new database if needed.
