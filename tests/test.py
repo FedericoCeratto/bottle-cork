@@ -613,7 +613,6 @@ def test_smtp_url_parsing_2():
     assert c['fqdn'] == 'foo'
     assert c['port'] == 25
 
-
 @with_setup(setup_mockedadmin, teardown_dir)
 def test_smtp_url_parsing_3():
     c = aaa.mailer._parse_smtp_url('foo:443')
@@ -623,7 +622,6 @@ def test_smtp_url_parsing_3():
     assert c['fqdn'] == 'foo'
     assert c['port'] == 443
 
-
 @with_setup(setup_mockedadmin, teardown_dir)
 def test_smtp_url_parsing_4():
     c = aaa.mailer._parse_smtp_url('ssl://user:pass@foo:443/')
@@ -632,6 +630,15 @@ def test_smtp_url_parsing_4():
     assert c['pass'] == 'pass'
     assert c['fqdn'] == 'foo'
     assert c['port'] == 443
+
+@with_setup(setup_mockedadmin, teardown_dir)
+def test_smtp_url_parsing_5():
+    c = aaa.mailer._parse_smtp_url('smtp://smtp.magnet.ie')
+    assert c['proto'] == 'smtp'
+    assert c['user'] == None
+    assert c['pass'] == None
+    assert c['fqdn'] == 'smtp.magnet.ie'
+    assert c['port'] == 25
 
 
 @with_setup(setup_mockedadmin, teardown_dir)

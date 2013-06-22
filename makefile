@@ -14,6 +14,7 @@ help:
 # target: cleanbuild - Remove build dir
 cleanbuild:
 	python setup.py clean
+	find . -name '*.pyc' -delete
 
 # target: build - build Python package
 build: cleanbuild

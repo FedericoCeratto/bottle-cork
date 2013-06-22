@@ -731,7 +731,11 @@ class Mailer(object):
                 (: (?P<pass>.*) )? @            # Optional :pass
             )?
             (?P<fqdn>                           # Required FQDN on IP address
-                ([a-zA-Z0-9_\-]{,255})          # FQDN
+                ()|                             # Empty string
+                (                               # FQDN
+                    [a-zA-Z_\-]                 # First character cannot be a number
+                    [a-zA-Z0-9_\-\.]{,254}
+                )
                 |(                              # IPv4
                     ([0-9]{1,3}\.){3}
                     [0-9]{1,3}
