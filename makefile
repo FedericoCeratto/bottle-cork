@@ -36,6 +36,10 @@ coverage: prepare-cover-dir
 coverage-base: TESTGLOB=test.py
 coverage-base: coverage
 
+# target: coverage-sqlite - Run SQLite functional testing + code coverage
+coverage-sqlite: TESTGLOB=test_sqlite.py
+coverage-sqlite: coverage
+
 # target: coverage-mongodb - Run MongoDB functional testing + code coverage
 coverage-mongodb: TESTGLOB=test_functional_mongodb_instance.py
 coverage-mongodb: coverage
