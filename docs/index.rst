@@ -20,6 +20,15 @@ It is designed to stay out of the way and let you focus on what your application
 
 News:
 
+* 2013-07-07: Version 0.9
+
+  * SQLite support added.
+  * SMTP URL bugfix #38
+
+* 2013-05-27: Version 0.8
+
+   * scrypt implemented, bugfixes #34 #35 #32
+
 * 2013-04-08: Version 0.7
 
   * Configurable backend support added.

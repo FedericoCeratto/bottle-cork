@@ -1,3 +1,6 @@
+v0.9 2013-07-07
+ * SQLite support added.
+ * SMTP URL bugfix #38
 v0.8 2013-05-27
  * scrypt implemented, bugfixes #34 #35 #32
 v0.7 2013-04-08
