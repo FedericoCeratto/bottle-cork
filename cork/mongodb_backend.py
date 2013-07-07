@@ -94,8 +94,13 @@ class MongoSingleValueTable(MongoTable):
         return r['val']
 
 class MongoMutableDict(dict):
-    """"""
+    """Represent an item from a Table. Acts as a dictionary.
+    """
     def __init__(self, parent, root_key, d):
+        """Create a MongoMutableDict instance.
+        :param parent: Table instance
+        :type parent: :class:`MongoTable`
+        """
         super(MongoMutableDict, self).__init__(d)
         self._parent = parent
         self._root_key = root_key
