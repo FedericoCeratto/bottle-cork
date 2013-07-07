@@ -168,7 +168,10 @@ def test_password_hashing_collision():
 
 @with_setup(setup_mockedadmin, purge_test_db)
 def test_unauth_create_role():
+    assert len(aaa._store.users) == 1, "Only the admin user should be present"
     aaa._store.roles['admin'] = 10  # lower admin level
+    assert aaa._store.roles['admin'] == 10, aaa._store.roles['admin']
+    assert len(aaa._store.users) == 1, "Only the admin user should be present"
     assert_raises(AuthException, aaa.create_role, 'user', 33)
 
 
@@ -280,7 +283,13 @@ def test_iteritems_on_users():
         assert isinstance(k, str)
         assert isinstance(v, dict)
         expected_dkeys = set(('hash', 'email_addr', 'role', 'creation_date', 'desc'))
-        assert expected_dkeys == set(v.keys())
+        dkeys = set(v.keys())
+
+        extra = dkeys - expected_dkeys
+        assert not extra, "Unexpected extra keys: %s" % repr(extra)
+
+        missing = expected_dkeys - dkeys
+        assert not missing, "Missing keys: %s" % repr(missing)
 
 
 @with_setup(setup_mockedadmin, purge_test_db)
@@ -312,7 +321,9 @@ def test_login_existing_user_empty_password():
 
 @with_setup(setup_mockedadmin, purge_test_db)
 def test_create_and_validate_user():
+    assert len(aaa._store.users) == 1, "Only the admin user should be present"
     aaa.create_user('phil', 'user', 'hunter123')
+    assert len(aaa._store.users) == 2, "Two users should be present"
     assert 'phil' in aaa._store.users
     assert aaa._store.users['phil']['role'] == 'user'
     login = aaa.login('phil', 'hunter123')
