@@ -1,0 +1,12 @@
+Contributors
+============
+The following is a list of people that contributed to Cork.
+If you think your name is missing from such list please file a bug report.
+
+Thank you very much for your help.
+
+Peter "23min" Bruinsma <peter@23min.com>
+"bbrodriges" <bender@rodriges.org>
+Felipe Valverde <felipe.valverde.campos@gmail.com>
+Hassen Ben Yedder <hassenbenyedder@gmail.com>
+Steven Hiscocks <steven@hiscocks.me.uk>
