@@ -175,15 +175,6 @@ class Test(object):
         self.assert_redirect('/login', '/', post=post)
         assert 'beaker.session.id' in self._app.cookies, "Cookie not found"
 
-        #for n in 'app', 'environ_key', 'options', 'session', 'wrap_app':
-        for n in ():
-            print
-            print("NAME: %s" % n)
-            print("REPR: %s" % repr(getattr(self._app.app, n)))
-            print("DIR: %s" % dir(getattr(self._app.app, n)))
-
-        #ret = self.assert_200('/user_is_anonymous', 'True')
-        #assert 'beaker.session.id' in ret.cookies_set, "Cookie not found"
         self.assert_200('/my_role', 'admin')
         assert 'beaker.session.id' in self._app.cookies, "Cookie not found"
 
@@ -191,13 +182,10 @@ class Test(object):
         session = bottle.request.environ.get('beaker.session')
         print("Session from func. test", repr(session))
 
-        print '#' * 33
         self.assert_200('/login', 'Please insert your credentials')
-        print '#' * 33
+
 
         p = self._app.get('/admin')
-        print (p.location)
-
         assert 'Welcome' in p.body, repr(p)
 
         p = self._app.get('/my_role', status=200)

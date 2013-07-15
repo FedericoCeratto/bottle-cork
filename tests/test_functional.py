@@ -23,9 +23,6 @@ from cork import Cork
 
 REDIR = '302 Found'
 
-#FIXME: fix skipped tests
-
-
 class Test(object):
     def __init__(self):
         self._tmpdir = None
@@ -33,8 +30,6 @@ class Test(object):
         self._app = None
         self._starting_dir = os.getcwd()
 
-    #def setUp(self):
-    #    assert False
     def populate_conf_directory(self):
         """Populate a directory with valid configuration files, to be run just once
         The files are not modified by each test
@@ -148,41 +143,102 @@ class Test(object):
         self._app = TestApp(self._bottle_app)
         print("Test App created")
 
-    def assert_redirect(self, page, redir_page):
+    def teardown(self):
+        print("Doing teardown")
+        try:
+            self._app.post('/logout')
+        except:
+            pass
+
+        # drop the cookie
+        self._app.reset()
+        assert 'beaker.session.id' not in self._app.cookies, "Unexpected cookie found"
+        # drop the cookie
+        self._app.reset()
+
+        #assert self._app.get('/admin').status != '200 OK'
+        os.chdir(self._starting_dir)
+        #if self._tmproot is not None:
+        #    testutils.purge_temp_directory(self._tmproot)
+
+        self._app.app.options['timeout'] = self._default_timeout
+        self._app = None
+        self._tmproot = None
+        self._tmpdir = None
+        print("Teardown done")
+
+    def setup(self):
+        # create test dir and populate it using the example files
+
+        # save the directory where the unit testing has been run
+        if self._starting_dir is None:
+            self._starting_dir = os.getcwd()
+
+        # create json files to be used by Cork
+        self._tmproot = testutils.pick_temp_directory()
+        assert self._tmproot is not None
+
+        # purge the temporary test directory
+        self.remove_temp_dir()
+
+        self.populate_temp_dir()
+        self.create_app_instance()
+        self._app.reset()
+        print("Reset done")
+        self._default_timeout = self._app.app.options['timeout']
+        print("Setup completed")
+
+    def assert_200(self, path, match):
+        """Assert that a page returns 200"""
+        p = self._app.get(path)
+        assert p.status_int == 200, "Status: %d, Location: %s" % \
+            (p.status_int, p.location)
+
+        if match is not None:
+            assert match in p.body, "'%s' not found in body: '%s'" % (match, p.body)
+
+        return p
+
+    def assert_redirect(self, page, redir_page, post=None):
         """Assert that a page redirects to another one"""
-        p = self._app.get(page, status=302)
+
+        # perform GET or POST
+        if post is None:
+            p = self._app.get(page, status=302)
+        else:
+            assert isinstance(post, dict)
+            p = self._app.post(page, post, status=302)
+
         dest = p.location.split(':80/')[-1]
         dest = "/%s" % dest
         assert dest == redir_page, "%s redirects to %s instead of %s" % \
             (page, dest, redir_page)
 
+        return p
+
     def login_as_admin(self):
         """perform log in"""
         assert self._app is not None
         assert 'beaker.session.id' not in self._app.cookies, "Unexpected cookie found"
+
+        self.assert_200('/login', 'Please insert your credentials')
+        assert 'beaker.session.id' not in self._app.cookies, "Unexpected cookie found"
+
         self.assert_redirect('/admin', '/sorry_page')
 
-        p = self._app.post('/login', {'username': 'admin', 'password': 'admin'})
-        assert p.status == REDIR, "Redirect expected"
-        assert p.location == 'http://localhost:80/', \
-            "Incorrect redirect to %s" % p.location
+        self.assert_200('/user_is_anonymous', 'True')
+        assert 'beaker.session.id' not in self._app.cookies, "Unexpected cookie found"
 
+        post = {'username': 'admin', 'password': 'admin'}
+        self.assert_redirect('/login', '/', post=post)
         assert 'beaker.session.id' in self._app.cookies, "Cookie not found"
-
-        a = self._app.app
-        for n in 'app', 'environ_key', 'options', 'session', 'wrap_app':
-            print
-            print(n)
-            print("REP %s" % repr(getattr(a, n)))
-            print("DIR %s" % dir(getattr(a, n)))
 
         import bottle
         session = bottle.request.environ.get('beaker.session')
         print("Session from func. test", repr(session))
 
-        print('running GET myrole')
-        p = self._app.get('/my_role')
-        print('myrole', repr(p))
+        self.assert_200('/login', 'Please insert your credentials')
+
 
         p = self._app.get('/admin')
         assert 'Welcome' in p.body, repr(p)
@@ -193,24 +249,8 @@ class Test(object):
 
         print("Login performed")
 
-    def teardown(self):
-        print("Doing logout")
-        try:
-            self._app.post('/logout')
-        except:
-            pass
 
-        assert self._app.get('/admin').status != '200 OK'
-        os.chdir(self._starting_dir)
-        #if self._tmproot is not None:
-        #    testutils.purge_temp_directory(self._tmproot)
 
-        self._app = None
-        self._tmproot = None
-        self._tmpdir = None
-        print("Teardown done")
-
-    @SkipTest
     def test_functional_login(self):
         assert self._app
         self._app.get('/admin', status=302)
@@ -252,7 +292,6 @@ class Test(object):
         assert p.location == 'http://localhost:80/login', \
             "Incorrect redirect to %s" % p.location
 
-    @SkipTest
     def test_functional_login_logout(self):
         # Incorrect login
         p = self._app.post('/login', {'username': 'admin', 'password': 'BogusPassword'})
@@ -265,6 +304,8 @@ class Test(object):
         assert p.status == REDIR
         assert p.location == 'http://localhost:80/', \
             "Incorrect redirect to %s" % p.location
+
+        self.assert_200('/my_role', 'admin')
 
         # fetch a page successfully
         assert self._app.get('/admin').status == '200 OK', "Admin page should be served"
@@ -279,7 +320,6 @@ class Test(object):
         # fetch the same page, unsuccessfully
         assert self._app.get('/admin').status == REDIR
 
-    @SkipTest
     def test_functional_user_creation_login_deletion(self):
         assert self._app.cookies == {}, "The cookie should be not set"
 
@@ -288,6 +328,8 @@ class Test(object):
         assert p.status == REDIR
         assert p.location == 'http://localhost:80/', \
             "Incorrect redirect to %s" % p.location
+
+        self.assert_200('/my_role', 'admin')
 
         # Create new user
         username = 'BrandNewUser'
