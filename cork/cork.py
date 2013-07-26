@@ -464,6 +464,7 @@ class Cork(object):
                 if v['email_addr'] == email_addr:
                     username = k
                     break
+            else:    
                 raise AAAException("Email address not found.")
 
         else:  # username is provided
