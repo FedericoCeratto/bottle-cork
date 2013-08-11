@@ -26,11 +26,11 @@ authorize = aaa.make_auth_decorator(fail_redirect="/login", role="user")
 import datetime
 app = bottle.app()
 session_opts = {
+    'session.cookie_expires': True,
+    'session.encrypt_key': 'please use a random key and keep it secret!',
+    'session.timeout': 3600 * 24,  # 1 day
     'session.type': 'cookie',
     'session.validate_key': True,
-    'session.cookie_expires': True,
-    'session.timeout': 3600 * 24,  # 1 day
-    'session.encrypt_key': 'please use a random key and keep it secret!',
 }
 app = SessionMiddleware(app, session_opts)
 
