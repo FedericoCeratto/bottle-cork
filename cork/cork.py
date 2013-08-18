@@ -84,7 +84,7 @@ class Cork(object):
     def login(self, username, password, success_redirect=None,
         fail_redirect=None):
         """Check login credentials for an existing user.
-        Optionally redirect the user to another page (tipically /login)
+        Optionally redirect the user to another page (typically /login)
 
         :param username: username
         :type username: str.
@@ -104,6 +104,8 @@ class Cork(object):
                     self._store.users[username]['hash']):
                 # Setup session data
                 self._setup_cookie(username)
+                self._store.users[username]['last_login'] = str(datetime.utcnow())
+                self._store.save_users()
                 if success_redirect:
                     bottle.redirect(success_redirect)
                 return True
@@ -280,7 +282,8 @@ class Cork(object):
             'hash': self._hash(username, password),
             'email_addr': email_addr,
             'desc': description,
-            'creation_date': tstamp
+            'creation_date': tstamp,
+            'last_login': tstamp
         }
         self._store.save_users()
 
@@ -431,7 +434,8 @@ class Cork(object):
             'hash': data['hash'],
             'email_addr': data['email_addr'],
             'desc': data['desc'],
-            'creation_date': data['creation_date']
+            'creation_date': data['creation_date'],
+            'last_login': str(datetime.utcnow())
         }
         self._store.save_users()
 

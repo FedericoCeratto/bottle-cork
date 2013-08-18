@@ -149,11 +149,13 @@ class SqlAlchemyBackend(base_backend.Backend):
 
         self._users = Table(users_tname, self._metadata,
             Column('username', String(128), primary_key=True),
-            Column('role', ForeignKey('roles.role')),
+            Column('role', ForeignKey(roles_tname + '.role')),
             Column('hash', String(256), nullable=False),
             Column('email_addr', String(128)),
             Column('desc', String(128)),
-            Column('creation_date', String(128), nullable=False)
+            Column('creation_date', String(128), nullable=False),
+            Column('last_login', String(128), nullable=False)
+
         )
         self._roles = Table(roles_tname, self._metadata,
             Column('role', String(128), primary_key=True),
@@ -162,7 +164,7 @@ class SqlAlchemyBackend(base_backend.Backend):
         self._pending_reg = Table(pending_reg_tname, self._metadata,
             Column('code', String(128), primary_key=True),
             Column('username', String(128), nullable=False),
-            Column('role', ForeignKey('roles.role')),
+            Column('role', ForeignKey(roles_tname + '.role')),
             Column('hash', String(256), nullable=False),
             Column('email_addr', String(128)),
             Column('desc', String(128)),
