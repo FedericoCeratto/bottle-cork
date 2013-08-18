@@ -165,7 +165,8 @@ class UsersTable(Table):
             ('hash', str),
             ('email_addr', str),
             ('desc', str),
-            ('creation_date', str)
+            ('creation_date', str),
+            ('last_login', str)
         )
         super(UsersTable, self).__init__(*args, **kwargs)
 
