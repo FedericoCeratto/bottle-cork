@@ -104,7 +104,7 @@ class Cork(object):
                     self._store.users[username]['hash']):
                 # Setup session data
                 self._setup_cookie(username)
-                self._store.users['last_login'] = str(datetime.utcnow())
+                self._store.users[username]['last_login'] = str(datetime.utcnow())
                 self._store.save_users()
                 if success_redirect:
                     bottle.redirect(success_redirect)
