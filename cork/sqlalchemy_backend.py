@@ -153,7 +153,9 @@ class SqlAlchemyBackend(base_backend.Backend):
             Column('hash', String(256), nullable=False),
             Column('email_addr', String(128)),
             Column('desc', String(128)),
-            Column('creation_date', String(128), nullable=False)
+            Column('creation_date', String(128), nullable=False),
+            Column('last_login', String(128), nullable=False)
+
         )
         self._roles = Table(roles_tname, self._metadata,
             Column('role', String(128), primary_key=True),
