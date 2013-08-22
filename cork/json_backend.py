@@ -22,7 +22,7 @@ class JsonBackend(object):
     """JSON file-based storage backend."""
 
     def __init__(self, directory, users_fname='users',
-            roles_fname='roles', pending_reg_fname='register', initialize=False):
+            roles_fname='roles', pending_reg_fname='register'):
         """Data storage class. Handles JSON files
 
         :param users_fname: users file name (without .json)
@@ -43,8 +43,11 @@ class JsonBackend(object):
         self._mtimes = {}
         self._pending_reg_fname = pending_reg_fname
         self.pending_registrations = {}
-        if initialize:
-            self._initialize_storage()
+        self._refresh()  # load users and roles
+
+    def initialize(self):
+        """Initialize the JSON storage"""
+        self._initialize_storage()
         self._refresh()  # load users and roles
 
     def _initialize_storage(self):

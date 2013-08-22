@@ -136,7 +136,7 @@ class MongoMultiValueTable(MongoTable):
 
 
 class MongoDBBackend(Backend):
-    def __init__(self, db_name='cork', hostname='localhost', port=27017, initialize=False):
+    def __init__(self, db_name='cork', hostname='localhost', port=27017):
         """Initialize MongoDB Backend"""
         connection = MongoClient(host=hostname, port=port)
         db = connection[db_name]
@@ -148,7 +148,7 @@ class MongoDBBackend(Backend):
         )
         self.roles = MongoSingleValueTable('roles', 'role', db.roles)
 
-        if initialize:
+    def initialize(self):
             self._initialize_storage()
 
     def _initialize_storage(self):

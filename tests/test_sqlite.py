@@ -59,7 +59,7 @@ class MockedUnauthenticatedCork(Cork):
 
 
 def setup_test_db():
-    b = SQLiteBackend(':memory:', initialize=True)
+    b = SQLiteBackend(':memory:')
     b.connection.executescript("""
         INSERT INTO users (username, email_addr, desc, role, hash, creation_date) VALUES
         (
@@ -100,6 +100,7 @@ def purge_test_db():
 def test_initialize_storage():
     mb = setup_test_db()
     Cork(backend=mb)
+    cork.initialize()
 
 
 @with_setup(setup_mockedadmin, purge_test_db)

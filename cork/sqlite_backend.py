@@ -197,7 +197,7 @@ class PendingRegistrationsTable(Table):
 class SQLiteBackend(base_backend.Backend):
 
     def __init__(self, filename, users_tname='users', roles_tname='roles',
-            pending_reg_tname='register', initialize=False):
+            pending_reg_tname='register'):
 
         self._filename = filename
 
@@ -205,11 +205,11 @@ class SQLiteBackend(base_backend.Backend):
         self.roles = RolesTable(self, roles_tname)
         self.pending_registrations = PendingRegistrationsTable(self, pending_reg_tname)
 
-        if initialize:
-            self.users.create_table()
-            self.roles.create_table()
-            self.pending_registrations.create_table()
-            log.debug("Tables created")
+    def initialize(self):
+        self.users.create_table()
+        self.roles.create_table()
+        self.pending_registrations.create_table()
+        log.debug("Tables created")
 
     @property
     def connection(self):

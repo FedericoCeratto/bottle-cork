@@ -54,8 +54,7 @@ class AuthException(AAAException):
 class Cork(object):
 
     def __init__(self, directory=None, backend=None, email_sender=None,
-        initialize=False, session_domain=None, smtp_server=None,
-        smtp_url='localhost'):
+        session_domain=None, smtp_server=None, smtp_url='localhost'):
         """Auth/Authorization/Accounting class
 
         :param directory: configuration directory
@@ -75,11 +74,14 @@ class Cork(object):
         # Setup JsonBackend by default for backward compatibility.
         if backend is None:
             self._store = JsonBackend(directory, users_fname='users',
-                roles_fname='roles', pending_reg_fname='register',
-                initialize=initialize)
+                roles_fname='roles', pending_reg_fname='register')
 
         else:
             self._store = backend
+
+
+    def initialize(self):
+        self._store.initialize()
 
     def login(self, username, password, success_redirect=None,
         fail_redirect=None):

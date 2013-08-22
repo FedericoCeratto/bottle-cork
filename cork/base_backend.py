@@ -5,6 +5,8 @@
 # Base Backend.
 #
 
+from abc import ABCMeta, abstractmethod
+
 class BackendIOException(Exception):
     """Generic Backend I/O Exception"""
     pass
@@ -14,9 +16,15 @@ def ni(*args, **kwargs):
 
 class Backend(object):
     """Base Backend class - to be subclassed by real backends."""
+    __metaclass__ = ABCMeta
+
     save_users = ni
     save_roles = ni
     save_pending_registrations = ni
+
+    @abstractmethod
+    def initialize(self):
+        pass
 
 class Table(object):
     """Base Table class - to be subclassed by real backends."""

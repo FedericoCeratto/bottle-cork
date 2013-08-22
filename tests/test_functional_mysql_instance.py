@@ -69,12 +69,13 @@ def connect_to_test_db():
         db_name = 'cork_functional_test'
 
     uri = "mysql://root:%s@localhost/%s" % (password, db_name)
-    return SqlAlchemyBackend(uri, initialize=True)
+    return SqlAlchemyBackend(uri)
 
 
 def setup_test_db():
 
     mb = connect_to_test_db()
+    mb.initialize()
 
     ## Purge DB
     mb.users.empty_table()
@@ -130,8 +131,8 @@ def setup_mocked_unauthenticated():
 @with_setup(setup_test_db, purge_test_db)
 def test_initialize_storage():
     mb = connect_to_test_db()
-    Cork(backend=mb)
-
+    c = Cork(backend=mb)
+    c.initialize()
 
 @with_setup(setup_mockedadmin, purge_test_db)
 def test_mockedadmin():
