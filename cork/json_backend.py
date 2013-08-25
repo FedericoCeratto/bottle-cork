@@ -93,7 +93,7 @@ class JsonBackend(object):
         """Save obj in JSON format in a file in self._directory"""
         fname = "%s/%s.json" % (self._directory, fname)
         try:
-            s = json.dumps(obj)
+            s = json.dumps(obj, indent=4, separators=(',', ': '),encoding="Latin-1")
             with open("%s.tmp" % fname, 'wb') as f:
                 f.write(s)
                 f.flush()
