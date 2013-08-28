@@ -126,26 +126,14 @@ class SqlSingleValueTable(SqlTable):
 class SqlAlchemyBackend(base_backend.Backend):
 
     def __init__(self, db_full_url, users_tname='users', roles_tname='roles',
-            pending_reg_tname='register', initialize=False):
+            pending_reg_tname='register'):
 
         if not sqlalchemy_available:
             raise RuntimeError("The SQLAlchemy library is not available.")
 
         self._metadata = MetaData()
-        if initialize:
-            # Create new database if needed.
-            db_url, db_name = db_full_url.rsplit('/', 1)
-            self._engine = create_engine(db_url)
-            try:
-                self._engine.execute("CREATE DATABASE %s" % db_name)
-            except Exception, e:
-                log.info("Failed DB creation: %s" % e)
-
-            self._engine.execute("USE %s" % db_name)
-
-        else:
-            self._engine = create_engine(db_full_url)
-
+        self._dbURL = db_full_url
+        self._engine = create_engine(db_full_url)
 
         self._users = Table(users_tname, self._metadata,
             Column('username', String(128), primary_key=True),
@@ -175,10 +163,16 @@ class SqlAlchemyBackend(base_backend.Backend):
         self.roles = SqlSingleValueTable(self._engine, self._roles, 'role', 'level')
         self.pending_registrations = SqlTable(self._engine, self._pending_reg, 'code')
 
-        if initialize:
-            self._initialize_storage(db_name)
-            log.debug("Tables created")
+    def initialize(self):
+        db_url, db_name = self._dbURL.rsplit('/', 1)
+        try:
+            self._engine.execute("CREATE DATABASE %s" % db_name)
+        except Exception, e:
+            log.info("Failed DB creation: %s" % e)
 
+        self._engine.execute("USE %s" % db_name)
+        self._initialize_storage(db_name)
+        log.debug("Tables created")
 
     def _initialize_storage(self, db_name):
         self._metadata.create_all(self._engine)

@@ -119,7 +119,8 @@ def test_init():
 
 @with_setup(setup_dir, teardown_dir)
 def test_initialize_storage():
-    jb = JsonBackend(testdir, initialize=True)
+    jb = JsonBackend(testdir)
+    jb.initialize()
     Cork(backend=jb)
     with open("%s/users.json" % testdir) as f:
         assert f.readlines() == ['{}']
@@ -139,8 +140,8 @@ def test_initialize_storage():
 @with_setup(setup_dir, teardown_dir)
 def test_unable_to_save():
     bogus_dir = '/___inexisting_directory___'
-    Cork(bogus_dir, initialize=True)
-
+    obj = Cork(bogus_dir)
+    obj.initialize()
 
 @with_setup(setup_mockedadmin, teardown_dir)
 def test_mockedadmin():

@@ -43,7 +43,8 @@ class Test(object):
         os.mkdir(self._tmpdir)
         os.mkdir(self._tmpdir + "/example_conf")
 
-        cork = Cork(os.path.join(self._tmpdir, "example_conf"), initialize=True)
+        cork = Cork(os.path.join(self._tmpdir, "example_conf"))
+        cork.initialize()
 
         cork._store.roles['admin'] = 100
         cork._store.roles['editor'] = 60

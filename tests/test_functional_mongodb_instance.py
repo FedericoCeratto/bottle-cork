@@ -58,7 +58,7 @@ class MockedUnauthenticatedCork(Cork):
         cookie_name = username
 
 def setup_test_db():
-    mb = MongoDBBackend(db_name='cork-functional-test', initialize=True)
+    mb = MongoDBBackend(db_name='cork-functional-test')
 
     # Purge DB
     mb.users._coll.drop()
@@ -85,7 +85,8 @@ def setup_test_db():
 
 def purge_test_db():
     # Purge DB
-    mb = MongoDBBackend(db_name='cork-functional-test', initialize=True)
+    mb = MongoDBBackend(db_name='cork-functional-test')
+    mb.initialize()
     mb.users._coll.drop()
     mb.roles._coll.drop()
     mb.pending_registrations._coll.drop()
@@ -109,9 +110,9 @@ def setup_mocked_unauthenticated():
 
 @with_setup(setup_test_db, purge_test_db)
 def test_initialize_storage():
-    mb = MongoDBBackend(db_name='cork-functional-test', initialize=True)
-    Cork(backend=mb)
-
+    mb = MongoDBBackend(db_name='cork-functional-test')
+    obj = Cork(backend=mb)
+    obj.initialize()
 
 @with_setup(setup_mockedadmin, purge_test_db)
 def test_mockedadmin():
