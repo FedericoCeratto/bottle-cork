@@ -77,9 +77,10 @@ def setup_test_db():
     mb = connect_to_test_db()
 
     ## Purge DB
-    mb.users.empty_table()
-    mb.roles.empty_table()
-    mb.pending_registrations.empty_table()
+    mb._drop_all_tables()
+    #mb.users.empty_table()
+    #mb.roles.empty_table()
+    #mb.pending_registrations.empty_table()
 
     assert len(mb.roles) == 0
     assert len(mb.users) == 0

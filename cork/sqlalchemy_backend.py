@@ -141,7 +141,9 @@ class SqlAlchemyBackend(base_backend.Backend):
             except Exception, e:
                 log.info("Failed DB creation: %s" % e)
 
-            self._engine.execute("USE %s" % db_name)
+            # SQLite in-memory database URL: "sqlite://:memory:"
+            if db_name != ':memory:':
+                self._engine.execute("USE %s" % db_name)
 
         else:
             self._engine = create_engine(db_full_url)
@@ -185,7 +187,7 @@ class SqlAlchemyBackend(base_backend.Backend):
 
     def _drop_all_tables(self):
         for table in reversed(self._metadata.sorted_tables):
-            log.info("Dropping table %s" % repr(table))
+            log.info("Dropping table %s" % repr(table.name))
             self._engine.execute(table.delete())
 
     def save_users(self): pass
