@@ -252,7 +252,8 @@ def test_iteritems_on_users():
     for k, v in aaa._store.users.iteritems():
         assert isinstance(k, str)
         assert isinstance(v, dict)
-        expected_dkeys = set(('hash', 'email_addr', 'role', 'creation_date', 'desc'))
+        expected_dkeys = set(('hash', 'email_addr', 'role', 'creation_date',
+            'desc', 'last_login'))
         dkeys = set(v.keys())
 
         extra = dkeys - expected_dkeys
