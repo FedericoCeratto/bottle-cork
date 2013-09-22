@@ -1,3 +1,10 @@
+v0.10 2013-09-22
+ * Decorator support added. #6
+ * 'last_login' user attribute added. #47 #48
+ * In-memory SQLite Database support added.
+ * CONTRIBUTORS.txt added
+ * Bugfix: configurable role table name #46
+ * Bugfix: email address #42
 v0.9 2013-07-07
  * SQLite support added.
  * SMTP URL bugfix #38
