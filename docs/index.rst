@@ -20,6 +20,15 @@ It is designed to stay out of the way and let you focus on what your application
 
 News:
 
+* 2013-09-22: Version 0.10
+
+  * Decorator support added. #6
+  * 'last_login' user attribute added. #47 #48
+  * In-memory SQLite Database support added.
+  * CONTRIBUTORS.txt added
+  * Bugfix: configurable role table name #46
+  * Bugfix: email address #42
+
 * 2013-07-07: Version 0.9
 
   * SQLite support added.
@@ -27,7 +36,7 @@ News:
 
 * 2013-05-27: Version 0.8
 
-   * scrypt implemented, bugfixes #34 #35 #32
+  * scrypt implemented, bugfixes #34 #35 #32
 
 * 2013-04-08: Version 0.7
 
