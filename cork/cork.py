@@ -842,9 +842,9 @@ class Mailer(object):
         try:
             if proto == 'ssl':
                 log.debug("Setting up SSL")
-                session = SMTP_SSL(self._conf['fqdn'])
+                session = SMTP_SSL(self._conf['fqdn'], self._conf['port'])
             else:
-                session = SMTP(self._conf['fqdn'])
+                session = SMTP(self._conf['fqdn'], self._conf['port'])
 
             if proto == 'starttls':
                 log.debug('Sending EHLO and STARTTLS')
