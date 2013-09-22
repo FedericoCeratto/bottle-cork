@@ -30,7 +30,6 @@ setup(
         'Beaker',
         'Bottle',
         'pycrypto',
-        'setuptools',
     ],
     extras_require = {
         'scrypt': ["scrypt>=0.6.1"],
