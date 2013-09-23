@@ -827,7 +827,7 @@ class Mailer(object):
         thread.start()
         self._threads.append(thread)
 
-    def _send(self, email_addr, msg):  # pragma: no cover
+    def _send(self, email_addr, msg):
         """Deliver an email using SMTP
 
         :param email_addr: recipient
@@ -861,7 +861,7 @@ class Mailer(object):
             session.quit()
             log.info('Email sent')
 
-        except Exception as e:
+        except Exception as e:  # pragma: no cover
             log.error("Error sending email: %s" % e, exc_info=True)
 
     def join(self):

@@ -721,19 +721,68 @@ def test_smtp_url_parsing_IPv6():
     assert c['fqdn'] == '[2001:0:0123:4567:89ab:cdef]'
 
 
-# Patch the mailer _send() method to prevent network interactions
+# Patch the SMTP class to prevent network interactions
 @with_setup(setup_mockedadmin, teardown_dir)
-@mock.patch.object(Mailer, '_send')
-def test_send_email(mocked):
-    assert aaa.mailer._conf == {
-        'fqdn': 'localhost',
-        'pass': None,
-        'port': 25,
-        'proto': 'smtp',
-        'user': None,
-    }
+@mock.patch('cork.cork.SMTP')
+def test_send_email_SMTP(SMTP):
+    SMTP.return_value = msession = mock.Mock() # session instance
+
     aaa.mailer.send_email('address', ' sbj', 'text')
     aaa.mailer.join()
+
+    SMTP.assert_called_once_with('localhost', 25)
+    assert msession.sendmail.call_count == 1
+    assert msession.quit.call_count == 1
+    assert len(msession.method_calls) == 2
+
+# Patch the SMTP_SSL class to prevent network interactions
+@with_setup(setup_mockedadmin, teardown_dir)
+@mock.patch('cork.cork.SMTP_SSL')
+def test_send_email_SMTP_SSL(SMTP_SSL):
+    SMTP_SSL.return_value = msession = mock.Mock() # session instance
+
+    aaa.mailer._conf['proto'] = 'ssl'
+    aaa.mailer.send_email('address', ' sbj', 'text')
+    aaa.mailer.join()
+
+    SMTP_SSL.assert_called_once_with('localhost', 25)
+    assert msession.sendmail.call_count == 1
+    assert msession.quit.call_count == 1
+    assert len(msession.method_calls) == 2
+
+# Patch the SMTP_SSL class to prevent network interactions
+@with_setup(setup_mockedadmin, teardown_dir)
+@mock.patch('cork.cork.SMTP_SSL')
+def test_send_email_SMTP_SSL_with_login(SMTP_SSL):
+    SMTP_SSL.return_value = msession = mock.Mock() # session instance
+
+    aaa.mailer._conf['proto'] = 'ssl'
+    aaa.mailer._conf['user'] = 'username'
+    aaa.mailer.send_email('address', ' sbj', 'text')
+    aaa.mailer.join()
+
+    SMTP_SSL.assert_called_once_with('localhost', 25)
+    assert msession.login.call_count == 1
+    assert msession.sendmail.call_count == 1
+    assert msession.quit.call_count == 1
+    assert len(msession.method_calls) == 3
+
+# Patch the SMTP_SSL class to prevent network interactions
+@with_setup(setup_mockedadmin, teardown_dir)
+@mock.patch('cork.cork.SMTP')
+def test_send_email_SMTP_STARTTLS(SMTP):
+    SMTP.return_value = msession = mock.Mock() # session instance
+
+    aaa.mailer._conf['proto'] = 'starttls'
+    aaa.mailer.send_email('address', ' sbj', 'text')
+    aaa.mailer.join()
+
+    SMTP.assert_called_once_with('localhost', 25)
+    assert msession.ehlo.call_count == 2
+    assert msession.starttls.call_count == 1
+    assert msession.sendmail.call_count == 1
+    assert msession.quit.call_count == 1
+    assert len(msession.method_calls) == 5
 
 
 @raises(AAAException)
