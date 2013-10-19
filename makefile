@@ -48,6 +48,9 @@ coverage-mongodb: coverage
 coverage-mysql: TESTGLOB=test_functional_mysql_instance.py
 coverage-mysql: coverage
 
+# target: pylint - run pylint
+pylint:
+	pylint cork tests
 
 # target: doc - Build sphinx docs
 doc:
