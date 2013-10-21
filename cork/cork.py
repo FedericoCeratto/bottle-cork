@@ -208,16 +208,18 @@ class Cork(object):
 
         return
 
-    def create_role(self, role, level):
+    def create_role(self, role, level, initialize=False):
         """Create a new role.
 
         :param role: role name
         :type role: str.
         :param level: role level (0=lowest, 100=admin)
         :type level: int.
+        :param initialize: ignores current user previleges if true
+        :type initialize: bool.
         :raises: AuthException on errors
         """
-        if self.current_user.level < 100:
+        if not initialize and self.current_user.level < 100:
             raise AuthException("The current user is not authorized to ")
         if role in self._store.roles:
             raise AAAException("The role is already existing")
@@ -251,7 +253,7 @@ class Cork(object):
             yield (role, self._store.roles[role])
 
     def create_user(self, username, role, password, email_addr=None,
-        description=None):
+        description=None, initialize=False):
         """Create a new user account.
         This method is available to users with level>=100
 
@@ -265,10 +267,12 @@ class Cork(object):
         :type email_addr: str.
         :param description: description (free form)
         :type description: str.
+        :param initialize: ignores current user previleges if true
+        :type initialize: bool.
         :raises: AuthException on errors
         """
         assert username, "Username must be provided."
-        if self.current_user.level < 100:
+        if not initialize and self.current_user.level < 100:
             raise AuthException("The current user is not authorized" \
                 " to create users.")
 
