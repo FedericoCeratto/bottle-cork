@@ -1,6 +1,6 @@
 
 Cork - Authentication for the Bottle web framework
-================================
+==================================================
 
 .. image:: cork.png
    :name: logo
@@ -18,7 +18,34 @@ Cork provides a simple set of methods to implement Authentication and Authorizat
 It is designed to stay out of the way and let you focus on what your application should do.
 
 
-News:
+Cork is under development - contributions are welcome.
+
+Features
+--------
+
+* Minimal design, easy to tweak.
+
+* Multiple storage backends are supported:
+
+  * `MySQL <http://mysql.com>`_, `MariaDB <http://mariadb.com>`_, `PostgreSQL <http://postgresql.org>`_ using `SQLAlchemy <http://sqlalchemy.org/>`_
+
+  * `MongoDb <http://mongodb.com>`_
+
+  * `SQLite <http://sqlite.com>`_
+
+  * Local JSON files for low-traffic web applications
+
+* Simple role-based authentication. User are authorized by role e.g. 'admin', 'user', 'editor'.
+
+  * Admin users can create and delete user accounts and roles.
+
+* User registration and password reset using email delivery and confirmation.
+
+* Unit-tested and `code covered <./cover/cork_cork.html>`_
+
+
+News
+----
 
 * 2013-09-22: Version 0.10
 
@@ -50,26 +77,6 @@ News:
   * Fixed function to update user's email address.
   * More informative log message for missing Pycrypto.
 
-Cork is under development - contributions are welcome.
-
-Features
---------
-
-* Minimal design, easy to tweak.
-
-* Designed for web application with moderate userbases. User credentials are stored in JSON files.
-
-* Simple role-based authentication. User are authorized by role e.g. 'admin', 'user', 'editor'.
-
-  * Admin users can create and delete user accounts and roles.
-
-* User registration and password reset using email delivery and confirmation.
-
-* Unit-tested and almost fully `code covered <./cover/cork_cork.html>`_
-
-* Multiple backends support (e.g. storing users/roles in a key/value database).
-
-* Thread safe.
 
 Roadmap
 -------
@@ -79,6 +86,7 @@ Roadmap
 * Hooks to share session data between multiple hosts
 
 * Flask support
+
 
 Basic usage
 -----------
@@ -91,77 +99,24 @@ Installation::
 
 Use virtualenv on package-based Linux distributions! `Learn why <http://workaround.org/easy-install-debian>`_
 
-A fully working example is provided with the Cork `sources <https://github.com/FedericoCeratto/bottle-cork/downloads>`_
+Fully working examples are provided with the `sources <https://github.com/FedericoCeratto/bottle-cork/downloads>`_
 
-**Example web application**::
+* :doc:`example_webapp_decorated`
 
-    from cork import Cork
+* :doc:`example_webapp`
 
-    # Use users.json and roles.json in the local example_conf directory
-    aaa = Cork('example_conf')
-
-    @bottle.route('/login', method='POST')
-    def login():
-        username = request.POST.get('user', '')
-        password = request.POST.get('pwd', '')
-        aaa.login(username, password, success_redirect='/', fail_redirect='/login')
-
-    @bottle.route('/logout')
-    def logout():
-        aaa.current_user.logout(redirect='/login')
-
-    @bottle.route('/')
-    def index():
-        """Only authenticated users can see this"""
-        aaa.require(fail_redirect='/sorry_page')
-        return "Welcome %s" % aaa.current_user.username
-
-    @bottle.route('/admin')
-    def admin():
-        """Only administrators can see this"""
-        aaa.require(role='admin', fail_redirect='/sorry_page')
-        return 'Welcome administrators'
-
-    @bottle.route('/register', method='POST')
-    def register():
-        """Users can create new accounts, but only with 'user' role"""
-        username = request.POST.get('user', '')
-        password = request.POST.get('pwd', '')
-        email_addr = request.POST.get('email_addr', '')
-        aaa.register(username, password, email_addr)
-        return 'Please check your inbox.'
-
-
-    # Web application main
-
-    def main():
-
-        session_opts = {
-            'session.type': 'cookie',
-            'session.validate_key': True,
-        }
-
-        # Setup Beaker middleware to handle sessions and cookies
-        app = bottle.default_app()
-        app = SessionMiddleware(app, session_opts)
-
-        # Start the Bottle webapp
-        bottle.run(app=app, reloader=True)
-
-    if __name__ == "__main__":
-        main()
 
 Code documentation
 ------------------
 
-.. toctree::
-   :maxdepth: 2
 
+:doc:`cork_module`
 
-.. automodule:: cork.cork
-    :members:
-    :inherited-members:
-    :undoc-members:
+:doc:`sqlalchemy_backend`
+
+:doc:`mongodb_backend`
+
+:doc:`sqlite_backend`
 
 
 Indices and tables
@@ -170,7 +125,3 @@ Indices and tables
 * :ref:`genindex`
 * :ref:`modindex`
 * :ref:`search`
-
-.. raw:: html
-
-  <iframe frameborder="0" height="800px" width="600px" src="http://firelet.net:8080/comments/read/cork"></iframe>
