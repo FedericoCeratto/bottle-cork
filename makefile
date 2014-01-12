@@ -54,12 +54,13 @@ pylint:
 
 # target: doc - Build sphinx docs
 doc:
-	cd docs && make html
+	#cd docs && sphinx-build -b html .  _build/html
+	sphinx-build -b html docs  docs/_build/html
 
 # target: docwithcoverage - Build sphinx docs
 docwithcoverage: coverage doc
 
 # target: rsync - Build docs with coverage and publish them
 rsync: build docwithcoverage
-	echo rsync -avz _build/html/ firelet.net:~/websites/$(PROJ)
+	cd docs && rsync -avz _build/html/ firelet.net:~/websites/$(PROJ)
 
