@@ -305,7 +305,7 @@ class Cork(object):
         """List users.
 
         :return: (username, role, email_addr, description) generator (sorted by
-        username)
+            username)
         """
         for un in sorted(self._store.users):
             d = self._store.users[un]
