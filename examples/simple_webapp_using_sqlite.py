@@ -18,9 +18,6 @@ logging.basicConfig(format='localhost - - [%(asctime)s] %(message)s', level=logg
 log = logging.getLogger(__name__)
 bottle.debug(True)
 
-# Use users.json and roles.json in the local example_conf directory
-aaa = Cork('example_conf', email_sender='federico.ceratto@gmail.com', smtp_url='smtp://smtp.magnet.ie')
-
 def populate_backend():
     b = SQLiteBackend('example.db', initialize=True)
     b.connection.executescript("""
