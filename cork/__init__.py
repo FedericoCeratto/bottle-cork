@@ -5,3 +5,4 @@
 # Backends API - used to make backends available for importing
 #
 from cork import Cork, JsonBackend, AAAException, AuthException, Mailer
+from flaskcork import FlaskCork, Redirect
