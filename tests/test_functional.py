@@ -1,4 +1,4 @@
-# Cork - Authentication module for tyyhe Bottle web framework
+# Cork - Authentication module for the Bottle web framework
 # Copyright (C) 2013 Federico Ceratto and others, see AUTHORS file.
 # Released under LGPLv3+ license, see LICENSE.txt
 #
@@ -363,6 +363,22 @@ class Test(object):
         assert p.status == REDIR and p.location == 'http://localhost:80/login', \
             "User login should fail"
         assert self._app.cookies == {}, "The cookie should not be set"
+
+        # Log in as Admin, again
+        p = self._app.post('/login', {'username': 'admin', 'password': 'admin'})
+        assert p.status == REDIR
+        assert p.location == 'http://localhost:80/', \
+            "Incorrect redirect to %s" % p.location
+
+        self.assert_200('/my_role', 'admin')
+
+        # Delete the user
+        ret = self._app.post('/delete_user', {
+            'username': username,
+        })
+        retj = json.loads(ret.body)
+        assert 'ok' in retj and retj['ok'] == True, "Failed user deletion: %s" % \
+            ret.body
 
     #def test_functional_user_registration(self):
     #    assert self._app.cookies == {}, "The cookie should be not set"
