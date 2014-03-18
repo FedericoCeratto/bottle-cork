@@ -8,6 +8,7 @@ install:
   - pip install MySQL-python --use-mirrors
   - pip install SQLAlchemy --use-mirrors
   - pip install coveralls --use-mirrors
+  - pip install flask --use-mirrors
   - pip install pymongo --use-mirrors
   - pip install scrypt --use-mirrors
   - pip install webtest --use-mirrors
