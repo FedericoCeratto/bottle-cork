@@ -1,7 +1,12 @@
-*.pyc
-*~
 *.priv
+*.pyc
+*.swp
+*~
 .coverage
+.supcut
+.tox
 build
-
 cover
+dist/
+docs/_build
+docs/bw_sphinxtheme
