@@ -27,6 +27,7 @@ from smtplib import SMTP, SMTP_SSL
 from threading import Thread
 from time import time
 import bottle
+import flask
 import os
 import re
 import uuid
@@ -51,7 +52,8 @@ class AuthException(AAAException):
     pass
 
 
-class Cork(object):
+class BaseCork(object):
+    """Abstract class"""
 
     def __init__(self, directory=None, backend=None, email_sender=None,
         initialize=False, session_domain=None, smtp_server=None,
@@ -107,11 +109,11 @@ class Cork(object):
                 self._store.users[username]['last_login'] = str(datetime.utcnow())
                 self._store.save_users()
                 if success_redirect:
-                    bottle.redirect(success_redirect)
+                    self._redirect(success_redirect)
                 return True
 
         if fail_redirect:
-            bottle.redirect(fail_redirect)
+            self._redirect(fail_redirect)
 
         return False
 
@@ -128,9 +130,9 @@ class Cork(object):
             session.delete()
         except Exception, e:
             log.debug("Exception %s while logging out." % repr(e))
-            bottle.redirect(fail_redirect)
+            self._redirect(fail_redirect)
 
-        bottle.redirect(success_redirect)
+        self._redirect(success_redirect)
 
     def require(self, username=None, role=None, fixed_role=False,
         fail_redirect=None):
@@ -170,7 +172,7 @@ class Cork(object):
             if fail_redirect is None:
                 raise AuthException("Unauthenticated user")
             else:
-                bottle.redirect(fail_redirect)
+                self._redirect(fail_redirect)
 
         # Authorization
         if cu.role not in self._store.roles:
@@ -182,7 +184,7 @@ class Cork(object):
                     raise AuthException("Unauthorized access: incorrect"
                         " username")
                 else:
-                    bottle.redirect(fail_redirect)
+                    self._redirect(fail_redirect)
 
         if fixed_role:
             if role == self.current_user.role:
@@ -191,7 +193,7 @@ class Cork(object):
             if fail_redirect is None:
                 raise AuthException("Unauthorized access: incorrect role")
             else:
-                bottle.redirect(fail_redirect)
+                self._redirect(fail_redirect)
 
         else:
             if role is not None:
@@ -204,7 +206,7 @@ class Cork(object):
                 if fail_redirect is None:
                     raise AuthException("Unauthorized access: ")
                 else:
-                    bottle.redirect(fail_redirect)
+                    self._redirect(fail_redirect)
 
         return
 
@@ -546,18 +548,14 @@ class Cork(object):
 
     ## Private methods
 
-    @property
-    def _beaker_session(self):
-        """Get Beaker session"""
-        return bottle.request.environ.get('beaker.session')
-
     def _setup_cookie(self, username):
         """Setup cookie for a user that just logged in"""
         session = self._beaker_session
         session['username'] = username
         if self.session_domain is not None:
             session.domain = self.session_domain
-        session.save()
+
+        self._save_session()
 
     def _hash(self, username, pwd, salt=None, algo=None):
         """Hash username and password, generating salt value if required
@@ -732,6 +730,39 @@ class User(object):
         except KeyError:
             raise AAAException("Nonexistent user.")
         self._cork._store.save_users()
+
+
+class Redirect(Exception):
+    pass
+
+def raise_redirect(path):
+    raise Redirect(path)
+
+class Cork(BaseCork):
+    @staticmethod
+    def _redirect(location):
+        bottle.redirect(location)
+
+    @property
+    def _beaker_session(self):
+        """Get Beaker session"""
+        return bottle.request.environ.get('beaker.session')
+
+    def _save_session(self):
+        self._beaker_session.save()
+
+class FlaskCork(BaseCork):
+    @staticmethod
+    def _redirect(location):
+        raise_redirect(location)
+
+    @property
+    def _beaker_session(self):
+        """Get Beaker session"""
+        return flask.session
+
+    def _save_session(self):
+        pass
 
 
 class Mailer(object):
