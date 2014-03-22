@@ -331,8 +331,14 @@ class Test(object):
 
         self.assert_200('/my_role', 'admin')
 
-        # Create new user
         username = 'BrandNewUser'
+
+        # Delete the user
+        ret = self._app.post('/delete_user', {
+            'username': username,
+        })
+
+        # Create new user
         password = '42IsTheAnswer'
         ret = self._app.post('/create_user', {
             'username': username,
