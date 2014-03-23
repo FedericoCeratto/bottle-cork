@@ -27,7 +27,7 @@ def pick_temp_directory():
 
     if sys.platform == 'linux2':
         # In-memory filesystem allows faster testing.
-        return "/dev/shm"
+        return tempfile.mkdtemp(dir='/dev/shm')
 
     return tempfile.mkdtemp()
 
