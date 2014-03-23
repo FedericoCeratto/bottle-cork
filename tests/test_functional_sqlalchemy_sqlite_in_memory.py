@@ -2,8 +2,8 @@
 # Copyright (C) 2013 Federico Ceratto and others, see AUTHORS file.
 # Released under LGPLv3+ license, see LICENSE.txt
 #
-# Unit testing - test the Cork module against a real MySQL instance
-# running on localhost.
+# Unit testing - test the Cork module against an in-memory SQLite DB using the
+# SqlAlchemyBackend backend module
 
 from nose import SkipTest
 from nose.tools import assert_raises, raises, with_setup
@@ -12,7 +12,6 @@ from cork import Cork, AAAException, AuthException
 from cork.backends import SqlAlchemyBackend
 import os
 import testutils
-
 
 def connect_to_test_db():
 
@@ -24,8 +23,8 @@ def connect_to_test_db():
         password = ''
         db_name = 'cork_functional_test'
 
-    uri = "mysql://root:%s@localhost/%s" % (password, db_name)
-    return SqlAlchemyBackend(uri, initialize=True)
+    return SqlAlchemyBackend('sqlite:///:memory:', initialize=True)
+
 
 class Conf(object):
 
@@ -69,8 +68,8 @@ class Conf(object):
         mb._drop_all_tables()
 
 
-class TestMysqlUnauth(Conf, testutils.DatabaseInteractionAsUnauthenticated):
+class TestSQLAlchemyUnauth(Conf, testutils.DatabaseInteractionAsUnauthenticated):
     pass
 
-class TestMysqlAdmin(Conf, testutils.DatabaseInteractionAsAdmin):
+class TestSQLAlchemyAdmin(Conf, testutils.DatabaseInteractionAsAdmin):
     pass
