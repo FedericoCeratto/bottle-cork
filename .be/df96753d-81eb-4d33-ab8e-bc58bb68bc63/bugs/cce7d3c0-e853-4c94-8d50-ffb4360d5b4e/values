@@ -26,21 +26,21 @@
 
 
 
-    "status": "fixed", 
+    "status": "open", 
 
 
 
 
 
 
-    "summary": "fix tyyhe", 
+    "summary": "refactor pick_temp_directory to create and remove one temp dir per test without nesting", 
 
 
 
 
 
 
-    "time": "Tue, 18 Mar 2014 21:18:02 +0000"
+    "time": "Sun, 23 Mar 2014 14:24:45 +0000"
 
 
 

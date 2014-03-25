@@ -26,21 +26,21 @@
 
 
 
-    "status": "fixed", 
+    "status": "open", 
 
 
 
 
 
 
-    "summary": "fix tyyhe", 
+    "summary": "tests/test_flask.py contains backend tests: remove or rewrite to test Flask", 
 
 
 
 
 
 
-    "time": "Tue, 18 Mar 2014 21:18:02 +0000"
+    "time": "Sun, 23 Mar 2014 13:11:13 +0000"
 
 
 
