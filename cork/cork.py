@@ -904,4 +904,8 @@ class Mailer(object):
 
     def __del__(self):
         """Class destructor: wait for threads to terminate within a timeout"""
-        self.join()
+        try:
+            self.join()
+        except TypeError:
+            pass
+
