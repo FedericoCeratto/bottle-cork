@@ -470,7 +470,7 @@ class BaseCork(object):
                 if v['email_addr'] == email_addr:
                     username = k
                     break
-            else:    
+            else:
                 raise AAAException("Email address not found.")
 
         else:  # username is provided
@@ -638,13 +638,13 @@ class BaseCork(object):
         :param exp_time: expiration time (hours)
         :type exp_time: float.
         """
-        for uuid, data in self._store.pending_registrations.items():
+        for uuid_code, data in self._store.pending_registrations.items():
             creation = datetime.strptime(data['creation_date'],
                 "%Y-%m-%d %H:%M:%S.%f")
             now = datetime.utcnow()
             maxdelta = timedelta(hours=exp_time)
             if now - creation > maxdelta:
-                self._store.pending_registrations.pop(uuid)
+                self._store.pending_registrations.pop(uuid_code)
 
     def _reset_code(self, username, email_addr):
         """generate a reset_code token
