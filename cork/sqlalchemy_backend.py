@@ -12,7 +12,7 @@ from logging import getLogger
 log = getLogger(__name__)
 
 try:
-    from sqlalchemy import create_engine, delete, func, select, \
+    from sqlalchemy import create_engine, delete, select, \
         Column, ForeignKey, Integer, MetaData, String, Table
     sqlalchemy_available = True
 except ImportError:  # pragma: no cover
