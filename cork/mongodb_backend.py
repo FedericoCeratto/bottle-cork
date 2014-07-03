@@ -12,7 +12,6 @@ log = getLogger(__name__)
 from .base_backend import Backend, Table
 
 try:
-    import pymongo
     try:
         from pymongo import MongoClient
     except ImportError:  # pragma: no cover

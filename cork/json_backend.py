@@ -15,7 +15,6 @@ try:
 except ImportError:  # pragma: no cover
     import simplejson as json
 
-import base_backend
 from base_backend import BackendIOException
 
 log = getLogger(__name__)
