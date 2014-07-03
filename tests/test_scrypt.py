@@ -7,14 +7,12 @@
 # Test scrypt-based password hashing
 #
 
-from nose import SkipTest
-from nose.tools import assert_raises, raises, with_setup
+from pytest import raises
 from time import time
 import os
-import mock
 import shutil
 
-from cork import Cork, JsonBackend, AAAException, AuthException
+from cork import Cork, JsonBackend, AuthException
 import testutils
 
 
@@ -63,7 +61,7 @@ def tearDown():
     teardown_dir()
 
 
-def test_password_hashing_scrypt():
+def test_password_hashing_scrypt(aaa):
     shash = aaa._hash('user_foo', 'bogus_pwd', algo='scrypt')
     assert len(shash) == 132, "hash length should be 132 and is %d" % len(shash)
     assert shash.endswith(b'='), "hash should end with '=': %r" % shash
@@ -71,31 +69,31 @@ def test_password_hashing_scrypt():
         "Hashing verification should succeed"
 
 
-def test_password_hashing_scrypt_known_hash():
+def test_password_hashing_scrypt_known_hash(aaa):
     salt = b's' * 32
     shash = aaa._hash('user_foo', 'bogus_pwd', salt=salt, algo='scrypt')
     assert shash == b'c3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3NzeLt/2Ta8vJOVqimNpN9G1WWxN1hxlUOJDPgH+0wqPpG20XQHFHLlksDIUo2BL4P8BMLBZj7F+cq6UP6pc304LQ==', repr(shash)
 
 
-def test_password_hashing_scrypt_known_hash_2():
+def test_password_hashing_scrypt_known_hash_2(aaa):
     salt = b'\0' * 32
     shash = aaa._hash('user_foo', 'bogus_pwd', salt=salt, algo='scrypt')
     assert shash == b'cwAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAmu5jQskr2/yX13Yxmc4TYL0MIuSxwo41SVJwn/QueiDdLGkNaEsxlKL37i98YofXxs8xJJAJlC3Xj/9Nx0RNBw=='
 
 
-def test_password_hashing_scrypt_known_hash_3():
+def test_password_hashing_scrypt_known_hash_3(aaa):
     salt = b'x' * 32
     shash = aaa._hash('user_foo', 'bogus_pwd', salt=salt, algo='scrypt')
     assert shash == b'c3h4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4yKuT1e8lovFZnaaOctivIvYBPkLoKDXX72kf5/nRuGIgyyhiKxxKE4LVYFKFCeVNPQM5m/+LulQkWhO0aB89lA=='
 
 
-@raises(AssertionError)
-def test_password_hashing_scrypt_incorrect_hash_len():
+def test_password_hashing_scrypt_incorrect_hash_len(aaa):
     salt = b'x' * 31 # Incorrect length
-    shash = aaa._hash('user_foo', 'bogus_pwd', salt=salt, algo='scrypt')
+    with raises(AssertionError):
+        shash = aaa._hash('user_foo', 'bogus_pwd', salt=salt, algo='scrypt')
 
 
-def test_password_hashing_scrypt_incorrect_hash_value():
+def test_password_hashing_scrypt_incorrect_hash_value(aaa):
     shash = aaa._hash('user_foo', 'bogus_pwd', algo='scrypt')
     assert len(shash) == 132, "hash length should be 132 and is %d" % len(shash)
     assert shash.endswith(b'='), "hash should end with '='"
@@ -106,7 +104,7 @@ def test_password_hashing_scrypt_incorrect_hash_value():
 
 
 
-def test_password_hashing_scrypt_collision():
+def test_password_hashing_scrypt_collision(aaa):
     salt = b'S' * 32
     hash1 = aaa._hash('user_foo', 'bogus_pwd', salt=salt, algo='scrypt')
     hash2 = aaa._hash('user_foobogus', '_pwd', salt=salt, algo='scrypt')

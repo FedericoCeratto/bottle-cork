@@ -13,12 +13,13 @@ import json
 import mock
 import tempfile
 from base64 import b64encode, b64decode
-from nose.tools import assert_raises, raises, with_setup
-from nose import SkipTest
+from pytest import raises
+import pytest
 
 from datetime import datetime, timedelta
 from cork import Cork, AAAException, AuthException
 
+SkipTest = pytest.mark.skipif(True, reason='skipped')
 cookie_name = None
 
 def pick_temp_directory():
@@ -111,10 +112,10 @@ class DatabaseInteractionAsUnauthenticated(object):
         del(self.aaa)
         cookie_name = None
 
-    @raises(AAAException)
     def test_get_current_user_unauth(self):
         print self.aaa.current_user
-        self.aaa.current_user['username']
+        with raises(AAAException):
+            self.aaa.current_user['username']
 
     def test_unauth_is_anonymous(self):
         assert self.aaa.user_is_anonymous
@@ -183,13 +184,13 @@ class DatabaseInteractionAsAdmin(object):
     def test_create_existing_role(self):
         assert_raises(AAAException, self.aaa.create_role, 'user', 33)
 
-    @raises(KeyError)
     def test_access_nonexisting_role(self):
-        self.aaa._store.roles['NotThere']
+        with raises(KeyError):
+            self.aaa._store.roles['NotThere']
 
-    @raises(AAAException)
     def test_create_role_with_incorrect_level(self):
-        self.aaa.create_role('new_user', 'not_a_number')
+        with raises(AAAException):
+            self.aaa.create_role('new_user', 'not_a_number')
 
 
     def test_create_role(self):
@@ -231,9 +232,9 @@ class DatabaseInteractionAsAdmin(object):
         assert_raises(AAAException, self.aaa.create_user, 'admin', 'admin', 'bogus')
 
 
-    @raises(AAAException)
     def test_create_user_with_wrong_role(self):
-        self.aaa.create_user('admin2', 'nonexistent_role', 'bogus')
+        with raises(AAAException):
+            self.aaa.create_user('admin2', 'nonexistent_role', 'bogus')
 
 
     def test_create_user(self):
@@ -370,9 +371,9 @@ class DatabaseInteractionAsAdmin(object):
         assert_raises(AuthException, self.aaa.require, role='user', fixed_role=True)
 
 
-    @raises(AAAException)
     def test_require_missing_parameter(self):
-        self.aaa.require(fixed_role=True)
+        with raises(AAAException):
+            self.aaa.require(fixed_role=True)
 
 
     def test_require_nonexistent_role(self):
@@ -398,10 +399,10 @@ class DatabaseInteractionAsAdmin(object):
         assert_raises(AAAException, self.aaa.current_user.update, role='clown')
 
 
-    @raises(AAAException)
     def test_update_nonexistent_user(self):
-        self.aaa._store.users.pop('admin')
-        self.aaa.current_user.update(role='user')
+        with raises(AAAException):
+            self.aaa._store.users.pop('admin')
+            self.aaa.current_user.update(role='user')
 
 
     def test_update_role(self):
@@ -419,11 +420,11 @@ class DatabaseInteractionAsAdmin(object):
         assert self.aaa._store.users['admin']['email_addr'] == 'foo', self.aaa._store.users['admin']
 
 
-    @raises(AuthException)
     def test_get_current_user_nonexistent(self):
         # The current user 'admin' is not in the user table
-        self.aaa._store.users.pop('admin')
-        self.aaa.current_user
+        with raises(AuthException):
+            self.aaa._store.users.pop('admin')
+            self.aaa.current_user
 
 
     def test_get_nonexistent_user(self):
@@ -493,26 +494,26 @@ class DatabaseInteractionAsAdmin(object):
 
 
 
-    @raises(AAAException)
     def test_send_password_reset_email_no_data(self):
-        self.aaa.send_password_reset_email()
+        with raises(AAAException):
+            self.aaa.send_password_reset_email()
 
-    @raises(AAAException)
     def test_send_password_reset_email_incorrect_data(self):
-        self.aaa.send_password_reset_email(username='NotThere', email_addr='NoEmail')
+        with raises(AAAException):
+            self.aaa.send_password_reset_email(username='NotThere', email_addr='NoEmail')
 
-    @raises(AAAException)
     def test_send_password_reset_email_incorrect_data2(self):
-        # The username is valid but the email address is not matching
-        self.aaa.send_password_reset_email(username='admin', email_addr='NoEmail')
+        with raises(AAAException):
+            # The username is valid but the email address is not matching
+            self.aaa.send_password_reset_email(username='admin', email_addr='NoEmail')
 
-    @raises(AAAException)
     def test_send_password_reset_email_only_incorrect_email(self):
-        self.aaa.send_password_reset_email(email_addr='NoEmail')
+        with raises(AAAException):
+            self.aaa.send_password_reset_email(email_addr='NoEmail')
 
-    @raises(AAAException)
     def test_send_password_reset_email_only_incorrect_username(self):
-        self.aaa.send_password_reset_email(username='NotThere')
+        with raises(AAAException):
+            self.aaa.send_password_reset_email(username='NotThere')
 
     def test_send_password_reset_email_only_email(self):
         self.aaa.mailer.send_email = mock.Mock()
@@ -526,56 +527,56 @@ class DatabaseInteractionAsAdmin(object):
 
 
 
-    @raises(AuthException)
     def test_perform_password_reset_invalid(self):
-        self.aaa.reset_password('bogus', 'newpassword')
+        with raises(AuthException):
+            self.aaa.reset_password('bogus', 'newpassword')
 
 
-    @raises(AuthException)
     def test_perform_password_reset_timed_out(self):
         self.aaa.password_reset_timeout = 0
         token = self.aaa._reset_code('admin', 'admin@localhost.local')
-        self.aaa.reset_password(token, 'newpassword')
+        with raises(AuthException):
+            self.aaa.reset_password(token, 'newpassword')
 
 
-    @raises(AAAException)
     def test_perform_password_reset_nonexistent_user(self):
         token = self.aaa._reset_code('admin_bogus', 'admin@localhost.local')
-        self.aaa.reset_password(token, 'newpassword')
+        with raises(AAAException):
+            self.aaa.reset_password(token, 'newpassword')
 
 
     # The following test should fail
     # an user can change the password reset timestamp by b64-decoding the token,
     # editing the field and b64-encoding it
     @SkipTest
-    @raises(AuthException)
     def test_perform_password_reset_mangled_timestamp(self):
         token = self.aaa._reset_code('admin', 'admin@localhost.local')
         username, email_addr, tstamp, h = b64decode(token).split(':', 3)
         tstamp = str(int(tstamp) + 100)
         mangled_token = ':'.join((username, email_addr, tstamp, h))
         mangled_token = b64encode(mangled_token)
-        self.aaa.reset_password(mangled_token, 'newpassword')
+        with raises(AuthException):
+            self.aaa.reset_password(mangled_token, 'newpassword')
 
 
-    @raises(AuthException)
     def test_perform_password_reset_mangled_username(self):
         token = self.aaa._reset_code('admin', 'admin@localhost.local')
         username, email_addr, tstamp, h = b64decode(token).split(':', 3)
         username += "mangled_username"
         mangled_token = ':'.join((username, email_addr, tstamp, h))
         mangled_token = b64encode(mangled_token)
-        self.aaa.reset_password(mangled_token, 'newpassword')
+        with raises(AuthException):
+            self.aaa.reset_password(mangled_token, 'newpassword')
 
 
-    @raises(AuthException)
     def test_perform_password_reset_mangled_email(self):
         token = self.aaa._reset_code('admin', 'admin@localhost.local')
         username, email_addr, tstamp, h = b64decode(token).split(':', 3)
         email_addr += "mangled_email"
         mangled_token = ':'.join((username, email_addr, tstamp, h))
         mangled_token = b64encode(mangled_token)
-        self.aaa.reset_password(mangled_token, 'newpassword')
+        with raises(AuthException):
+            self.aaa.reset_password(mangled_token, 'newpassword')
 
 
     def test_perform_password_reset(self):
