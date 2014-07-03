@@ -179,36 +179,39 @@ class BaseCork(object):
             raise AAAException("Role not found for the current user")
 
         if username is not None:
-            if username != self.current_user.username:
-                if fail_redirect is None:
-                    raise AuthException("Unauthorized access: incorrect"
-                        " username")
-                else:
-                    self._redirect(fail_redirect)
+            # A specific user is required
+            if username == self.current_user.username:
+                return
+
+            if fail_redirect is None:
+                raise AuthException("Unauthorized access: incorrect"
+                    " username")
+
+            self._redirect(fail_redirect)
 
         if fixed_role:
+            # A specific role is required
             if role == self.current_user.role:
                 return
 
             if fail_redirect is None:
                 raise AuthException("Unauthorized access: incorrect role")
-            else:
-                self._redirect(fail_redirect)
 
-        else:
-            if role is not None:
-                # Any role with higher level is allowed
-                current_lvl = self._store.roles[self.current_user.role]
-                threshold_lvl = self._store.roles[role]
-                if current_lvl >= threshold_lvl:
-                    return
+            self._redirect(fail_redirect)
 
-                if fail_redirect is None:
-                    raise AuthException("Unauthorized access: ")
-                else:
-                    self._redirect(fail_redirect)
+        if role is not None:
+            # Any role with higher level is allowed
+            current_lvl = self._store.roles[self.current_user.role]
+            threshold_lvl = self._store.roles[role]
+            if current_lvl >= threshold_lvl:
+                return
 
-        return
+            if fail_redirect is None:
+                raise AuthException("Unauthorized access: ")
+
+            self._redirect(fail_redirect)
+
+        return  # success
 
     def create_role(self, role, level):
         """Create a new role.
