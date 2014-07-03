@@ -1,9 +1,11 @@
 # Cork - Authentication module for the Bottle web framework
 # Copyright (C) 2013 Federico Ceratto and others, see AUTHORS file.
 # Released under LGPLv3+ license, see LICENSE.txt
-#
-# JSON file-based storage backend.
-#
+
+"""
+.. module:: json_backend
+   :synopsis: JSON file-based storage backend.
+"""
 
 import shutil
 import os

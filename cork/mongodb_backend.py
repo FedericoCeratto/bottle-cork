@@ -1,10 +1,11 @@
 # Cork - Authentication module for the Bottle web framework
 # Copyright (C) 2013 Federico Ceratto and others, see AUTHORS file.
 # Released under LGPLv3+ license, see LICENSE.txt
-#
-# MongoDB storage backend.
-#
 
+"""
+.. module:: mongodb_backend
+   :synopsis: MongoDB storage backend.
+"""
 from logging import getLogger
 log = getLogger(__name__)
 
