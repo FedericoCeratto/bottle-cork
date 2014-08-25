@@ -1,9 +1,11 @@
 # Cork - Authentication module for the Bottle web framework
 # Copyright (C) 2013 Federico Ceratto and others, see AUTHORS file.
 # Released under LGPLv3+ license, see LICENSE.txt
-#
-# Base Backend.
-#
+
+"""
+.. module:: backend.py
+   :synopsis: Base Backend.
+"""
 
 class BackendIOException(Exception):
     """Generic Backend I/O Exception"""

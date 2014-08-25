@@ -1,9 +1,11 @@
 # Cork - Authentication module for the Bottle web framework
 # Copyright (C) 2013 Federico Ceratto and others, see AUTHORS file.
 # Released under LGPLv3+ license, see LICENSE.txt
-#
-# SQLite storage backend.
-#
+
+"""
+.. module:: sqlite_backend
+   :synopsis: SQLite storage backend.
+"""
 
 import base_backend
 from logging import getLogger

@@ -1,16 +1,18 @@
 # Cork - Authentication module for the Bottle web framework
 # Copyright (C) 2013 Federico Ceratto and others, see AUTHORS file.
 # Released under LGPLv3+ license, see LICENSE.txt
-#
-# SQLAlchemy storage backend.
-#
+
+"""
+.. module:: sqlalchemy_backend
+   :synopsis: SQLAlchemy storage backend.
+"""
 
 import base_backend
 from logging import getLogger
 log = getLogger(__name__)
 
 try:
-    from sqlalchemy import create_engine, delete, func, select, \
+    from sqlalchemy import create_engine, delete, select, \
         Column, ForeignKey, Integer, MetaData, String, Table
     sqlalchemy_available = True
 except ImportError:  # pragma: no cover
