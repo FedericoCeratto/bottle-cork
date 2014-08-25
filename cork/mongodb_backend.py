@@ -24,6 +24,58 @@ except ImportError:  # pragma: no cover
 
 
 
+try:
+    import memcache
+    memcache_available = True
+except ImportError:  # pragma: no cover
+    memcache_available = False
+    raise
+
+class Memcache(object):
+    """
+    Helper class for memcache usage
+    Default item decay time of 5 minutes (300s)
+    """
+
+    def __init__(self, host=None, port=None, decay=300):
+        self.host = host
+        self.port = port
+        self.decay = decay
+        self.cache = None
+
+        if self.host and self.port:
+            self.connect(self.host, self.port, self.decay)
+
+    def connect(self, host, port, decay):
+        """Connect to memcache server"""
+        if host and port:
+            self.host = host
+            self.port = port
+            self.decay = decay
+            self.cache = memcache.Client(
+                ['{0}:{1}'.format(host, port)], debug=0)
+
+    def key(self, key, prefix=None):
+        """
+        Generate a string key for memcache.
+        Optional prefix for uniqueness
+        """
+        prefix = prefix or ''
+        return '{0}{1}'.format(prefix,key)
+
+    def get(self, key, prefix=None):
+        return self.cache.get(self.key(key, prefix))
+
+    def set(self, key, value, prefix=None):
+        self.cache.set(self.key(key, prefix), value, self.decay)
+
+    def delete(self, key, prefix=None):
+        self.cache.delete(self.key(key, prefix))
+
+_MC = Memcache()
+
+
+
 class MongoTable(Table):
     """Abstract MongoDB Table.
     Allow dictionary-like access.
@@ -32,6 +84,7 @@ class MongoTable(Table):
         self._name = name
         self._key_name = key_name
         self._coll = collection
+        self._mc_prefix = '{0}{1}'.format(self._name, self._key_name)
 
     def create_index(self):
         """Create collection index."""
@@ -45,7 +98,16 @@ class MongoTable(Table):
         return self._coll.count()
 
     def __contains__(self, value):
-        r = self._coll.find_one({self._key_name: value})
+        r = None
+        if _MC.cache:
+            r = _MC.get(value, self._mc_prefix)
+
+        if r is None:
+            r = self._coll.find_one({self._key_name: value})
+
+        if _MC.cache and r is not None:
+            _MC.set(value, r, self._mc_prefix)
+
         return r is not None
 
     def __iter__(self):
@@ -69,6 +131,9 @@ class MongoTable(Table):
         """Remove a dictionary item"""
         r = self[key_val]
         self._coll.remove({self._key_name: key_val}, safe=True)
+        if _MC.cache:
+            _MC.delete(key_val, self._mc_prefix)
+
         return r
 
 
@@ -85,11 +150,22 @@ class MongoSingleValueTable(MongoTable):
         spec = {self._key_name: key_val}
         data = {self._key_name: key_val, 'val': data}
         self._coll.update(spec, data, upsert=True, safe=True)
+        if _MC.cache:
+            _MC.delete(key_val, self._mc_prefix)
 
     def __getitem__(self, key_val):
-        r = self._coll.find_one({self._key_name: key_val})
+        r = None
+        if _MC.cache:
+            r = _MC.get(key_val, self._mc_prefix)
+
+        if r is None:
+            r = self._coll.find_one({self._key_name: key_val})
+
         if r is None:
             raise KeyError(key_val)
+
+        if _MC.cache:
+            _MC.set(key_val, r, self._mc_prefix)
 
         return r['val']
 
@@ -126,22 +202,41 @@ class MongoMultiValueTable(MongoTable):
 
         spec = {key_name: key_val}
         self._coll.update(spec, data, upsert=True)
+        if _MC.cache:
+            _MC.delete(key_val, self._mc_prefix)
 
     def __getitem__(self, key_val):
-        r = self._coll.find_one({self._key_name: key_val})
+        r = None
+        if _MC.cache:
+            r = _MC.get(key_val, self._mc_prefix)
+
+        if r is None:
+            r = self._coll.find_one({self._key_name: key_val})
+
         if r is None:
             raise KeyError(key_val)
+        else:
+            if _MC.cache:
+                _MC.set(key_val, r, self._mc_prefix)
 
         return MongoMutableDict(self, key_val, r)
 
 
 class MongoDBBackend(Backend):
-    def __init__(self, db_name='cork', hostname='localhost', port=27017, initialize=False, username=None, password=None):
+    def __init__(self, db_name='cork', hostname='localhost', port=27017,
+            initialize=False, username=None, password=None,
+            memcache_host=None, memcache_port=None, memcache_decay=300):
         """Initialize MongoDB Backend"""
+
+        # Initialize memcache
+        if memcache_available and memcache_host and memcache_port:
+            _MC.connect(memcache_host, memcache_port, decay=memcache_decay)
+
         connection = MongoClient(host=hostname, port=port)
         db = connection[db_name]
         if username and password:
             db.authenticate(username, password)
+
         self.users = MongoMultiValueTable('users', 'login', db.users)
         self.pending_registrations = MongoMultiValueTable(
             'pending_registrations',
