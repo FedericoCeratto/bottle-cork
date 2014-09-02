@@ -853,7 +853,7 @@ class Mailer(object):
         msg['Subject'] = subject
         msg['From'] = self.sender
         msg['To'] = email_addr
-        part = MIMEText(email_text, 'html')
+        part = MIMEText(email_text.encode('utf-8'), 'html')
         msg.attach(part)
 
         log.debug("Sending email using %s" % self._conf['fqdn'])
