@@ -2,7 +2,7 @@
 
 from setuptools import setup
 
-__version__ = '0.11a'
+__version__ = '0.11'
 
 CLASSIFIERS = map(str.strip,
 """Environment :: Console
