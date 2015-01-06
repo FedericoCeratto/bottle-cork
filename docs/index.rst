@@ -47,6 +47,13 @@ Features
 News
 ----
 
+* 2015-01-06: Version 0.11
+
+  * Add Flask support
+  * MongoDB: add authentication #68
+  * Enable configurable SMTP port. Closes: #43
+  * Remove unneeded setuptools dependency. Closes: #40
+
 * 2013-09-22: Version 0.10
 
   * Decorator support added. #6
