@@ -27,7 +27,6 @@ from smtplib import SMTP, SMTP_SSL
 from threading import Thread
 from time import time
 import bottle
-import flask
 import os
 import re
 import uuid
@@ -762,6 +761,7 @@ class FlaskCork(BaseCork):
     @property
     def _beaker_session(self):
         """Get Beaker session"""
+        import flask
         return flask.session
 
     def _save_session(self):
