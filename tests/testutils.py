@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*
 # Cork - Authentication module for the Bottle web framework
 # Copyright (C) 2013 Federico Ceratto and others, see AUTHORS file.
 # Released under LGPLv3+ license, see LICENSE.txt
@@ -308,6 +309,16 @@ class DatabaseInteractionAsAdmin(object):
         login = self.aaa.login('phil', 'hunter123')
         assert login == True, "Login must succeed"
         assert cookie_name == 'phil'
+
+    def test_create_and_validate_user_unicode(self):
+        assert len(self.aaa._store.users) == 1, "Only the admin user should be present"
+        self.aaa.create_user('phil_åöॐ', 'user', 'neko_猫')
+        assert len(self.aaa._store.users) == 2, "Two users should be present"
+        assert 'phil_åöॐ' in self.aaa._store.users
+        assert self.aaa._store.users['phil_åöॐ']['role'] == 'user'
+        login = self.aaa.login('phil_åöॐ', 'neko_猫')
+        assert login == True, "Login must succeed"
+        assert cookie_name == 'phil_åöॐ'
 
     def test_create_user_login_logout(self):
         assert 'phil' not in self.aaa._store.users
