@@ -88,17 +88,17 @@ class BaseCork(object):
         Optionally redirect the user to another page (typically /login)
 
         :param username: username
-        :type username: str.
+        :type username: str or unicode.
         :param password: cleartext password
-        :type password: str.
+        :type password: str.or unicode
         :param success_redirect: redirect authorized users (optional)
         :type success_redirect: str.
         :param fail_redirect: redirect unauthorized users (optional)
         :type fail_redirect: str.
         :returns: True for successful logins, else False
         """
-        assert isinstance(username, str), "the username must be a string"
-        assert isinstance(password, str), "the password must be a string"
+        assert isinstance(username, (str, unicode)), "the username must be a string"
+        assert isinstance(password, (str, unicode)), "the password must be a string"
 
         if username in self._store.users:
             if self._verify_password(username, password,
@@ -273,8 +273,8 @@ class BaseCork(object):
         """
         assert username, "Username must be provided."
         if self.current_user.level < 100:
-            raise AuthException("The current user is not authorized" \
-                " to create users.")
+            raise AuthException("The current user is not authorized"
+                                " to create users.")
 
         if username in self._store.users:
             raise AAAException("User is already existing.")

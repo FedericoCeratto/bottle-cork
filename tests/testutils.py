@@ -312,13 +312,13 @@ class DatabaseInteractionAsAdmin(object):
 
     def test_create_and_validate_user_unicode(self):
         assert len(self.aaa._store.users) == 1, "Only the admin user should be present"
-        self.aaa.create_user('phil_åöॐ', 'user', 'neko_猫')
+        self.aaa.create_user(u'phil_åöॐ', 'user', u'neko_猫')
         assert len(self.aaa._store.users) == 2, "Two users should be present"
-        assert 'phil_åöॐ' in self.aaa._store.users
-        assert self.aaa._store.users['phil_åöॐ']['role'] == 'user'
-        login = self.aaa.login('phil_åöॐ', 'neko_猫')
+        assert u'phil_åöॐ' in self.aaa._store.users
+        assert self.aaa._store.users[u'phil_åöॐ']['role'] == 'user'
+        login = self.aaa.login(u'phil_åöॐ', u'neko_猫')
         assert login == True, "Login must succeed"
-        assert cookie_name == 'phil_åöॐ'
+        assert cookie_name == u'phil_åöॐ'
 
     def test_create_user_login_logout(self):
         assert 'phil' not in self.aaa._store.users

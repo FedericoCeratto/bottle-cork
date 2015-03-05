@@ -13,7 +13,7 @@ log = getLogger(__name__)
 
 try:
     from sqlalchemy import create_engine, delete, select, \
-        Column, ForeignKey, Integer, MetaData, String, Table
+        Column, ForeignKey, Integer, MetaData, String, Table, Unicode
     sqlalchemy_available = True
 except ImportError:  # pragma: no cover
     sqlalchemy_available = False
@@ -152,7 +152,7 @@ class SqlAlchemyBackend(base_backend.Backend):
 
 
         self._users = Table(users_tname, self._metadata,
-            Column('username', String(128), primary_key=True),
+            Column('username', Unicode(128), primary_key=True),
             Column('role', ForeignKey(roles_tname + '.role')),
             Column('hash', String(256), nullable=False),
             Column('email_addr', String(128)),
@@ -167,7 +167,7 @@ class SqlAlchemyBackend(base_backend.Backend):
         )
         self._pending_reg = Table(pending_reg_tname, self._metadata,
             Column('code', String(128), primary_key=True),
-            Column('username', String(128), nullable=False),
+            Column('username', Unicode(128), nullable=False),
             Column('role', ForeignKey(roles_tname + '.role')),
             Column('hash', String(256), nullable=False),
             Column('email_addr', String(128)),
