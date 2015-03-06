@@ -144,7 +144,7 @@ class SqlAlchemyBackend(base_backend.Backend):
                 log.info("Failed DB creation: %s" % e)
 
             # SQLite in-memory database URL: "sqlite://:memory:"
-            if db_name != ':memory:':
+            if db_name != ':memory:' and not db_url.startswith('postgresql'):
                 self._engine.execute("USE %s" % db_name)
 
         else:
