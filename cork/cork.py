@@ -462,8 +462,8 @@ class BaseCork(object):
         :raises: AAAException on missing username or email_addr,
             AuthException on incorrect username/email_addr pair
         """
-        if username is None:
-            if email_addr is None:
+        if not username:
+            if not email_addr:
                 raise AAAException("At least `username` or `email_addr` must" \
                     " be specified.")
 
@@ -478,7 +478,7 @@ class BaseCork(object):
         else:  # username is provided
             if username not in self._store.users:
                 raise AAAException("Nonexistent user.")
-            if email_addr is None:
+            if not email_addr:
                 email_addr = self._store.users[username].get('email_addr', None)
                 if not email_addr:
                     raise AAAException("Email address not available.")
