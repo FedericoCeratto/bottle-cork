@@ -55,7 +55,7 @@ class BaseCork(object):
     """Abstract class"""
 
     def __init__(self, directory=None, backend=None, email_sender=None,
-        initialize=False, session_domain=None, smtp_server=None,
+        initialize=False, session_domain=None, session_key=None, smtp_server=None,
         smtp_url='localhost'):
         """Auth/Authorization/Accounting class
 
@@ -71,6 +71,7 @@ class BaseCork(object):
         self.mailer = Mailer(email_sender, smtp_url)
         self.password_reset_timeout = 3600 * 24
         self.session_domain = session_domain
+        self.session_key = session_key or 'beaker.session'
         self.preferred_hashing_algorithm = 'PBKDF2'
 
         # Setup JsonBackend by default for backward compatibility.
@@ -748,7 +749,7 @@ class Cork(BaseCork):
     @property
     def _beaker_session(self):
         """Get Beaker session"""
-        return bottle.request.environ.get('beaker.session')
+        return bottle.request.environ.get(self.session_key)
 
     def _save_session(self):
         self._beaker_session.save()
