@@ -46,6 +46,7 @@ class AAAException(Exception):
     """Generic Authentication/Authorization Exception"""
     pass
 
+
 class AuthException(AAAException):
     """Authentication Exception: incorrect username/password pair"""
     pass
@@ -55,8 +56,8 @@ class BaseCork(object):
     """Abstract class"""
 
     def __init__(self, directory=None, backend=None, email_sender=None,
-        initialize=False, session_domain=None, smtp_server=None,
-        smtp_url='localhost', session_key_name=None):
+                 initialize=False, session_domain=None, smtp_server=None,
+                 smtp_url='localhost', session_key_name=None):
         """Auth/Authorization/Accounting class
 
         :param directory: configuration directory
@@ -84,7 +85,7 @@ class BaseCork(object):
             self._store = backend
 
     def login(self, username, password, success_redirect=None,
-        fail_redirect=None):
+              fail_redirect=None):
         """Check login credentials for an existing user.
         Optionally redirect the user to another page (typically /login)
 
@@ -102,8 +103,12 @@ class BaseCork(object):
         assert isinstance(password, (str, unicode)), "the password must be a string"
 
         if username in self._store.users:
-            if self._verify_password(username, password,
-                    self._store.users[username]['hash']):
+            authenticated = self._verify_password(
+                username,
+                password,
+                self._store.users[username]['hash']
+            )
+            if authenticated:
                 # Setup session data
                 self._setup_cookie(username)
                 self._store.users[username]['last_login'] = str(datetime.utcnow())
@@ -135,7 +140,7 @@ class BaseCork(object):
         self._redirect(success_redirect)
 
     def require(self, username=None, role=None, fixed_role=False,
-        fail_redirect=None):
+                fail_redirect=None):
         """Ensure the user is logged in has the required role (or higher).
         Optionally redirect the user to another page (typically /login)
         If both `username` and `role` are specified, both conditions need to be
@@ -185,7 +190,7 @@ class BaseCork(object):
 
             if fail_redirect is None:
                 raise AuthException("Unauthorized access: incorrect"
-                    " username")
+                                    " username")
 
             self._redirect(fail_redirect)
 
@@ -256,7 +261,7 @@ class BaseCork(object):
             yield (role, self._store.roles[role])
 
     def create_user(self, username, role, password, email_addr=None,
-        description=None):
+                    description=None):
         """Create a new user account.
         This method is available to users with level>=100
 
@@ -358,9 +363,9 @@ class BaseCork(object):
         return None
 
     def register(self, username, password, email_addr, role='user',
-        max_level=50, subject="Signup confirmation",
-        email_template='views/registration_email.tpl',
-        description=None):
+                 max_level=50, subject="Signup confirmation",
+                 email_template='views/registration_email.tpl',
+                 description=None):
         """Register a new user account. An email with a registration validation
         is sent to the user.
         WARNING: this method is available to unauthenticated users
@@ -397,7 +402,8 @@ class BaseCork(object):
         creation_date = str(datetime.utcnow())
 
         # send registration email
-        email_text = bottle.template(email_template,
+        email_text = bottle.template(
+            email_template,
             username=username,
             email_addr=email_addr,
             role=role,
@@ -465,8 +471,8 @@ class BaseCork(object):
         """
         if username is None:
             if email_addr is None:
-                raise AAAException("At least `username` or `email_addr` must" \
-                    " be specified.")
+                raise AAAException("At least `username` or `email_addr` must"
+                                   " be specified.")
 
             # only email_addr is specified: fetch the username
             for k, v in self._store.users.iteritems():
@@ -493,7 +499,8 @@ class BaseCork(object):
         reset_code = self._reset_code(username, email_addr)
 
         # send reset email
-        email_text = bottle.template(email_template,
+        email_text = bottle.template(
+            email_template,
             username=username,
             email_addr=email_addr,
             reset_code=reset_code
@@ -583,7 +590,7 @@ class BaseCork(object):
         """
         if not scrypt_available:
             raise Exception("scrypt.hash required."
-                " Please install the scrypt library.")
+                            " Please install the scrypt library.")
 
         if salt is None:
             salt = os.urandom(32)
@@ -738,8 +745,10 @@ class User(object):
 class Redirect(Exception):
     pass
 
+
 def raise_redirect(path):
     raise Redirect(path)
+
 
 class Cork(BaseCork):
     @staticmethod
@@ -753,6 +762,7 @@ class Cork(BaseCork):
 
     def _save_session(self):
         self._beaker_session.save()
+
 
 class FlaskCork(BaseCork):
     @staticmethod
@@ -912,4 +922,3 @@ class Mailer(object):
             self.join()
         except TypeError:
             pass
-
