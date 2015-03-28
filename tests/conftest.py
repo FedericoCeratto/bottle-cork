@@ -1,5 +1,6 @@
 
 import pytest
+import bottle
 
 from cork import Cork
 
@@ -20,3 +21,89 @@ def aaa(mytmpdir):
     aaa = Cork(mytmpdir, smtp_server='localhost', email_sender='test@localhost')
     return aaa
 
+class MockedSession(object):
+    """Mock Beaker session
+    """
+    def __init__(self, username=None):
+        self.__username = username
+        self.__saved = False
+
+    def get(self, k, default):
+        print 'accessing',k
+        assert k in ('username')
+        if self.__username is None:
+            return default
+
+        return self.__username
+
+    def __getitem__(self, k):
+        print 'accessing',k
+        assert k in ('username')
+        if self.__username is None:
+            raise KeyError()
+
+        return self.__username
+
+    def NO__getattr__(self, k):
+        print 'accessing',k
+        assert k in ('username')
+        return self.__username
+
+    def __setitem__(self, k, v):
+        print 'accessing in write',k
+        assert k in ('username')
+        self.__username = v
+        self.__saved = False
+
+    def delete(self):
+        """Used during logout to delete the current session"""
+        self.__username = None
+
+    def save(self):
+        self.__saved = True
+
+class MockedSessionCork(Cork):
+    """Mocked Cork instance where the session is replaced with
+    MockedSession
+    """
+    @property
+    def _beaker_session(self):
+        return self._mocked_beaker_session
+
+
+@pytest.fixture
+def aaa_unauth(mytmpdir):
+    aaa = MockedSessionCork(mytmpdir, smtp_server='localhost',
+                                    email_sender='test@localhost')
+
+    aaa._mocked_beaker_session = MockedSession()
+    return aaa
+
+#        mb = self.setup_test_db()
+#        self.aaa = MockedUnauthenticatedCork(backend=mb,
+#            smtp_server='localhost', email_sender='test@localhost')
+#        cookie_name = None
+#        if hasattr(self, 'purge_test_db'):
+#            self.purge_test_db()
+#
+#        del(self.aaa)
+#        cookie_name = None
+
+@pytest.fixture
+def aaa_admin_base(mytmpdir):
+    aaa = MockedSessionCork(mytmpdir, smtp_server='localhost',
+                                    email_sender='test@localhost')
+    aaa._mocked_beaker_session = MockedSession(username='admin')
+    return aaa
+
+
+def assert_is_redirect(e, path):
+    """Check if an HTTPResponse is a redirect.
+
+    :param path: relative path without leading slash.
+    :type path: str
+    """
+    assert isinstance(e, bottle.HTTPResponse), "Incorrect exception type passed to assert_is_redirect"
+    assert e.status_code == 302, "HTTPResponse status should be 302 but is '%s'" % e.status
+    redir_location = e.headers['Location'].rsplit('/', 1)[1]
+    assert redir_location == path, "Redirected to %s instead of %s" % (redir_location, path)
