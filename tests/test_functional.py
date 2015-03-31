@@ -175,7 +175,6 @@ def setup_mongo_db(request):
     return mb
 
 
-
 def setup_mysql_db(request):
 
     if os.environ.get('TRAVIS', False):
@@ -223,6 +222,50 @@ def setup_mysql_db(request):
     return mb
 
 
+def setup_postgresql_db(request):
+
+    if os.environ.get('TRAVIS', False):
+        # Using Travis-CI - https://travis-ci.org/
+        db_name = 'myapp_test'
+    else:
+        db_name = 'cork_functional_test'
+
+    uri = "postgresql+psycopg2://postgres:@/%s" % db_name
+    mb = SqlAlchemyBackend(uri, initialize=True)
+
+    # Purge DB
+    mb._drop_all_tables()
+    assert len(mb.roles) == 0
+    assert len(mb.users) == 0
+
+    # Create roles
+    mb.roles.insert({'role': 'special', 'level': 200})
+    mb.roles.insert({'role': 'admin', 'level': 100})
+    mb.roles.insert({'role': 'editor', 'level': 60})
+    mb.roles.insert({'role': 'user', 'level': 50})
+
+    # Create admin
+    mb.users.insert({
+        "username": "admin",
+        "email_addr": "admin@localhost.local",
+        "desc": "admin test user",
+        "role": "admin",
+        "hash": "cLzRnzbEwehP6ZzTREh3A4MXJyNo+TV8Hs4//EEbPbiDoo+dmNg22f2RJC282aSwgyWv/O6s3h42qrA6iHx8yfw=",
+        "creation_date": "2012-10-28 20:50:26.286723",
+        "last_login": "2012-10-28 20:50:26.286723"
+    })
+    assert len(mb.roles) == 4
+    assert len(mb.users) == 1
+
+    def fin():
+        mb._drop_all_tables()
+        assert len(mb.roles) == 0
+        assert len(mb.users) == 0
+
+    request.addfinalizer(fin)
+    return mb
+
+
 
 ## General fixtures
 
@@ -236,7 +279,7 @@ def templates_dir(tmpdir):
 
 
 
-@pytest.fixture(params=['json', 'sqlite', 'sqlalchemy', 'mongodb', 'mysql'])
+@pytest.fixture(params=['json', 'sqlite', 'sqlalchemy', 'mongodb', 'mysql', 'postgresql'])
 def backend(tmpdir, request):
     # Create backend instances
     backend_type = request.param
@@ -254,6 +297,9 @@ def backend(tmpdir, request):
 
     if backend_type == 'mysql':
         return setup_mysql_db(request)
+
+    if backend_type == 'postgresql':
+        return setup_postgresql_db(request)
 
     raise Exception()
 
