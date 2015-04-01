@@ -314,12 +314,12 @@ class BaseCork(object):
     def list_users(self):
         """List users.
 
-        :return: (username, role, email_addr, description) generator (sorted by
-            username)
+        :return: (username, role, email_addr, description, last_login) generator
+        (sorted by username)
         """
         for un in sorted(self._store.users):
             d = self._store.users[un]
-            yield (un, d['role'], d['email_addr'], d['desc'])
+            yield (un, d['role'], d['email_addr'], d['desc'], d['last_login'])
 
     @property
     def current_user(self):
