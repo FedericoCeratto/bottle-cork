@@ -15,15 +15,19 @@ install:
 
 before_script:
   - mysql -e 'create database myapp_test;' # username: "root", password: ""
-  #- mongo mydb_test --eval 'db.addUser("travis", "test");'
+  - mongo mydb_test --eval 'db.addUser("travis", "test");'
+  - psql -c 'create database travis_ci_test;' -U postgres
 
-script: 
-  - nosetests tests/test.py tests/test_functional_mysql_instance.py tests/test_functional_mongodb_instance.py
-  - coverage run --source=cork tests/test_webtest_decorated.py tests/test_functional_mongodb_instance.py tests/test_functional_sqlalchemy_sqlite_in_memory.py tests/test_sqlite.py
+script:
+  - py.test tests/test.py tests/test_scrypt.py tests/test_functional.py
+    #- coverage run --source=cork tests/test_webtest_decorated.py tests/test_functional_mongodb_instance.py tests/test_functional_sqlalchemy_sqlite_in_memory.py tests/test_sqlite.py
 
 services:
   # MySQL is started by default
   - mongodb
+
+addons:
+    postgresql: "9.3"
 
 after_success:
   - coveralls
