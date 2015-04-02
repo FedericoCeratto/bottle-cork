@@ -4,14 +4,14 @@ python:
   - "2.7"
   # - "3.2" Temporary disabling Python3
 install:
-  - pip install -e . --use-mirrors
-  - pip install MySQL-python --use-mirrors
-  - pip install SQLAlchemy --use-mirrors
-  - pip install coveralls --use-mirrors
-  - pip install flask --use-mirrors
-  - pip install pymongo --use-mirrors
-  - pip install scrypt --use-mirrors
-  - pip install webtest --use-mirrors
+  - pip install -e .
+  - pip install MySQL-python
+  - pip install SQLAlchemy
+  - pip install coveralls
+  - pip install flask
+  - pip install pymongo
+  - pip install scrypt
+  - pip install webtest
 
 before_script:
   - mysql -e 'create database myapp_test;' # username: "root", password: ""
