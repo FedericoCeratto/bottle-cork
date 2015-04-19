@@ -50,6 +50,8 @@ class AuthException(AAAException):
     """Authentication Exception: incorrect username/password pair"""
     pass
 
+class UserExists(AAAException):
+    pass
 
 class BaseCork(object):
     """Abstract class"""
@@ -278,7 +280,7 @@ class BaseCork(object):
                                 " to create users.")
 
         if username in self._store.users:
-            raise AAAException("User is already existing.")
+            raise UserExists("User is already existing.")
         if role not in self._store.roles:
             raise AAAException("Nonexistent user role.")
         tstamp = str(datetime.utcnow())
@@ -387,7 +389,7 @@ class BaseCork(object):
         assert password, "A password must be provided."
         assert email_addr, "An email address must be provided."
         if username in self._store.users:
-            raise AAAException("User is already existing.")
+            raise UserExists("User is already existing.")
         if role not in self._store.roles:
             raise AAAException("Nonexistent role")
         if self._store.roles[role] > max_level:
@@ -431,7 +433,7 @@ class BaseCork(object):
 
         username = data['username']
         if username in self._store.users:
-            raise AAAException("User is already existing.")
+            raise UserExists("User is already existing.")
 
         # the user data is moved from pending_registrations to _users
         self._store.users[username] = {
