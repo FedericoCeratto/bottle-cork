@@ -7,7 +7,7 @@
    :synopsis: SQLite storage backend.
 """
 
-import base_backend
+from . import base_backend
 from logging import getLogger
 log = getLogger(__name__)
 
@@ -31,7 +31,7 @@ class Table(base_backend.Table):
         self._backend = backend
         self._engine = backend.connection
         self._table_name = table_name
-        self._column_names = zip(*self._columns)[0]
+        self._column_names = [n for n, t in self._columns]
         self._key_col_num = 0
         self._key_col_name = self._column_names[self._key_col_num]
         self._key_col = self._column_names[self._key_col_num]

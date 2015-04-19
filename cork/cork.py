@@ -27,8 +27,10 @@ from smtplib import SMTP, SMTP_SSL
 from threading import Thread
 from time import time
 import bottle
+import hashlib
 import os
 import re
+import sys
 import uuid
 
 try:
@@ -37,7 +39,14 @@ try:
 except ImportError:  # pragma: no cover
     scrypt_available = False
 
-from backends import JsonBackend
+try:
+  basestring
+except NameError:
+  basestring = str
+
+from .backends import JsonBackend
+
+is_py3 = (sys.version_info.major == 3)
 
 log = getLogger(__name__)
 
@@ -99,8 +108,8 @@ class BaseCork(object):
         :type fail_redirect: str.
         :returns: True for successful logins, else False
         """
-        assert isinstance(username, (str, unicode)), "the username must be a string"
-        assert isinstance(password, (str, unicode)), "the password must be a string"
+        assert isinstance(username, basestring), "the username must be a string"
+        assert isinstance(password, basestring), "the password must be a string"
 
         if username in self._store.users:
             authenticated = self._verify_password(
@@ -133,7 +142,7 @@ class BaseCork(object):
         try:
             session = self._beaker_session
             session.delete()
-        except Exception, e:
+        except Exception as e:
             log.debug("Exception %s while logging out." % repr(e))
             self._redirect(fail_redirect)
 
@@ -518,7 +527,7 @@ class BaseCork(object):
         :raises: AuthException for invalid reset tokens, AAAException
         """
         try:
-            reset_code = b64decode(reset_code)
+            reset_code = b64decode(reset_code).decode()
             username, email_addr, tstamp, h = reset_code.split(':', 3)
             tstamp = int(tstamp)
         except (TypeError, ValueError):
@@ -601,7 +610,8 @@ class BaseCork(object):
         h = scrypt.hash(cleartext, salt)
 
         # 's' for scrypt
-        return b64encode('s' + salt + h)
+        hashed = b's' + salt + h
+        return b64encode(hashed)
 
     @staticmethod
     def _hash_pbkdf2(username, pwd, salt=None):
@@ -612,16 +622,18 @@ class BaseCork(object):
         """
         if salt is None:
             salt = os.urandom(32)
+
         assert len(salt) == 32, "Incorrect salt length"
 
-        cleartext = "%s\0%s" % (username, pwd)
+        cleartext = username.encode('utf-8') + b'\0' + pwd.encode('utf-8')
         h = crypto.generateCryptoKeys(cleartext, salt, 10)
         if len(h) != 32:
             raise RuntimeError("The PBKDF2 hash is %d bytes long instead"
                 "of 32. The pycrypto library might be missing." % len(h))
 
         # 'p' for PBKDF2
-        return b64encode('p' + salt + h)
+        hashed = b'p' + salt + h
+        return b64encode(hashed)
 
     def _verify_password(self, username, pwd, salted_hash):
         """Verity username/password pair against a salted hash
@@ -630,6 +642,9 @@ class BaseCork(object):
         """
         decoded = b64decode(salted_hash)
         hash_type = decoded[0]
+        if isinstance(hash_type, int):
+            hash_type = chr(hash_type)
+
         salt = decoded[1:33]
 
         if hash_type == 'p':  # PBKDF2
@@ -648,7 +663,11 @@ class BaseCork(object):
         :param exp_time: expiration time (hours)
         :type exp_time: float.
         """
-        for uuid_code, data in self._store.pending_registrations.items():
+        pending = self._store.pending_registrations.items()
+        if is_py3:
+            pending = list(pending)
+
+        for uuid_code, data in pending:
             creation = datetime.strptime(data['creation_date'],
                 "%Y-%m-%d %H:%M:%S.%f")
             now = datetime.utcnow()
@@ -667,7 +686,8 @@ class BaseCork(object):
         """
         h = self._hash(username, email_addr)
         t = "%d" % time()
-        reset_code = ':'.join((username, email_addr, t, h))
+        t = t.encode('utf-8')
+        reset_code = b':'.join((username.encode('utf-8'), email_addr.encode('utf-8'), t, h))
         return b64encode(reset_code)
 
 
@@ -781,7 +801,7 @@ class FlaskCork(BaseCork):
 
 class Mailer(object):
 
-    def __init__(self, sender, smtp_url, join_timeout=5):
+    def __init__(self, sender, smtp_url, join_timeout=5, use_threads=True):
         """Send emails asyncronously
 
         :param sender: Sender email address
@@ -791,6 +811,7 @@ class Mailer(object):
         """
         self.sender = sender
         self.join_timeout = join_timeout
+        self.use_threads = use_threads
         self._threads = []
         self._conf = self._parse_smtp_url(smtp_url)
 
@@ -864,13 +885,22 @@ class Mailer(object):
         msg['Subject'] = subject
         msg['From'] = self.sender
         msg['To'] = email_addr
-        part = MIMEText(email_text.encode('utf-8'), 'html')
+        if isinstance(email_text, bytes):
+            email_text = email_text.encode('utf-8')
+
+        part = MIMEText(email_text, 'html')
         msg.attach(part)
+        msg = msg.as_string()
 
         log.debug("Sending email using %s" % self._conf['fqdn'])
-        thread = Thread(target=self._send, args=(email_addr, msg.as_string()))
-        thread.start()
-        self._threads.append(thread)
+
+        if self.use_threads:
+            thread = Thread(target=self._send, args=(email_addr, msg))
+            thread.start()
+            self._threads.append(thread)
+
+        else:
+            self._send(email_addr, msg)
 
     def _send(self, email_addr, msg):
         """Deliver an email using SMTP

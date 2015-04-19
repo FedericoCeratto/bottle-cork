@@ -7,7 +7,7 @@
    :synopsis: SQLAlchemy storage backend.
 """
 
-import base_backend
+from . import base_backend
 from logging import getLogger
 log = getLogger(__name__)
 
@@ -140,7 +140,7 @@ class SqlAlchemyBackend(base_backend.Backend):
             self._engine = create_engine(db_url)
             try:
                 self._engine.execute("CREATE DATABASE %s" % db_name)
-            except Exception, e:
+            except Exception as e:
                 log.info("Failed DB creation: %s" % e)
 
             # SQLite in-memory database URL: "sqlite://:memory:"

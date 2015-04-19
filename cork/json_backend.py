@@ -7,17 +7,36 @@
    :synopsis: JSON file-based storage backend.
 """
 
-import shutil
-import os
 from logging import getLogger
+import os
+import shutil
+import sys
+
 try:
     import json
 except ImportError:  # pragma: no cover
     import simplejson as json
 
-from base_backend import BackendIOException
+from .base_backend import BackendIOException
+
+is_py3 = (sys.version_info.major == 3)
 
 log = getLogger(__name__)
+
+try:
+    dict.iteritems
+    py23dict = dict
+except AttributeError:
+    class py23dict(dict):
+        iteritems = dict.items
+
+class BytesEncoder(json.JSONEncoder):
+    def default(self, obj):
+        if is_py3 and isinstance(obj, bytes):
+            return obj.decode()
+
+        return json.JSONEncoder.default(self, obj)
+
 
 class JsonBackend(object):
     """JSON file-based storage backend."""
@@ -37,13 +56,13 @@ class JsonBackend(object):
         """
         assert directory, "Directory name must be valid"
         self._directory = directory
-        self.users = {}
+        self.users = py23dict()
         self._users_fname = users_fname
-        self.roles = {}
+        self.roles = py23dict()
         self._roles_fname = roles_fname
-        self._mtimes = {}
+        self._mtimes = py23dict()
         self._pending_reg_fname = pending_reg_fname
-        self.pending_registrations = {}
+        self.pending_registrations = py23dict()
         if initialize:
             self._initialize_storage()
         self._refresh()  # load users and roles
@@ -94,9 +113,8 @@ class JsonBackend(object):
         """Save obj in JSON format in a file in self._directory"""
         fname = "%s/%s.json" % (self._directory, fname)
         try:
-            s = json.dumps(obj)
-            with open("%s.tmp" % fname, 'wb') as f:
-                f.write(s)
+            with open("%s.tmp" % fname, 'w') as f:
+                json.dump(obj, f, cls=BytesEncoder)
                 f.flush()
             shutil.move("%s.tmp" % fname, fname)
         except Exception as e:
