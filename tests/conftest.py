@@ -1,8 +1,35 @@
 
-import pytest
 import bottle
+import os
+import pytest
 
 from cork import Cork
+
+@pytest.fixture
+def chdir_to_tmpdir(tmpdir):
+    # Chdir into the current tmpdir (used by Cork to find email templates)
+    tmpdir.chdir()
+    assert tmpdir.strpath == os.getcwd()
+
+@pytest.fixture
+def templates_dir(tmpdir, chdir_to_tmpdir):
+    # Setup email templates
+    tmpdir.mkdir('views')
+    tmpdir.join('views/registration_email.tpl').write("""Username:{{username}} Email:{{email_addr}} Code:{{registration_code}}""")
+    tmpdir.join('views/password_reset_email.tpl').write("""Username:{{username}} Email:{{email_addr}} Code:{{reset_code}}""")
+    assert tmpdir.join('views/password_reset_email.tpl').exists()
+    tmpdir.mkdir('examples')
+    tmpdir.mkdir('examples/views')
+    tmpdir.join('examples/views/password_reset_email.tpl').write(
+"""Hello {{username}},<br/>
+You are receiving this email because you requested a password reset on Cork Demo Webapp.<br/>
+<br/>
+If you wish to complete the password reset please click on:<br/>
+<a href="http://localhost:8080/change_password/{{reset_code}}">Confirm</a>
+<br/><br/>
+""")
+    return tmpdir
+
 
 @pytest.fixture
 def mytmpdir(tmpdir):
@@ -16,6 +43,7 @@ def mytmpdir(tmpdir):
     tmpdir.join('password_reset_email.tpl').write("""Username:{{username}} Email:{{email_addr}} Code:{{reset_code}}""")
     return tmpdir
 
+# used by test_scrypt.py
 @pytest.fixture
 def aaa(mytmpdir):
     aaa = Cork(mytmpdir, smtp_server='localhost', email_sender='test@localhost')
