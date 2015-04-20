@@ -18,7 +18,6 @@
 #
 
 from base64 import b64encode, b64decode
-from beaker import crypto
 from datetime import datetime, timedelta
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
@@ -623,13 +622,17 @@ class BaseCork(object):
         if salt is None:
             salt = os.urandom(32)
 
+        assert isinstance(salt, bytes)
         assert len(salt) == 32, "Incorrect salt length"
 
-        cleartext = username.encode('utf-8') + b'\0' + pwd.encode('utf-8')
-        h = crypto.generateCryptoKeys(cleartext, salt, 10)
-        if len(h) != 32:
-            raise RuntimeError("The PBKDF2 hash is %d bytes long instead"
-                "of 32. The pycrypto library might be missing." % len(h))
+        username = username.encode('utf-8')
+        assert isinstance(username, bytes)
+
+        pwd = pwd.encode('utf-8')
+        assert isinstance(pwd, bytes)
+
+        cleartext = username + b'\0' + pwd
+        h = hashlib.pbkdf2_hmac('sha1', cleartext, salt, 10, dklen=32)
 
         # 'p' for PBKDF2
         hashed = b'p' + salt + h
@@ -777,7 +780,7 @@ class Cork(BaseCork):
 
     @property
     def _beaker_session(self):
-        """Get Beaker session"""
+        """Get session"""
         return bottle.request.environ.get(self.session_key_name)
 
     def _save_session(self):
@@ -791,7 +794,7 @@ class FlaskCork(BaseCork):
 
     @property
     def _beaker_session(self):
-        """Get Beaker session"""
+        """Get session"""
         import flask
         return flask.session
 

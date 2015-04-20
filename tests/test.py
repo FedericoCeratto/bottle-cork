@@ -145,7 +145,6 @@ def test_loadjson_unchanged(aaa):
 
 # Test PBKDF2-based password hashing
 
-
 def test_password_hashing_PBKDF2(aaa):
     shash = aaa._hash(u'user_foo', u'bogus_pwd')
     assert isinstance(shash, bytes)
@@ -155,18 +154,27 @@ def test_password_hashing_PBKDF2(aaa):
         "Hashing verification should succeed"
 
 
+def test_hashlib_pbk():
+    # Hashlib works under py2 and py3 producing the same output.
+    # With iterations = 10 and dklen = 32 the output is also consistent with
+    # beaker under py2 as in the previous versions of Cork
+    import hashlib
+    cleartext = b'hello'
+    salt = b'hi'
+    h = hashlib.pbkdf2_hmac('sha1', cleartext, salt, 10, dklen=32)
+    assert b64encode(h) == b'QTH8vcCFLLqLhxCTnkz6sq+Un3B4RQgWjMPpRC9hfEY='
+
 def test_password_hashing_PBKDF2_known_hash(aaa):
     assert aaa.preferred_hashing_algorithm == 'PBKDF2'
     salt = b's' * 32
     shash = aaa._hash(u'user_foo', u'bogus_pwd', salt=salt)
-    assert shash == 'cHNzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzax44AxQgK6uD9q1YWxLos1ispCe1Z7T7pOFK1PwdWEs='
-
+    assert shash == b'cHNzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzax44AxQgK6uD9q1YWxLos1ispCe1Z7T7pOFK1PwdWEs='
 
 def test_password_hashing_PBKDF2_known_hash_2(aaa):
     assert aaa.preferred_hashing_algorithm == 'PBKDF2'
     salt = b'\0' * 32
     shash = aaa._hash(u'user_foo', u'bogus_pwd', salt=salt)
-    assert shash == 'cAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA/8Uh4pyEOHoRz4j0lDzAmqb7Dvmo8GpeXwiKTDsuYFw='
+    assert shash == b'cAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA/8Uh4pyEOHoRz4j0lDzAmqb7Dvmo8GpeXwiKTDsuYFw='
 
 
 def test_password_hashing_PBKDF2_known_hash_3(aaa):

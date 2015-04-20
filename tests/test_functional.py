@@ -358,7 +358,6 @@ def aaa_admin(templates_dir, backend):
     return aaa
 
 
-
 ### Tests
 
 ## Unauthenticated user
