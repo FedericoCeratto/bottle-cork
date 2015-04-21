@@ -111,10 +111,14 @@ class BaseCork(object):
         assert isinstance(password, basestring), "the password must be a string"
 
         if username in self._store.users:
+            salted_hash = self._store.users[username]['hash']
+            if not isinstance(salted_hash, type(b'')):
+                salted_hash = salted_hash.encode('utf-8')
+            assert isinstance(salted_hash, type(b''))
             authenticated = self._verify_password(
                 username,
                 password,
-                self._store.users[username]['hash']
+                salted_hash,
             )
             if authenticated:
                 # Setup session data
@@ -529,10 +533,17 @@ class BaseCork(object):
             reset_code = b64decode(reset_code).decode()
             username, email_addr, tstamp, h = reset_code.split(':', 3)
             tstamp = int(tstamp)
+            assert isinstance(username, type(u''))
+            assert isinstance(email_addr, type(u''))
+            if not isinstance(h, type(b'')):
+                h = h.encode('utf-8')
         except (TypeError, ValueError):
             raise AuthException("Invalid reset code.")
+
         if time() - tstamp > self.password_reset_timeout:
             raise AuthException("Expired reset code.")
+
+        assert isinstance(h, type(b''))
         if not self._verify_password(username, email_addr, h):
             raise AuthException("Invalid reset code.")
         user = self.user(username)
@@ -643,6 +654,7 @@ class BaseCork(object):
 
         :returns: bool
         """
+        assert isinstance(salted_hash, type(b''))
         decoded = b64decode(salted_hash)
         hash_type = decoded[0]
         if isinstance(hash_type, int):

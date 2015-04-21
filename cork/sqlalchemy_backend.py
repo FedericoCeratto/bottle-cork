@@ -137,7 +137,7 @@ class SqlAlchemyBackend(base_backend.Backend):
         if initialize:
             # Create new database if needed.
             db_url, db_name = db_full_url.rsplit('/', 1)
-            self._engine = create_engine(db_url)
+            self._engine = create_engine(db_url, encoding='utf-8')
             try:
                 self._engine.execute("CREATE DATABASE %s" % db_name)
             except Exception as e:
@@ -148,7 +148,7 @@ class SqlAlchemyBackend(base_backend.Backend):
                 self._engine.execute("USE %s" % db_name)
 
         else:
-            self._engine = create_engine(db_full_url)
+            self._engine = create_engine(db_full_url, encoding='utf-8')
 
 
         self._users = Table(users_tname, self._metadata,
