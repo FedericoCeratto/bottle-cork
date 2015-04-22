@@ -107,14 +107,12 @@ class BaseCork(object):
         :type fail_redirect: str.
         :returns: True for successful logins, else False
         """
-        assert isinstance(username, basestring), "the username must be a string"
-        assert isinstance(password, basestring), "the password must be a string"
+        #assert isinstance(username, type(u'')), "the username must be a string"
+        #assert isinstance(password, type(u'')), "the password must be a string"
 
         if username in self._store.users:
             salted_hash = self._store.users[username]['hash']
-            if not isinstance(salted_hash, type(b'')):
-                salted_hash = salted_hash.encode('utf-8')
-            assert isinstance(salted_hash, type(b''))
+            salted_hash = salted_hash.encode('ascii')
             authenticated = self._verify_password(
                 username,
                 password,
@@ -299,9 +297,11 @@ class BaseCork(object):
         if role not in self._store.roles:
             raise AAAException("Nonexistent user role.")
         tstamp = str(datetime.utcnow())
+        h = self._hash(username, password)
+        h = h.decode('ascii')
         self._store.users[username] = {
             'role': role,
-            'hash': self._hash(username, password),
+            'hash': h,
             'email_addr': email_addr,
             'desc': description,
             'creation_date': tstamp,
@@ -425,10 +425,12 @@ class BaseCork(object):
         self.mailer.send_email(email_addr, subject, email_text)
 
         # store pending registration
+        h = self._hash(username, password)
+        h = h.decode('ascii')
         self._store.pending_registrations[registration_code] = {
             'username': username,
             'role': role,
-            'hash': self._hash(username, password),
+            'hash': h,
             'email_addr': email_addr,
             'desc': description,
             'creation_date': creation_date,

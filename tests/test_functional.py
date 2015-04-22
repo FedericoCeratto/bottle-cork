@@ -485,6 +485,27 @@ def test_create_user(aaa_admin):
     assert 'phil' in aaa_admin._store.users
 
 
+@pytest.fixture
+def disable_os_urandom(monkeypatch):
+    monkeypatch.setattr('os.urandom', lambda n: b'9' * n)
+
+
+def test_check_hashing(aaa_admin, disable_os_urandom):
+    h1 = aaa_admin._hash(u'user', u'pwd')
+    assert h1 == b'cDk5OTk5OTk5OTk5OTk5OTk5OTk5OTk5OTk5OTk5OTk5ihNBRY2RYEuI8BWPKndJzD0BTxFOV+hv4Ih9WvRk9Dg='
+
+
+def test_create_user_check_hashing(aaa_admin, disable_os_urandom):
+    assert len(aaa_admin._store.users) == 1, repr(aaa_admin._store.users)
+    aaa_admin.create_user(u'phil', 'user', u'pwd')
+    assert len(aaa_admin._store.users) == 2, repr(aaa_admin._store.users)
+    assert 'phil' in aaa_admin._store.users
+
+    h = aaa_admin._store.users['phil']['hash'].encode('ascii')
+    assert h == b'cDk5OTk5OTk5OTk5OTk5OTk5OTk5OTk5OTk5OTk5OTk5REycUvi9EWiRY7kAUwU4vnGD84a0hstdqigKOaNmqBM='
+    assert h == aaa_admin._hash(u'phil', u'pwd')
+
+
 def test_unauth_delete_user(aaa_admin):
     aaa_admin._store.roles['admin'] = 10  # lower admin level
     assert_raises(AuthException, aaa_admin.delete_user, 'phil')
@@ -604,6 +625,55 @@ def test_modify_user_using_local_change(aaa_admin):
     u['role'] = 'editor'
     assert u['role'] == 'editor', repr(u)
     assert aaa_admin._store.users['phil']['role'] == 'editor'
+
+def test_write_user_hash_bytes(aaa_admin):
+    username = 'huh'
+    h = b'1234'
+    tstamp = "just a string"
+
+    h = h.decode('ascii')
+    assert isinstance(h, type(u''))
+    aaa_admin._store.users[username] = {
+        'role': "user",
+        'hash': h,
+        'email_addr': "bar",
+        'desc': "foo",
+        'creation_date': tstamp,
+        'last_login': tstamp
+    }
+
+    if hasattr(backend, '_engine'):
+        h_from_db = backend._engine.execute("SELECT * FROM users").fetchall()[1][2]
+        print("H %r" % h_from_db)
+        assert h_from_db == '1234'
+
+    fetched_h = aaa_admin._store.users[username]['hash']
+    fetched_h = fetched_h.encode('ascii')
+    assert isinstance(fetched_h, type(b''))
+    assert fetched_h == b'1234'
+
+
+def test_write_user_hash_unicode(aaa_admin):
+    username = 'huh'
+    h = u'1234'
+    tstamp = "just a string"
+    aaa_admin._store.users[username] = {
+        'role': "user",
+        'hash': h,
+        'email_addr': "bar",
+        'desc': "foo",
+        'creation_date': tstamp,
+        'last_login': tstamp
+    }
+
+    if hasattr(backend, '_engine'):
+        h_from_db = backend._engine.execute("SELECT * FROM users").fetchall()[1][2]
+        print("H %r" % h_from_db)
+        assert h_from_db == '1234'
+
+
+    fetched_h = aaa_admin._store.users[username]['hash']
+    assert fetched_h == u'1234'
 
 
 def test_require_failing_username(aaa_admin):
