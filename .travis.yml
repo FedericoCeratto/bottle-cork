@@ -5,6 +5,7 @@ install:
   - pip install coveralls
   - pip install tox
   - pip install webtest
+  - pip install tox-pytest-summary
 
 before_script:
   - mysql -e 'create database myapp_test;' # username: "root", password: ""
@@ -22,3 +23,6 @@ addons:
 
 after_success:
   - coveralls
+
+after_script:
+  - tox-pytest-summary
