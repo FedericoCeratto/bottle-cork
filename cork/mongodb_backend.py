@@ -84,7 +84,7 @@ class MongoSingleValueTable(MongoTable):
         assert not isinstance(data, dict)
         spec = {self._key_name: key_val}
         data = {self._key_name: key_val, 'val': data}
-        self._coll.update(spec, data, upsert=True, safe=True)
+        self._coll.update(spec, {'$set' :data}, upsert=True, safe=True)
 
     def __getitem__(self, key_val):
         r = self._coll.find_one({self._key_name: key_val})
@@ -125,7 +125,7 @@ class MongoMultiValueTable(MongoTable):
             data[key_name] = key_val
 
         spec = {key_name: key_val}
-        self._coll.update(spec, data, upsert=True)
+        self._coll.update(spec, {'$set': data}, upsert=True)
 
     def __getitem__(self, key_val):
         r = self._coll.find_one({self._key_name: key_val})
