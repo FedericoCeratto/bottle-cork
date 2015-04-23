@@ -50,7 +50,7 @@ class MongoTable(Table):
 
     def __iter__(self):
         """Iter on dictionary keys"""
-        r = self._coll.find(fields=[self._key_name,])
+        r = self._coll.find(projection={self._key_name: 1})
         return (i[self._key_name] for i in r)
 
     def iteritems(self):
