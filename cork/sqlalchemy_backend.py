@@ -7,9 +7,13 @@
    :synopsis: SQLAlchemy storage backend.
 """
 
-from . import base_backend
+import sys
 from logging import getLogger
+
+from . import base_backend
+
 log = getLogger(__name__)
+is_py3 = (sys.version_info.major == 3)
 
 try:
     from sqlalchemy import create_engine, delete, select, \
@@ -137,6 +141,9 @@ class SqlAlchemyBackend(base_backend.Backend):
         if initialize:
             # Create new database if needed.
             db_url, db_name = db_full_url.rsplit('/', 1)
+            if is_py3 and db_url.startswith('mysql'):
+                print("WARNING: MySQL is not supported under Python3")
+
             self._engine = create_engine(db_url, encoding='utf-8')
             try:
                 self._engine.execute("CREATE DATABASE %s" % db_name)

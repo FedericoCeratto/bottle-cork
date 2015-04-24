@@ -581,7 +581,12 @@ def test_create_and_validate_user(aaa_admin):
     assert login == True, "Login must succeed"
     assert aaa_admin._beaker_session['username'] == 'phil'
 
-def test_create_and_validate_user_unicode(aaa_admin):
+def test_create_and_validate_user_unicode(aaa_admin, request):
+    backend_type = request.param
+    if backend_type == 'mysql':
+        # FIXME, see #4
+        pytest.xfail()
+
     assert len(aaa_admin._store.users) == 1, "Only the admin user should be present"
     aaa_admin.create_user(u'phil_åöॐ', 'user', u'neko_猫')
     assert len(aaa_admin._store.users) == 2, "Two users should be present"
