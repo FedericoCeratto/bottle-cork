@@ -581,11 +581,12 @@ def test_create_and_validate_user(aaa_admin):
     assert login == True, "Login must succeed"
     assert aaa_admin._beaker_session['username'] == 'phil'
 
-def test_create_and_validate_user_unicode(aaa_admin, request):
-    backend_type = request.param
-    if backend_type == 'mysql':
-        # FIXME, see #4
-        pytest.xfail()
+def test_create_and_validate_user_unicode(aaa_admin, backend):
+    # FIXME, see #4
+    if hasattr(backend, '_engine'):
+        url = backend._engine.url
+        if str(url).startswith('mysql'):
+            pytest.xfail()
 
     assert len(aaa_admin._store.users) == 1, "Only the admin user should be present"
     aaa_admin.create_user(u'phil_åöॐ', 'user', u'neko_猫')
@@ -631,7 +632,7 @@ def test_modify_user_using_local_change(aaa_admin):
     assert u['role'] == 'editor', repr(u)
     assert aaa_admin._store.users['phil']['role'] == 'editor'
 
-def test_write_user_hash_bytes(aaa_admin):
+def test_write_user_hash_bytes(aaa_admin, backend):
     username = 'huh'
     h = b'1234'
     tstamp = "just a string"
@@ -649,7 +650,6 @@ def test_write_user_hash_bytes(aaa_admin):
 
     if hasattr(backend, '_engine'):
         h_from_db = backend._engine.execute("SELECT * FROM users").fetchall()[1][2]
-        print("H %r" % h_from_db)
         assert h_from_db == '1234'
 
     fetched_h = aaa_admin._store.users[username]['hash']
