@@ -82,7 +82,10 @@ class MongoSingleValueTable(MongoTable):
         assert not isinstance(data, dict)
         spec = {self._key_name: key_val}
         data = {self._key_name: key_val, 'val': data}
-        self._coll.update(spec, data, upsert=True, w=1)
+        if is_pymongo_2:
+            self._coll.update(spec, {'$set': data}, upsert=True, w=1)
+        else:
+            self._coll.update_one(spec, {'$set': data}, upsert=True)
 
     def __getitem__(self, key_val):
         r = self._coll.find_one({self._key_name: key_val})
@@ -105,7 +108,12 @@ class MongoMutableDict(dict):
 
     def __setitem__(self, k, v):
         super(MongoMutableDict, self).__setitem__(k, v)
-        self._parent[self._root_key] = self
+        spec = {self._parent._key_name: self._root_key}
+        if is_pymongo_2:
+            r = self._parent._coll.update(spec, {'$set': {k: v}}, upsert=True)
+        else:
+            r = self._parent._coll.update_one(spec, {'$set': {k: v}}, upsert=True)
+
 
 
 class MongoMultiValueTable(MongoTable):
@@ -123,7 +131,13 @@ class MongoMultiValueTable(MongoTable):
             data[key_name] = key_val
 
         spec = {key_name: key_val}
-        self._coll.update(spec, data, upsert=True)
+        if u'_id' in data:
+            del(data[u'_id'])
+
+        if is_pymongo_2:
+            self._coll.update(spec, {'$set': data}, upsert=True, w=1)
+        else:
+            self._coll.update_one(spec, {'$set': data}, upsert=True)
 
     def __getitem__(self, key_val):
         r = self._coll.find_one({self._key_name: key_val})
