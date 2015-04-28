@@ -47,6 +47,12 @@ Features
 News
 ----
 
+* 2015-04-26: Version 0.12.0a1
+
+  * WARNING: this is a development release and not backward-compatible.
+  * Add Python 3 support
+  * Add configurable session key #84
+
 * 2015-01-06: Version 0.11
 
   * Add Flask support
