@@ -377,7 +377,7 @@ class BaseCork(object):
     def register(self, username, password, email_addr, role='user',
                  max_level=50, subject="Signup confirmation",
                  email_template='views/registration_email.tpl',
-                 description=None):
+                 description=None, **kwargs):
         """Register a new user account. An email with a registration validation
         is sent to the user.
         WARNING: this method is available to unauthenticated users
@@ -420,7 +420,8 @@ class BaseCork(object):
             email_addr=email_addr,
             role=role,
             creation_date=creation_date,
-            registration_code=registration_code
+            registration_code=registration_code,
+            **kwargs
         )
         self.mailer.send_email(email_addr, subject, email_text)
 
@@ -466,7 +467,8 @@ class BaseCork(object):
 
     def send_password_reset_email(self, username=None, email_addr=None,
         subject="Password reset confirmation",
-        email_template='views/password_reset_email'):
+        email_template='views/password_reset_email',
+        **kwargs):
         """Email the user with a link to reset his/her password
         If only one parameter is passed, fetch the other from the users
         database. If both are passed they will be matched against the users
@@ -517,7 +519,8 @@ class BaseCork(object):
             email_template,
             username=username,
             email_addr=email_addr,
-            reset_code=reset_code
+            reset_code=reset_code,
+            **kwargs
         )
         self.mailer.send_email(email_addr, subject, email_text)
 
