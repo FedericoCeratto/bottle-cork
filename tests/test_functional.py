@@ -905,9 +905,17 @@ def test_perform_password_reset_mangled_email(aaa_admin):
         aaa_admin.reset_password(mangled_token, u'newpassword')
 
 
+def test_set_password_directly(aaa_admin):
+    #assert aaa_admin.login(u'admin', u'newpwd') == False
+    user = aaa_admin.user(u'admin')
+    assert user
+    user.update(pwd='newpwd')
+    assert aaa_admin.login(u'admin', u'newpwd')
+
+
 def test_perform_password_reset(aaa_admin):
     token = aaa_admin._reset_code(u'admin', u'admin@localhost.local')
     aaa_admin.reset_password(token, u'newpassword')
-
-
+    login = aaa_admin.login(u'admin', u'newpassword')
+    assert login == True, "Login must succeed"
 
