@@ -112,7 +112,8 @@ class BaseCork(object):
 
         if username in self._store.users:
             salted_hash = self._store.users[username]['hash']
-            salted_hash = salted_hash.encode('ascii')
+            if hasattr(salted_hash, 'encode'):
+                salted_hash = salted_hash.encode('ascii')
             authenticated = self._verify_password(
                 username,
                 password,
@@ -672,7 +673,7 @@ class BaseCork(object):
             h = self._hash_scrypt(username, pwd, salt)
             return salted_hash == h
 
-        raise RuntimeError("Unknown hashing algorithm: %s" % hash_type)
+        raise RuntimeError("Unknown hashing algorithm in hash: %r" % decoded)
 
     def _purge_expired_registrations(self, exp_time=96):
         """Purge expired registration requests.
