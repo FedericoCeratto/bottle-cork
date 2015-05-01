@@ -47,6 +47,11 @@ Features
 News
 ----
 
+* 2015-05-01: Version 0.12.0a2
+
+  * Implement configurable variables in email templates #88
+  * Fix #86, #87
+
 * 2015-04-26: Version 0.12.0a1
 
   * WARNING: this is a development release and not backward-compatible.
