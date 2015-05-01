@@ -2,7 +2,7 @@
 
 from setuptools import setup
 
-__version__ = '0.12.0a1'
+__version__ = '0.12.0a2'
 
 CLASSIFIERS = map(str.strip,
 """Development Status :: 4 - Beta
