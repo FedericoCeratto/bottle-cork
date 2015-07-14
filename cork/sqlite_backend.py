@@ -219,7 +219,7 @@ class SQLiteBackend(base_backend.Backend):
             return self._connection
         except AttributeError:
             import sqlite3
-            self._connection = sqlite3.connect(self._filename)
+            self._connection = sqlite3.connect(self._filename, isolation_level=None)
             return self._connection
 
     def run_query(self, query):
