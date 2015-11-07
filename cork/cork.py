@@ -43,9 +43,9 @@ except ImportError:  # pragma: no cover
     scrypt_available = False
 
 try:
-  basestring
+    basestring
 except NameError:
-  basestring = str
+    basestring = str
 
 from .backends import JsonBackend
 
@@ -89,9 +89,11 @@ class BaseCork(object):
 
         # Setup JsonBackend by default for backward compatibility.
         if backend is None:
-            self._store = JsonBackend(directory, users_fname='users',
+            self._store = JsonBackend(
+                directory, users_fname='users',
                 roles_fname='roles', pending_reg_fname='register',
-                initialize=initialize)
+                initialize=initialize
+            )
 
         else:
             self._store = backend
@@ -111,8 +113,8 @@ class BaseCork(object):
         :type fail_redirect: str.
         :returns: True for successful logins, else False
         """
-        #assert isinstance(username, type(u'')), "the username must be a string"
-        #assert isinstance(password, type(u'')), "the password must be a string"
+        # assert isinstance(username, type(u'')), "username must be a string"
+        # assert isinstance(password, type(u'')), "password must be a string"
 
         if username in self._store.users:
             salted_hash = self._store.users[username]['hash']
@@ -126,7 +128,8 @@ class BaseCork(object):
             if authenticated:
                 # Setup session data
                 self._setup_cookie(username)
-                self._store.users[username]['last_login'] = str(datetime.utcnow())
+                self._store.users[username]['last_login'] = str(
+                    datetime.utcnow())
                 self._store.save_users()
                 if success_redirect:
                     self._redirect(success_redirect)
@@ -514,7 +517,8 @@ class BaseCork(object):
                 # both username and email_addr are provided: check them
                 stored_email_addr = self._store.users[username]['email_addr']
                 if email_addr != stored_email_addr:
-                    raise AuthException("Username/email address pair not found.")
+                    raise AuthException(
+                        "Username/email address pair not found.")
 
         # generate a reset_code token
         reset_code = self._reset_code(username, email_addr)
@@ -561,7 +565,8 @@ class BaseCork(object):
             raise AAAException("Nonexistent user.")
         user.update(pwd=password)
 
-    def make_auth_decorator(self, username=None, role=None, fixed_role=False, fail_redirect='/login'):
+    def make_auth_decorator(self, username=None, role=None, fixed_role=False,
+                            fail_redirect='/login'):
         '''
         Create a decorator to be used for authentication and authorization
 
@@ -571,13 +576,16 @@ class BaseCork(object):
         :param fail_redirect: The URL to redirect to if a login is required.
         '''
         session_manager = self
+
         def auth_require(username=username, role=role, fixed_role=fixed_role,
                          fail_redirect=fail_redirect):
             def decorator(func):
                 import functools
+
                 @functools.wraps(func)
                 def wrapper(*a, **ka):
-                    session_manager.require(username=username, role=role, fixed_role=fixed_role,
+                    session_manager.require(
+                        username=username, role=role, fixed_role=fixed_role,
                         fail_redirect=fail_redirect)
                     return func(*a, **ka)
                 return wrapper
@@ -694,7 +702,7 @@ class BaseCork(object):
 
         for uuid_code, data in pending:
             creation = datetime.strptime(data['creation_date'],
-                "%Y-%m-%d %H:%M:%S.%f")
+                                         "%Y-%m-%d %H:%M:%S.%f")
             now = datetime.utcnow()
             maxdelta = timedelta(hours=exp_time)
             if now - creation > maxdelta:
@@ -712,7 +720,8 @@ class BaseCork(object):
         h = self._hash(username, email_addr)
         t = "%d" % time()
         t = t.encode('utf-8')
-        reset_code = b':'.join((username.encode('utf-8'), email_addr.encode('utf-8'), t, h))
+        reset_code = b':'.join((username.encode('utf-8'),
+                                email_addr.encode('utf-8'), t, h))
         return b64encode(reset_code)
 
 
