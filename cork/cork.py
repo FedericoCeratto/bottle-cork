@@ -32,6 +32,10 @@ import re
 import sys
 import uuid
 
+if sys.version_info[0:3] < (2, 7, 8):
+    print("Python >= 2.7.8 is required")
+    sys.exit(1)
+
 try:
     import scrypt
     scrypt_available = True
