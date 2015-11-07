@@ -26,3 +26,11 @@ after_success:
 
 after_script:
   - tox-pytest-summary
+
+sudo: false
+
+addons:
+  apt:
+    packages:
+    - libmysqlclient-dev
+    - python3-dev
