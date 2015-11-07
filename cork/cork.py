@@ -764,7 +764,7 @@ class User(object):
 
         if pwd is not None:
             self._cork._store.users[username]['hash'] = self._cork._hash(
-                username, pwd)
+                username, pwd).decode()
 
         if email_addr is not None:
             self._cork._store.users[username]['email_addr'] = email_addr
