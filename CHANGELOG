@@ -1,3 +1,6 @@
+v0.12 2015-11-07
+ * Support Python3
+ * Support Unicode usernames and passwords
 v0.11.1 2015-01-09
  * Flask import bugfix. Closes: #79
 v0.11 2015-01-06

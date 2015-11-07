@@ -47,6 +47,13 @@ Features
 News
 ----
 
+* 2015-11-07: Version 0.12
+
+  * WARNING: not backward-compatible with version 0.11
+  * Add Python 3 support
+  * Support unicode usernames and passwords
+  * Bugfixes
+
 * 2015-05-01: Version 0.12.0a2
 
   * Implement configurable variables in email templates #88
