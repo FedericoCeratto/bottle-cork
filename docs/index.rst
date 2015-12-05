@@ -9,7 +9,7 @@ Cork - Authentication for the Bottle web framework
 
  - `Mailing list <https://groups.google.com/forum/?fromgroups#!forum/cork-discuss>`_
  - `Bug tracker <http://github.com/FedericoCeratto/bottle-cork/issues>`_
- - IRC: (`#bottle <http://webchat.freenode.net?channels=bottle&uio=OT10cnVlde>`_) on Freenode
+ - IRC: (`#bottlepy <http://webchat.freenode.net?channels=bottlepy&uio=OT10cnVlde>`_) on Freenode
  - `Downloads <http://pypi.python.org/pypi/bottle-cork/>`_
  - `Source code <https://github.com/FedericoCeratto/bottle-cork>`_
 
