@@ -11,7 +11,7 @@ import pytest
 import smtplib
 
 import cork.cork
-from cork import Cork, JsonBackend, AAAException, AuthException
+from cork import Cork, JsonBackend, AAAException, AuthException, UserExists
 from cork.base_backend import BackendIOException
 
 
@@ -472,7 +472,7 @@ def test_prevent_double_registration(aaa, json_db_dir):
 
     # Run validate_registration with the second registration code
     # The second registration should fail as the user account exists
-    with pytest.raises(AAAException):
+    with pytest.raises(UserExists):
         aaa.validate_registration(second_registration_code)
 
     # test login
