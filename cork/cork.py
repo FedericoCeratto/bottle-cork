@@ -18,7 +18,6 @@
 #
 
 from base64 import b64encode, b64decode
-from beaker import crypto
 from datetime import datetime, timedelta
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
@@ -27,9 +26,15 @@ from smtplib import SMTP, SMTP_SSL
 from threading import Thread
 from time import time
 import bottle
+import hashlib
 import os
 import re
+import sys
 import uuid
+
+if sys.version_info[0:3] < (2, 7, 8):
+    print("Python >= 2.7.8 is required")
+    sys.exit(1)
 
 try:
     import scrypt
@@ -37,7 +42,14 @@ try:
 except ImportError:  # pragma: no cover
     scrypt_available = False
 
-from backends import JsonBackend
+try:
+    basestring
+except NameError:
+    basestring = str
+
+from .backends import JsonBackend
+
+is_py3 = (sys.version_info.major == 3)
 
 log = getLogger(__name__)
 
@@ -45,6 +57,7 @@ log = getLogger(__name__)
 class AAAException(Exception):
     """Generic Authentication/Authorization Exception"""
     pass
+
 
 class AuthException(AAAException):
     """Authentication Exception: incorrect username/password pair"""
@@ -57,8 +70,8 @@ class BaseCork(object):
     """Abstract class"""
 
     def __init__(self, directory=None, backend=None, email_sender=None,
-        initialize=False, session_domain=None, session_key=None, smtp_server=None,
-        smtp_url='localhost'):
+                 initialize=False, session_domain=None, smtp_server=None,
+                 smtp_url='localhost', session_key_name=None):
         """Auth/Authorization/Accounting class
 
         :param directory: configuration directory
@@ -73,20 +86,22 @@ class BaseCork(object):
         self.mailer = Mailer(email_sender, smtp_url)
         self.password_reset_timeout = 3600 * 24
         self.session_domain = session_domain
-        self.session_key = session_key or 'beaker.session'
+        self.session_key_name = session_key_name or 'beaker.session'
         self.preferred_hashing_algorithm = 'PBKDF2'
 
         # Setup JsonBackend by default for backward compatibility.
         if backend is None:
-            self._store = JsonBackend(directory, users_fname='users',
+            self._store = JsonBackend(
+                directory, users_fname='users',
                 roles_fname='roles', pending_reg_fname='register',
-                initialize=initialize)
+                initialize=initialize
+            )
 
         else:
             self._store = backend
 
     def login(self, username, password, success_redirect=None,
-        fail_redirect=None):
+              fail_redirect=None):
         """Check login credentials for an existing user.
         Optionally redirect the user to another page (typically /login)
 
@@ -100,15 +115,23 @@ class BaseCork(object):
         :type fail_redirect: str.
         :returns: True for successful logins, else False
         """
-        assert isinstance(username, (str, unicode)), "the username must be a string"
-        assert isinstance(password, (str, unicode)), "the password must be a string"
+        # assert isinstance(username, type(u'')), "username must be a string"
+        # assert isinstance(password, type(u'')), "password must be a string"
 
         if username in self._store.users:
-            if self._verify_password(username, password,
-                    self._store.users[username]['hash']):
+            salted_hash = self._store.users[username]['hash']
+            if hasattr(salted_hash, 'encode'):
+                salted_hash = salted_hash.encode('ascii')
+            authenticated = self._verify_password(
+                username,
+                password,
+                salted_hash,
+            )
+            if authenticated:
                 # Setup session data
                 self._setup_cookie(username)
-                self._store.users[username]['last_login'] = str(datetime.utcnow())
+                self._store.users[username]['last_login'] = str(
+                    datetime.utcnow())
                 self._store.save_users()
                 if success_redirect:
                     self._redirect(success_redirect)
@@ -130,14 +153,14 @@ class BaseCork(object):
         try:
             session = self._beaker_session
             session.delete()
-        except Exception, e:
+        except Exception as e:
             log.debug("Exception %s while logging out." % repr(e))
             self._redirect(fail_redirect)
 
         self._redirect(success_redirect)
 
     def require(self, username=None, role=None, fixed_role=False,
-        fail_redirect=None):
+                fail_redirect=None):
         """Ensure the user is logged in has the required role (or higher).
         Optionally redirect the user to another page (typically /login)
         If both `username` and `role` are specified, both conditions need to be
@@ -187,7 +210,7 @@ class BaseCork(object):
 
             if fail_redirect is None:
                 raise AuthException("Unauthorized access: incorrect"
-                    " username")
+                                    " username")
 
             self._redirect(fail_redirect)
 
@@ -258,7 +281,7 @@ class BaseCork(object):
             yield (role, self._store.roles[role])
 
     def create_user(self, username, role, password, email_addr=None,
-        description=None):
+                    description=None):
         """Create a new user account.
         This method is available to users with level>=100
 
@@ -284,9 +307,11 @@ class BaseCork(object):
         if role not in self._store.roles:
             raise AAAException("Nonexistent user role.")
         tstamp = str(datetime.utcnow())
+        h = self._hash(username, password)
+        h = h.decode('ascii')
         self._store.users[username] = {
             'role': role,
-            'hash': self._hash(username, password),
+            'hash': h,
             'email_addr': email_addr,
             'desc': description,
             'creation_date': tstamp,
@@ -360,9 +385,9 @@ class BaseCork(object):
         return None
 
     def register(self, username, password, email_addr, role='user',
-        max_level=50, subject="Signup confirmation",
-        email_template='views/registration_email.tpl',
-        description=None):
+                 max_level=50, subject="Signup confirmation",
+                 email_template='views/registration_email.tpl',
+                 description=None, **kwargs):
         """Register a new user account. An email with a registration validation
         is sent to the user.
         WARNING: this method is available to unauthenticated users
@@ -399,20 +424,24 @@ class BaseCork(object):
         creation_date = str(datetime.utcnow())
 
         # send registration email
-        email_text = bottle.template(email_template,
+        email_text = bottle.template(
+            email_template,
             username=username,
             email_addr=email_addr,
             role=role,
             creation_date=creation_date,
-            registration_code=registration_code
+            registration_code=registration_code,
+            **kwargs
         )
         self.mailer.send_email(email_addr, subject, email_text)
 
         # store pending registration
+        h = self._hash(username, password)
+        h = h.decode('ascii')
         self._store.pending_registrations[registration_code] = {
             'username': username,
             'role': role,
-            'hash': self._hash(username, password),
+            'hash': h,
             'email_addr': email_addr,
             'desc': description,
             'creation_date': creation_date,
@@ -448,7 +477,8 @@ class BaseCork(object):
 
     def send_password_reset_email(self, username=None, email_addr=None,
         subject="Password reset confirmation",
-        email_template='views/password_reset_email'):
+        email_template='views/password_reset_email',
+        **kwargs):
         """Email the user with a link to reset his/her password
         If only one parameter is passed, fetch the other from the users
         database. If both are passed they will be matched against the users
@@ -465,10 +495,10 @@ class BaseCork(object):
         :raises: AAAException on missing username or email_addr,
             AuthException on incorrect username/email_addr pair
         """
-        if username is None:
-            if email_addr is None:
-                raise AAAException("At least `username` or `email_addr` must" \
-                    " be specified.")
+        if not username:
+            if not email_addr:
+                raise AAAException("At least `username` or `email_addr` must"
+                                   " be specified.")
 
             # only email_addr is specified: fetch the username
             for k, v in self._store.users.iteritems():
@@ -481,24 +511,29 @@ class BaseCork(object):
         else:  # username is provided
             if username not in self._store.users:
                 raise AAAException("Nonexistent user.")
-            if email_addr is None:
+
+            if not email_addr:
                 email_addr = self._store.users[username].get('email_addr', None)
                 if not email_addr:
                     raise AAAException("Email address not available.")
+
             else:
                 # both username and email_addr are provided: check them
                 stored_email_addr = self._store.users[username]['email_addr']
                 if email_addr != stored_email_addr:
-                    raise AuthException("Username/email address pair not found.")
+                    raise AuthException(
+                        "Username/email address pair not found.")
 
         # generate a reset_code token
         reset_code = self._reset_code(username, email_addr)
 
         # send reset email
-        email_text = bottle.template(email_template,
+        email_text = bottle.template(
+            email_template,
             username=username,
             email_addr=email_addr,
-            reset_code=reset_code
+            reset_code=reset_code,
+            **kwargs
         )
         self.mailer.send_email(email_addr, subject, email_text)
 
@@ -513,13 +548,20 @@ class BaseCork(object):
         :raises: AuthException for invalid reset tokens, AAAException
         """
         try:
-            reset_code = b64decode(reset_code)
+            reset_code = b64decode(reset_code).decode()
             username, email_addr, tstamp, h = reset_code.split(':', 3)
             tstamp = int(tstamp)
+            assert isinstance(username, type(u''))
+            assert isinstance(email_addr, type(u''))
+            if not isinstance(h, type(b'')):
+                h = h.encode('utf-8')
         except (TypeError, ValueError):
             raise AuthException("Invalid reset code.")
+
         if time() - tstamp > self.password_reset_timeout:
             raise AuthException("Expired reset code.")
+
+        assert isinstance(h, type(b''))
         if not self._verify_password(username, email_addr, h):
             raise AuthException("Invalid reset code.")
         user = self.user(username)
@@ -527,7 +569,8 @@ class BaseCork(object):
             raise AAAException("Nonexistent user.")
         user.update(pwd=password)
 
-    def make_auth_decorator(self, username=None, role=None, fixed_role=False, fail_redirect='/login'):
+    def make_auth_decorator(self, username=None, role=None, fixed_role=False,
+                            fail_redirect='/login'):
         '''
         Create a decorator to be used for authentication and authorization
 
@@ -537,13 +580,16 @@ class BaseCork(object):
         :param fail_redirect: The URL to redirect to if a login is required.
         '''
         session_manager = self
+
         def auth_require(username=username, role=role, fixed_role=fixed_role,
                          fail_redirect=fail_redirect):
             def decorator(func):
                 import functools
+
                 @functools.wraps(func)
                 def wrapper(*a, **ka):
-                    session_manager.require(username=username, role=role, fixed_role=fixed_role,
+                    session_manager.require(
+                        username=username, role=role, fixed_role=fixed_role,
                         fail_redirect=fail_redirect)
                     return func(*a, **ka)
                 return wrapper
@@ -585,7 +631,7 @@ class BaseCork(object):
         """
         if not scrypt_available:
             raise Exception("scrypt.hash required."
-                " Please install the scrypt library.")
+                            " Please install the scrypt library.")
 
         if salt is None:
             salt = os.urandom(32)
@@ -596,7 +642,8 @@ class BaseCork(object):
         h = scrypt.hash(cleartext, salt)
 
         # 's' for scrypt
-        return b64encode('s' + salt + h)
+        hashed = b's' + salt + h
+        return b64encode(hashed)
 
     @staticmethod
     def _hash_pbkdf2(username, pwd, salt=None):
@@ -607,24 +654,34 @@ class BaseCork(object):
         """
         if salt is None:
             salt = os.urandom(32)
+
+        assert isinstance(salt, bytes)
         assert len(salt) == 32, "Incorrect salt length"
 
-        cleartext = "%s\0%s" % (username, pwd)
-        h = crypto.generateCryptoKeys(cleartext, salt, 10)
-        if len(h) != 32:
-            raise RuntimeError("The PBKDF2 hash is %d bytes long instead"
-                "of 32. The pycrypto library might be missing." % len(h))
+        username = username.encode('utf-8')
+        assert isinstance(username, bytes)
+
+        pwd = pwd.encode('utf-8')
+        assert isinstance(pwd, bytes)
+
+        cleartext = username + b'\0' + pwd
+        h = hashlib.pbkdf2_hmac('sha1', cleartext, salt, 10, dklen=32)
 
         # 'p' for PBKDF2
-        return b64encode('p' + salt + h)
+        hashed = b'p' + salt + h
+        return b64encode(hashed)
 
     def _verify_password(self, username, pwd, salted_hash):
         """Verity username/password pair against a salted hash
 
         :returns: bool
         """
+        assert isinstance(salted_hash, type(b''))
         decoded = b64decode(salted_hash)
         hash_type = decoded[0]
+        if isinstance(hash_type, int):
+            hash_type = chr(hash_type)
+
         salt = decoded[1:33]
 
         if hash_type == 'p':  # PBKDF2
@@ -635,7 +692,7 @@ class BaseCork(object):
             h = self._hash_scrypt(username, pwd, salt)
             return salted_hash == h
 
-        raise RuntimeError("Unknown hashing algorithm: %s" % hash_type)
+        raise RuntimeError("Unknown hashing algorithm in hash: %r" % decoded)
 
     def _purge_expired_registrations(self, exp_time=96):
         """Purge expired registration requests.
@@ -643,9 +700,13 @@ class BaseCork(object):
         :param exp_time: expiration time (hours)
         :type exp_time: float.
         """
-        for uuid_code, data in self._store.pending_registrations.items():
+        pending = self._store.pending_registrations.items()
+        if is_py3:
+            pending = list(pending)
+
+        for uuid_code, data in pending:
             creation = datetime.strptime(data['creation_date'],
-                "%Y-%m-%d %H:%M:%S.%f")
+                                         "%Y-%m-%d %H:%M:%S.%f")
             now = datetime.utcnow()
             maxdelta = timedelta(hours=exp_time)
             if now - creation > maxdelta:
@@ -662,7 +723,9 @@ class BaseCork(object):
         """
         h = self._hash(username, email_addr)
         t = "%d" % time()
-        reset_code = ':'.join((username, email_addr, t, h))
+        t = t.encode('utf-8')
+        reset_code = b':'.join((username.encode('utf-8'),
+                                email_addr.encode('utf-8'), t, h))
         return b64encode(reset_code)
 
 
@@ -718,7 +781,7 @@ class User(object):
 
         if pwd is not None:
             self._cork._store.users[username]['hash'] = self._cork._hash(
-                username, pwd)
+                username, pwd).decode()
 
         if email_addr is not None:
             self._cork._store.users[username]['email_addr'] = email_addr
@@ -740,8 +803,10 @@ class User(object):
 class Redirect(Exception):
     pass
 
+
 def raise_redirect(path):
     raise Redirect(path)
+
 
 class Cork(BaseCork):
     @staticmethod
@@ -750,11 +815,12 @@ class Cork(BaseCork):
 
     @property
     def _beaker_session(self):
-        """Get Beaker session"""
-        return bottle.request.environ.get(self.session_key)
+        """Get session"""
+        return bottle.request.environ.get(self.session_key_name)
 
     def _save_session(self):
         self._beaker_session.save()
+
 
 class FlaskCork(BaseCork):
     @staticmethod
@@ -763,7 +829,7 @@ class FlaskCork(BaseCork):
 
     @property
     def _beaker_session(self):
-        """Get Beaker session"""
+        """Get session"""
         import flask
         return flask.session
 
@@ -773,7 +839,7 @@ class FlaskCork(BaseCork):
 
 class Mailer(object):
 
-    def __init__(self, sender, smtp_url, join_timeout=5):
+    def __init__(self, sender, smtp_url, join_timeout=5, use_threads=True):
         """Send emails asyncronously
 
         :param sender: Sender email address
@@ -783,6 +849,7 @@ class Mailer(object):
         """
         self.sender = sender
         self.join_timeout = join_timeout
+        self.use_threads = use_threads
         self._threads = []
         self._conf = self._parse_smtp_url(smtp_url)
 
@@ -856,13 +923,22 @@ class Mailer(object):
         msg['Subject'] = subject
         msg['From'] = self.sender
         msg['To'] = email_addr
-        part = MIMEText(email_text.encode('utf-8'), 'html')
+        if isinstance(email_text, bytes):
+            email_text = email_text.encode('utf-8')
+
+        part = MIMEText(email_text, 'html')
         msg.attach(part)
+        msg = msg.as_string()
 
         log.debug("Sending email using %s" % self._conf['fqdn'])
-        thread = Thread(target=self._send, args=(email_addr, msg.as_string()))
-        thread.start()
-        self._threads.append(thread)
+
+        if self.use_threads:
+            thread = Thread(target=self._send, args=(email_addr, msg))
+            thread.start()
+            self._threads.append(thread)
+
+        else:
+            self._send(email_addr, msg)
 
     def _send(self, email_addr, msg):
         """Deliver an email using SMTP
@@ -914,4 +990,3 @@ class Mailer(object):
             self.join()
         except TypeError:
             pass
-

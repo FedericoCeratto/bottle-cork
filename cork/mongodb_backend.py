@@ -12,16 +12,10 @@ log = getLogger(__name__)
 from .base_backend import Backend, Table
 
 try:
-    try:
-        from pymongo import MongoClient
-    except ImportError:  # pragma: no cover
-        # Backward compatibility with PyMongo 2.2
-        from pymongo import Connection as MongoClient
-
-    pymongo_available = True
+    import pymongo
+    is_pymongo_2 = (pymongo.version_tuple[0] == 2)
 except ImportError:  # pragma: no cover
-    pymongo_available = False
-
+    pass
 
 
 class MongoTable(Table):
@@ -50,7 +44,11 @@ class MongoTable(Table):
 
     def __iter__(self):
         """Iter on dictionary keys"""
-        r = self._coll.find(fields=[self._key_name,])
+        if is_pymongo_2:
+            r = self._coll.find(fields=[self._key_name,])
+        else:
+            r = self._coll.find(projection=[self._key_name,])
+
         return (i[self._key_name] for i in r)
 
     def iteritems(self):
@@ -68,7 +66,7 @@ class MongoTable(Table):
     def pop(self, key_val):
         """Remove a dictionary item"""
         r = self[key_val]
-        self._coll.remove({self._key_name: key_val}, safe=True)
+        self._coll.remove({self._key_name: key_val}, w=1)
         return r
 
 
@@ -84,7 +82,10 @@ class MongoSingleValueTable(MongoTable):
         assert not isinstance(data, dict)
         spec = {self._key_name: key_val}
         data = {self._key_name: key_val, 'val': data}
-        self._coll.update(spec, data, upsert=True, safe=True)
+        if is_pymongo_2:
+            self._coll.update(spec, {'$set': data}, upsert=True, w=1)
+        else:
+            self._coll.update_one(spec, {'$set': data}, upsert=True)
 
     def __getitem__(self, key_val):
         r = self._coll.find_one({self._key_name: key_val})
@@ -107,7 +108,12 @@ class MongoMutableDict(dict):
 
     def __setitem__(self, k, v):
         super(MongoMutableDict, self).__setitem__(k, v)
-        self._parent[self._root_key] = self
+        spec = {self._parent._key_name: self._root_key}
+        if is_pymongo_2:
+            r = self._parent._coll.update(spec, {'$set': {k: v}}, upsert=True)
+        else:
+            r = self._parent._coll.update_one(spec, {'$set': {k: v}}, upsert=True)
+
 
 
 class MongoMultiValueTable(MongoTable):
@@ -125,7 +131,13 @@ class MongoMultiValueTable(MongoTable):
             data[key_name] = key_val
 
         spec = {key_name: key_val}
-        self._coll.update(spec, data, upsert=True)
+        if u'_id' in data:
+            del(data[u'_id'])
+
+        if is_pymongo_2:
+            self._coll.update(spec, {'$set': data}, upsert=True, w=1)
+        else:
+            self._coll.update_one(spec, {'$set': data}, upsert=True)
 
     def __getitem__(self, key_val):
         r = self._coll.find_one({self._key_name: key_val})
@@ -138,7 +150,7 @@ class MongoMultiValueTable(MongoTable):
 class MongoDBBackend(Backend):
     def __init__(self, db_name='cork', hostname='localhost', port=27017, initialize=False, username=None, password=None):
         """Initialize MongoDB Backend"""
-        connection = MongoClient(host=hostname, port=port)
+        connection = pymongo.MongoClient(host=hostname, port=port)
         db = connection[db_name]
         if username and password:
             db.authenticate(username, password)

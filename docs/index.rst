@@ -9,7 +9,7 @@ Cork - Authentication for the Bottle web framework
 
  - `Mailing list <https://groups.google.com/forum/?fromgroups#!forum/cork-discuss>`_
  - `Bug tracker <http://github.com/FedericoCeratto/bottle-cork/issues>`_
- - IRC: (`#bottle <http://webchat.freenode.net?channels=bottle&uio=OT10cnVlde>`_) on Freenode
+ - IRC: (`#bottlepy <http://webchat.freenode.net?channels=bottlepy&uio=OT10cnVlde>`_) on Freenode
  - `Downloads <http://pypi.python.org/pypi/bottle-cork/>`_
  - `Source code <https://github.com/FedericoCeratto/bottle-cork>`_
 
@@ -46,6 +46,17 @@ Features
 
 News
 ----
+
+* 2015-05-01: Version 0.12.0a2
+
+  * Implement configurable variables in email templates #88
+  * Fix #86, #87
+
+* 2015-04-26: Version 0.12.0a1
+
+  * WARNING: this is a development release and not backward-compatible.
+  * Add Python 3 support
+  * Add configurable session key #84
 
 * 2015-01-06: Version 0.11
 

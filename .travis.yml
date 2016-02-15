@@ -1,29 +1,36 @@
 language: python
-python:
-  - "2.6"
-  - "2.7"
-  # - "3.2" Temporary disabling Python3
+python: 2.7
 install:
-  - pip install -e . --use-mirrors
-  - pip install MySQL-python --use-mirrors
-  - pip install SQLAlchemy --use-mirrors
-  - pip install coveralls --use-mirrors
-  - pip install flask --use-mirrors
-  - pip install pymongo --use-mirrors
-  - pip install scrypt --use-mirrors
-  - pip install webtest --use-mirrors
+  - pip install -e .
+  - pip install coveralls
+  - pip install tox
+  - pip install webtest
+  - pip install tox-pytest-summary
 
 before_script:
   - mysql -e 'create database myapp_test;' # username: "root", password: ""
-  #- mongo mydb_test --eval 'db.addUser("travis", "test");'
+  - mongo mydb_test --eval 'db.addUser("travis", "test");'
+  - psql -c 'create database travis_ci_test;' -U postgres
 
-script: 
-  - nosetests tests/test.py tests/test_functional_mysql_instance.py tests/test_functional_mongodb_instance.py
-  - coverage run --source=cork tests/test_webtest_decorated.py tests/test_functional_mongodb_instance.py tests/test_functional_sqlalchemy_sqlite_in_memory.py tests/test_sqlite.py
+script: tox -v
 
 services:
   # MySQL is started by default
   - mongodb
 
+addons:
+    postgresql: "9.3"
+
 after_success:
   - coveralls
+
+after_script:
+  - tox-pytest-summary
+
+sudo: false
+
+addons:
+  apt:
+    packages:
+    - libmysqlclient-dev
+    - python3-dev

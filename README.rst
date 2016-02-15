@@ -8,13 +8,13 @@ Cork - Authentication for the Bottle web framework
    :target: https://coveralls.io/r/FedericoCeratto/bottle-cork?branch=master
    :alt: Coverage
 
-.. image:: https://pypip.in/download/bottle-cork/badge.png
-    :target: https://pypi.python.org/pypi//bottle-cork/
-    :alt: Downloads
+.. image:: https://img.shields.io/pypi/dm/bottle-cork.svg?style=plastic
+   :target: https://pypi.python.org/pypi/bottle-cork/
+   :alt: Downloads
 
-.. image:: https://pypip.in/version/bottle-cork/badge.png
-    :target: https://pypi.python.org/pypi/bottle-cork/
-    :alt: Latest Version
+.. image:: https://img.shields.io/pypi/v/bottle-cork.svg?style=plastic
+   :target: https://pypi.python.org/pypi/bottle-cork/
+   :alt: Latest Version
 
 .. image:: https://pypip.in/license/bottle-cork/badge.png
     :target: https://pypi.python.org/pypi/bottle-cork/
