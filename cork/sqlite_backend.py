@@ -97,9 +97,9 @@ class Table(base_backend.Table):
         result = self._backend.run_query(query)
         for row in result:
             d = dict(zip(self._column_names, row))
-            d.pop(self._key_col)
+            value = d.pop(self._key_col)
 
-            yield (self._key_col, d)
+            yield (value, d)
 
     def pop(self, key):
         d = self.__getitem__(key)
