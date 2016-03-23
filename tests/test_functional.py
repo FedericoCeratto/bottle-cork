@@ -540,7 +540,8 @@ def test_iteritems_on_users(aaa_admin):
     else:
         items = iter(aaa_admin._store.users.items())
 
-    for k, v in items:
+    for username, v in items:
+        assert username == 'admin'
         dkeys = set(v.keys())
 
         extra = dkeys - expected_dkeys
