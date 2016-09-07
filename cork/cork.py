@@ -43,6 +43,12 @@ except ImportError:  # pragma: no cover
     scrypt_available = False
 
 try:
+    import argon2
+    argon2_available = True
+except ImportError:
+    argon2_available = False
+
+try:
     basestring
 except NameError:
     basestring = str
@@ -88,6 +94,7 @@ class BaseCork(object):
         self.session_domain = session_domain
         self.session_key_name = session_key_name or 'beaker.session'
         self.preferred_hashing_algorithm = 'PBKDF2'
+        self.hashlength = { 'PBKDF2':32, 'scrypt':32, 'argon2':57 }
 
         # Setup JsonBackend by default for backward compatibility.
         if backend is None:
@@ -615,15 +622,18 @@ class BaseCork(object):
             algo = self.preferred_hashing_algorithm
 
         if algo == 'PBKDF2':
-            return self._hash_pbkdf2(username, pwd, salt=salt)
+            return self._hash_pbkdf2(self, username, pwd, salt=salt)
 
         if algo == 'scrypt':
-            return self._hash_scrypt(username, pwd, salt=salt)
+            return self._hash_scrypt(self, username, pwd, salt=salt)
+
+        if algo == 'argon2':
+            return self._hash_argon2(self, username, pwd, salt=salt)
 
         raise RuntimeError("Unknown hashing algorithm requested: %s" % algo)
 
     @staticmethod
-    def _hash_scrypt(username, pwd, salt=None):
+    def _hash_scrypt(self, username, pwd, salt=None):
         """Hash username and password, generating salt value if required
         Use scrypt.
 
@@ -634,9 +644,9 @@ class BaseCork(object):
                             " Please install the scrypt library.")
 
         if salt is None:
-            salt = os.urandom(32)
+            salt = os.urandom(self.hashlength['scrypt'])
 
-        assert len(salt) == 32, "Incorrect salt length"
+        assert len(salt) == self.hashlength['scrypt'], "Incorrect salt length"
 
         cleartext = "%s\0%s" % (username, pwd)
         h = scrypt.hash(cleartext, salt)
@@ -646,17 +656,17 @@ class BaseCork(object):
         return b64encode(hashed)
 
     @staticmethod
-    def _hash_pbkdf2(username, pwd, salt=None):
+    def _hash_pbkdf2(self, username, pwd, salt=None):
         """Hash username and password, generating salt value if required
         Use PBKDF2 from Beaker
 
         :returns: base-64 encoded str.
         """
         if salt is None:
-            salt = os.urandom(32)
+            salt = os.urandom(self.hashlength['PBKDF2'])
 
         assert isinstance(salt, bytes)
-        assert len(salt) == 32, "Incorrect salt length"
+        assert len(salt) == self.hashlength['PBKDF2'], "Incorrect salt length"
 
         username = username.encode('utf-8')
         assert isinstance(username, bytes)
@@ -671,6 +681,34 @@ class BaseCork(object):
         hashed = b'p' + salt + h
         return b64encode(hashed)
 
+    @staticmethod
+    def _hash_argon2(self, username, pwd, salt=None):
+        """Hash username and password, generating salt value if required
+        Use argon2
+
+        :returns: base-64 encoded string.
+        """
+        if not argon2_available:
+            raise Exception("argon2 required."
+                            " Please install the argon2 library.")
+
+        if salt is None:
+            salt = os.urandom(self.hashlength['argon2'])
+
+        assert len(salt) == self.hashlength['argon2'], "Incorrect salt length %s" % salt
+
+        cleartext = "%s\0%s" % (username, pwd)
+
+        # t = time cost (# of iterations)
+        # m = memory cost kilobytes
+        # p = parallelism degree (# parallel threads)
+        h = argon2.argon2_hash(cleartext, salt, t=31, m=31, p=2)
+
+        # 'a' for argon2
+        hashed = b'a' + salt + h
+        return b64encode(hashed)
+
+
     def _verify_password(self, username, pwd, salted_hash):
         """Verity username/password pair against a salted hash
 
@@ -682,14 +720,22 @@ class BaseCork(object):
         if isinstance(hash_type, int):
             hash_type = chr(hash_type)
 
-        salt = decoded[1:33]
-
         if hash_type == 'p':  # PBKDF2
-            h = self._hash_pbkdf2(username, pwd, salt)
+            saltend = self.hashlength['PBKDF2']+1
+            salt = decoded[1:saltend]
+            h = self._hash_pbkdf2(self, username, pwd, salt)
             return salted_hash == h
 
         if hash_type == 's':  # scrypt
-            h = self._hash_scrypt(username, pwd, salt)
+            saltend = self.hashlength['scrypt']+1
+            salt = decoded[1:saltend]
+            h = self._hash_scrypt(self, username, pwd, salt)
+            return salted_hash == h
+
+        if hash_type == 'a':  # argon2
+            saltend = self.hashlength['argon2']+1
+            salt = decoded[1:saltend]
+            h = self._hash_argon2(self, username, pwd, salt)
             return salted_hash == h
 
         raise RuntimeError("Unknown hashing algorithm in hash: %r" % decoded)
@@ -780,8 +826,8 @@ class User(object):
             self._cork._store.users[username]['role'] = role
 
         if pwd is not None:
-            self._cork._store.users[username]['hash'] = self._cork._hash(
-                username, pwd).decode()
+            hash = self._cork._hash(username, pwd).decode()
+            self._cork._store.users[username]['hash'] = hash
 
         if email_addr is not None:
             self._cork._store.users[username]['email_addr'] = email_addr
