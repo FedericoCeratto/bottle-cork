@@ -94,7 +94,7 @@ class BaseCork(object):
         self.session_domain = session_domain
         self.session_key_name = session_key_name or 'beaker.session'
         self.preferred_hashing_algorithm = 'PBKDF2'
-        self.hashlength = { 'PBKDF2':32, 'scrypt':32, 'argon2':57 }
+        self.saltlength = { 'PBKDF2':32, 'scrypt':32, 'argon2':57 }
 
         # Setup JsonBackend by default for backward compatibility.
         if backend is None:
@@ -644,9 +644,9 @@ class BaseCork(object):
                             " Please install the scrypt library.")
 
         if salt is None:
-            salt = os.urandom(self.hashlength['scrypt'])
+            salt = os.urandom(self.saltlength['scrypt'])
 
-        assert len(salt) == self.hashlength['scrypt'], "Incorrect salt length"
+        assert len(salt) == self.saltlength['scrypt'], "Incorrect salt length"
 
         cleartext = "%s\0%s" % (username, pwd)
         h = scrypt.hash(cleartext, salt)
@@ -663,10 +663,10 @@ class BaseCork(object):
         :returns: base-64 encoded str.
         """
         if salt is None:
-            salt = os.urandom(self.hashlength['PBKDF2'])
+            salt = os.urandom(self.saltlength['PBKDF2'])
 
         assert isinstance(salt, bytes)
-        assert len(salt) == self.hashlength['PBKDF2'], "Incorrect salt length"
+        assert len(salt) == self.saltlength['PBKDF2'], "Incorrect salt length"
 
         username = username.encode('utf-8')
         assert isinstance(username, bytes)
@@ -693,9 +693,9 @@ class BaseCork(object):
                             " Please install the argon2 library.")
 
         if salt is None:
-            salt = os.urandom(self.hashlength['argon2'])
+            salt = os.urandom(self.saltlength['argon2'])
 
-        assert len(salt) == self.hashlength['argon2'], "Incorrect salt length %s" % salt
+        assert len(salt) == self.saltlength['argon2'], "Incorrect salt length %s" % salt
 
         cleartext = "%s\0%s" % (username, pwd)
 
@@ -721,19 +721,19 @@ class BaseCork(object):
             hash_type = chr(hash_type)
 
         if hash_type == 'p':  # PBKDF2
-            saltend = self.hashlength['PBKDF2']+1
+            saltend = self.saltlength['PBKDF2']+1
             salt = decoded[1:saltend]
             h = self._hash_pbkdf2(self, username, pwd, salt)
             return salted_hash == h
 
         if hash_type == 's':  # scrypt
-            saltend = self.hashlength['scrypt']+1
+            saltend = self.saltlength['scrypt']+1
             salt = decoded[1:saltend]
             h = self._hash_scrypt(self, username, pwd, salt)
             return salted_hash == h
 
         if hash_type == 'a':  # argon2
-            saltend = self.hashlength['argon2']+1
+            saltend = self.saltlength['argon2']+1
             salt = decoded[1:saltend]
             h = self._hash_argon2(self, username, pwd, salt)
             return salted_hash == h
