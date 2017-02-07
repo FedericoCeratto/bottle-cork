@@ -1,10 +1,14 @@
 language: python
 cache: pip
-python: 2.7
+python:
+-   "2.7"
+-   "3.5"
+-   "3.6"
 install:
   - pip install -e .
   - pip install coveralls
   - pip install tox
+  - pip install tox-travis
   - pip install webtest
   - pip install tox-pytest-summary
 
@@ -20,7 +24,7 @@ services:
   - mongodb
 
 addons:
-    postgresql: "9.3"
+    postgresql: "9.6"
 
 after_success:
   - coveralls
