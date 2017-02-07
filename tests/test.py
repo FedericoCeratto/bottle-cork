@@ -57,7 +57,8 @@ def json_db_dir(tmpdir, templates_dir):
 @pytest.fixture
 def aaa(json_db_dir):
     """Setup a MockedAdminCork instance"""
-    aaa = MockedAdminCork(json_db_dir.strpath, smtp_server='localhost', email_sender='test@localhost')
+    aaa = MockedAdminCork(json_db_dir.strpath, smtp_server='localhost', email_sender='test@localhost',
+                          preferred_hashing_algorithm='PBKDF2sha1', pbkdf2_iterations=100000)
     aaa.mailer.use_threads = False
     return aaa
 
@@ -65,7 +66,7 @@ def aaa(json_db_dir):
 @pytest.fixture
 def aaa_unauth(json_db_dir):
     """Setup test directory and a MockedAdminCork instance"""
-    aaa = MockedUnauthenticatedCork(json_db_dir.strpath)
+    aaa = MockedUnauthenticatedCork(json_db_dir.strpath, preferred_hashing_algorithm='PBKDF2sha1', pbkdf2_iterations=100000)
     aaa.mailer.use_threads = False
     return aaa
 
@@ -101,12 +102,12 @@ def raises(f, *e):
 # Tests
 
 def test_init(json_db_dir):
-    Cork(json_db_dir.strpath)
+    Cork(json_db_dir.strpath, preferred_hashing_algorithm='PBKDF2sha1', pbkdf2_iterations=100000)
 
 
 def test_initialize_storage(json_db_dir):
     jb = JsonBackend(json_db_dir.strpath, initialize=True)
-    Cork(backend=jb)
+    Cork(backend=jb, preferred_hashing_algorithm='PBKDF2sha1', pbkdf2_iterations=100000)
     assert json_db_dir.join('users.json').read() == '{}'
     assert json_db_dir.join('roles.json').read() == '{}'
     assert json_db_dir.join('register.json').read() == '{}'
@@ -122,7 +123,7 @@ def test_initialize_storage(json_db_dir):
 def test_unable_to_save(json_db_dir):
     bogus_dir = '/___inexisting_directory___'
     with pytest.raises(BackendIOException):
-        Cork(bogus_dir, initialize=True)
+        Cork(bogus_dir, initialize=True, preferred_hashing_algorithm='PBKDF2sha1', pbkdf2_iterations=100000)
 
 
 def test_loadjson_missing_file(aaa):
@@ -143,68 +144,8 @@ def test_loadjson_unchanged(aaa):
     assert mtimes == aaa._store._mtimes
 
 
-# Test PBKDF2-based password hashing
-
-def test_password_hashing_PBKDF2(aaa):
-    shash = aaa._hash(u'user_foo', u'bogus_pwd')
-    assert isinstance(shash, bytes)
-    assert len(shash) == 88, "hash length should be 88 and is %d" % len(shash)
-    assert shash.endswith(b'='), "hash should end with '='"
-    assert aaa._verify_password('user_foo', 'bogus_pwd', shash) == True, \
-        "Hashing verification should succeed"
 
 
-def test_hashlib_pbk():
-    # Hashlib works under py2 and py3 producing the same output.
-    # With iterations = 10 and dklen = 32 the output is also consistent with
-    # beaker under py2 as in the previous versions of Cork
-    import hashlib
-    cleartext = b'hello'
-    salt = b'hi'
-    h = hashlib.pbkdf2_hmac('sha1', cleartext, salt, 10, dklen=32)
-    assert b64encode(h) == b'QTH8vcCFLLqLhxCTnkz6sq+Un3B4RQgWjMPpRC9hfEY='
-
-def test_password_hashing_PBKDF2_known_hash(aaa):
-    assert aaa.preferred_hashing_algorithm == 'PBKDF2'
-    salt = b's' * 32
-    shash = aaa._hash(u'user_foo', u'bogus_pwd', salt=salt)
-    assert shash == b'cHNzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzax44AxQgK6uD9q1YWxLos1ispCe1Z7T7pOFK1PwdWEs='
-
-def test_password_hashing_PBKDF2_known_hash_2(aaa):
-    assert aaa.preferred_hashing_algorithm == 'PBKDF2'
-    salt = b'\0' * 32
-    shash = aaa._hash(u'user_foo', u'bogus_pwd', salt=salt)
-    assert shash == b'cAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA/8Uh4pyEOHoRz4j0lDzAmqb7Dvmo8GpeXwiKTDsuYFw='
-
-
-def test_password_hashing_PBKDF2_known_hash_3(aaa):
-    assert aaa.preferred_hashing_algorithm == 'PBKDF2'
-    salt = b'x' * 32
-    shash = aaa._hash(u'user_foo', u'bogus_pwd', salt=salt)
-    assert shash == b'cHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4MEaIU5Op97lmvwX5NpVSTBP8jg8OlrN7c2K8K8tnNks='
-
-
-def test_password_hashing_PBKDF2_incorrect_hash_len(aaa):
-    salt = b'x' * 31 # Incorrect length
-    with pytest.raises(AssertionError):
-        shash = aaa._hash(u'user_foo', u'bogus_pwd', salt=salt)
-
-
-def test_password_hashing_PBKDF2_incorrect_hash_value(aaa):
-    shash = aaa._hash(u'user_foo', u'bogus_pwd')
-    assert len(shash) == 88, "hash length should be 88 and is %d" % len(shash)
-    assert shash.endswith(b'='), "hash should end with '='"
-    assert aaa._verify_password(u'user_foo', u'####', shash) == False, \
-        "Hashing verification should fail"
-    assert aaa._verify_password(u'###', u'bogus_pwd', shash) == False, \
-        "Hashing verification should fail"
-
-
-def test_password_hashing_PBKDF2_collision(aaa):
-    salt = b'S' * 32
-    hash1 = aaa._hash(u'user_foo', u'bogus_pwd', salt=salt)
-    hash2 = aaa._hash(u'user_foobogus', u'_pwd', salt=salt)
-    assert hash1 != hash2, "Hash collision"
 
 
 # Test password hashing for inexistent algorithms

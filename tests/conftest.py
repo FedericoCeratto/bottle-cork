@@ -43,27 +43,6 @@ def mytmpdir(tmpdir):
     tmpdir.join('password_reset_email.tpl').write("""Username:{{username}} Email:{{email_addr}} Code:{{reset_code}}""")
     return tmpdir
 
-# used by test_scrypt.py
-@pytest.fixture
-def aaa(mytmpdir):
-    aaa = Cork(mytmpdir, smtp_server='localhost', email_sender='test@localhost')
-    return aaa
-
-
-
-
-#        mb = self.setup_test_db()
-#        self.aaa = MockedUnauthenticatedCork(backend=mb,
-#            smtp_server='localhost', email_sender='test@localhost')
-#        cookie_name = None
-#        if hasattr(self, 'purge_test_db'):
-#            self.purge_test_db()
-#
-#        del(self.aaa)
-#        cookie_name = None
-
-
-
 def assert_is_redirect(e, path):
     """Check if an HTTPResponse is a redirect.
 

@@ -340,6 +340,8 @@ def aaa_unauth(templates_dir, backend):
         backend=backend,
         smtp_server='localhost',
         email_sender='test@localhost',
+        preferred_hashing_algorithm='PBKDF2sha1',
+        pbkdf2_iterations=10,
     )
     aaa._mocked_beaker_session = MockedSession()
     return aaa
@@ -353,6 +355,8 @@ def aaa_admin(templates_dir, backend):
         backend=backend,
         email_sender='test@localhost',
         smtp_server='localhost',
+        preferred_hashing_algorithm='PBKDF2sha1',
+        pbkdf2_iterations=10,
     )
     aaa._mocked_beaker_session = MockedSession(username='admin')
     return aaa
