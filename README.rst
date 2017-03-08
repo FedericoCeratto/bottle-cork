@@ -16,10 +16,13 @@ Cork - Authentication for the Bottle web framework
    :target: https://pypi.python.org/pypi/bottle-cork/
    :alt: Latest Version
 
-.. image:: https://pypip.in/license/bottle-cork/badge.png
+.. image:: https://img.shields.io/badge/License-LGPL%20v3-blue.svg
     :target: https://pypi.python.org/pypi/bottle-cork/
     :alt: License
 
+.. image:: https://badges.debian.net/badges/debian/unstable/python-bottle-cork/version.svg
+    :target: https://badges.debian.net/badges/debian/unstable/python-bottle-cork/version.svg https://packages.debian.org/stretch/python-bottle-cork
+    
 
 
 Cork provides a simple set of methods to implement Authentication and Authorization in web applications based on Bottle.
