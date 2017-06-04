@@ -52,11 +52,6 @@ coverage-mysql: coverage
 pylint:
 	pylint cork tests
 
-# target: doc - Build sphinx docs
-doc:
-	#cd docs && sphinx-build -b html .  _build/html
-	sphinx-build -b html docs  docs/_build/html
-
 # target: docwithcoverage - Build sphinx docs
 docwithcoverage: coverage doc
 
