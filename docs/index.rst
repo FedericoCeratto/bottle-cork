@@ -7,13 +7,12 @@ Cork - Authentication for the Bottle web framework
 
 .. sidebar:: Links
 
- - `Mailing list <https://groups.google.com/forum/?fromgroups#!forum/cork-discuss>`_
  - `Bug tracker <http://github.com/FedericoCeratto/bottle-cork/issues>`_
  - IRC: (`#bottlepy <http://webchat.freenode.net?channels=bottlepy&uio=OT10cnVlde>`_) on Freenode
  - `Downloads <http://pypi.python.org/pypi/bottle-cork/>`_
  - `Source code <https://github.com/FedericoCeratto/bottle-cork>`_
 
-Cork provides a simple set of methods to implement Authentication and Authorization in web applications based on `Bottle <http://bottlepy.org>`_.
+Cork provides a simple set of methods to implement Authentication and Authorization in web applications based on `Bottle <http://bottlepy.org>`_ and Flask.
 
 It is designed to stay out of the way and let you focus on what your application should do.
 

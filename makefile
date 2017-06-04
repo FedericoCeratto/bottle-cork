@@ -72,4 +72,6 @@ targeted-coverage:
 	nosetests tests/test_functional_json.py --with-coverage --cover-erase --cover-package=cork.json_backend
 	nosetests tests/test_sqlite.py --with-coverage --cover-erase --cover-package=cork.sqlite_backend
 
-
+# target: html - Gen docs
+html:
+	cd docs && make html
