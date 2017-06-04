@@ -7,14 +7,11 @@
 #
 
 from pytest import fixture, raises
-from time import time
-import os
-import shutil
 
-from cork import Cork, JsonBackend, AuthException
-import testutils
+from cork import Cork
 
 HASHLEN = 32
+
 
 @fixture
 def aaa(mytmpdir):
@@ -48,11 +45,10 @@ def test_password_hashing_scrypt_known_hash_3(aaa):
     shash = aaa._hash('user_foo', 'bogus_pwd', salt=salt, algo='scrypt')
     assert shash == b'c3h4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4yKuT1e8lovFZnaaOctivIvYBPkLoKDXX72kf5/nRuGIgyyhiKxxKE4LVYFKFCeVNPQM5m/+LulQkWhO0aB89lA=='
 
-
 def test_password_hashing_scrypt_incorrect_hash_len(aaa):
-    salt = b'x' * 31 # Incorrect length
+    salt = b'x' * 31  # Incorrect length
     with raises(AssertionError):
-        shash = aaa._hash('user_foo', 'bogus_pwd', salt=salt, algo='scrypt')
+        aaa._hash('user_foo', 'bogus_pwd', salt=salt, algo='scrypt')
 
 
 def test_password_hashing_scrypt_incorrect_hash_value(aaa):
@@ -65,11 +61,8 @@ def test_password_hashing_scrypt_incorrect_hash_value(aaa):
         "Hashing verification should fail"
 
 
-
 def test_password_hashing_scrypt_collision(aaa):
     salt = b'S' * HASHLEN
     hash1 = aaa._hash('user_foo', 'bogus_pwd', salt=salt, algo='scrypt')
     hash2 = aaa._hash('user_foobogus', '_pwd', salt=salt, algo='scrypt')
     assert hash1 != hash2, "Hash collision"
-
-

@@ -69,8 +69,10 @@ class AuthException(AAAException):
     """Authentication Exception: incorrect username/password pair"""
     pass
 
+
 class UserExists(AAAException):
     pass
+
 
 class BaseCork(object):
     """Abstract class"""
@@ -108,7 +110,7 @@ class BaseCork(object):
         self.password_reset_timeout = 3600 * 24
         self.session_domain = session_domain
         self.session_key_name = session_key_name or 'beaker.session'
-        self.saltlength = { 'PBKDF2':32, 'scrypt':32, 'argon2':57 }
+        self.saltlength = {'PBKDF2': 32, 'scrypt': 32, 'argon2': 57}
         self.preferred_hashing_algorithm = preferred_hashing_algorithm
         self.pbkdf2_iterations = pbkdf2_iterations
 
@@ -672,7 +674,7 @@ class BaseCork(object):
         pwd = pwd.encode('utf-8')
         assert isinstance(pwd, bytes)
 
-        cleartext = "%s\0%s" % (username, pwd)
+        cleartext = username + b'\0' + pwd
         h = scrypt.hash(cleartext, salt)
 
         # 's' for scrypt
@@ -744,7 +746,8 @@ class BaseCork(object):
         if salt is None:
             salt = os.urandom(self.saltlength['argon2'])
 
-        assert len(salt) == self.saltlength['argon2'], "Incorrect salt length %s" % salt
+        assert len(salt) == self.saltlength['argon2'], \
+            "Incorrect salt length %s" % salt
 
         cleartext = "%s\0%s" % (username, pwd)
 
@@ -756,7 +759,6 @@ class BaseCork(object):
         # 'a' for argon2
         hashed = b'a' + salt + h
         return b64encode(hashed)
-
 
     def _verify_password(self, username, pwd, salted_hash):
         """Verity username/password pair against a salted hash
