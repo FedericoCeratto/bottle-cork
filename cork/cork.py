@@ -852,6 +852,8 @@ class User(object):
         self.description = user_data['desc']
         self.email_addr = user_data['email_addr']
         self.level = self._cork._store.roles[self.role]
+        if hasattr(user_data, "id"):
+            self.id = user_data['id']
 
         if session is not None:
             try:

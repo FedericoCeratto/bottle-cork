@@ -159,6 +159,7 @@ class SqlAlchemyBackend(base_backend.Backend):
 
 
         self._users = Table(users_tname, self._metadata,
+            Column('id', Integer),
             Column('username', Unicode(128), primary_key=True),
             Column('role', ForeignKey(roles_tname + '.role')),
             Column('hash', String(256), nullable=False),
