@@ -116,7 +116,7 @@ Installation::
 
 Use virtualenv on package-based Linux distributions! `Learn why <http://workaround.org/easy-install-debian>`_
 
-Fully working examples are provided with the `sources <https://github.com/FedericoCeratto/bottle-cork/downloads>`_
+Fully working examples are provided with the `sources <https://github.com/FedericoCeratto/bottle-cork/tree/master/examples>`_
 
 * :doc:`example_webapp_decorated`
 
