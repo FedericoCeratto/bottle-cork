@@ -7,6 +7,7 @@
    :synopsis: Backends API - used to make backends available for importing
 """
 
+from .dictionary_backend import DictionaryBackend
 from .json_backend import JsonBackend
 from .mongodb_backend import MongoDBBackend
 from .sqlalchemy_backend import SqlAlchemyBackend
