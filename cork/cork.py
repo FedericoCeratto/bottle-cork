@@ -53,7 +53,7 @@ try:
 except NameError:
     basestring = str
 
-from .backends import JsonBackend
+from .backends import JsonBackend, DictionaryBackend
 
 is_py3 = (sys.version_info.major == 3)
 

@@ -14,6 +14,7 @@ import pytest
 import time
 
 from cork import Cork, AAAException, AuthException
+from cork.backends import DictionaryBackend
 from cork.backends import JsonBackend
 from cork.backends import MongoDBBackend
 from cork.backends import SQLiteBackend
@@ -82,6 +83,44 @@ class MockedSessionCork(Cork):
 ### Fixtures and helpers
 
 ## Backends
+
+def setup_dictionary_db(request, use_add_interface=True):
+    if use_add_interface:
+        b = DictionaryBackend()
+
+        # Add roles.
+        b.add_role('special', 200)
+        b.add_role('admin', 100)
+        b.add_role('user', 50)
+        b.add_role('editor', 60)
+
+        # Add users.
+        b.add_user('admin', 'admin',
+            hash='69f75f38ac3bfd6ac813794f3d8c47acc867adb10b806e8979316ddbf6113999b6052efe4ba95c0fa9f6a568bddf60e8e5572d9254dbf3d533085e9153265623',
+            email='admin@localhost.local',
+            creation_date='2012-04-09 14:22:27.075596',
+            last_login='2012-10-28 20:50:26.286723')
+    else:
+        users = {
+            "admin": {
+                "email_addr": "admin@localhost.local",
+                "desc": None,
+                "role": "admin",
+                "hash": "69f75f38ac3bfd6ac813794f3d8c47acc867adb10b806e8979316ddbf6113999b6052efe4ba95c0fa9f6a568bddf60e8e5572d9254dbf3d533085e9153265623", 
+                "creation_date": "2012-04-09 14:22:27.075596",
+                "last_login": "2012-10-28 20:50:26.286723"
+            }
+        }
+        roles = {
+            "special": 200,
+            "admin": 100,
+            "user": 50,
+            "editor": 60
+        }
+
+        b = DictionaryBackend(users=users, roles=roles)
+
+    return b
 
 def setup_sqlite_db(request):
     # in-memory SQLite DB using the SQLiteBackend backend module.
@@ -295,16 +334,25 @@ def setup_postgresql_db(request):
 ## General fixtures
 
 @pytest.fixture(params=[
+    'dictionary_init',
+    'dictionary_add_interface',
     'json',
     'mongodb',
     'mysql',
     'postgresql',
     'sqlalchemy',
-    'sqlite',
+    'sqlite'
 ])
 def backend(tmpdir, request):
     # Create backend instances
     backend_type = request.param
+
+    if backend_type == 'dictionary_init':
+        return setup_dictionary_db(request, use_add_interface=False)
+
+    if backend_type == 'dictionary_add_interface':
+        return setup_dictionary_db(request, use_add_interface=True)
+
     if backend_type == 'json':
         return setup_json_db(request, tmpdir)
 
