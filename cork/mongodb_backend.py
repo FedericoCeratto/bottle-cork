@@ -32,7 +32,7 @@ class MongoTable(Table):
 
     def create_index(self):
         """Create collection index."""
-        self._coll.create_index(self._key_name, drop_dups=True, unique=True)
+        self._coll.create_index(self._key_name, unique=True)
 
     def __len__(self):
         return self._coll.count()
