@@ -14,7 +14,7 @@ install:
 
 before_script:
   - mysql -e 'create database myapp_test;' # username: "root", password: ""
-  - mongo mydb_test --eval 'db.addUser("travis", "test");'
+  - mongo mydb_test --eval 'db.createUser({user:"travis",pwd:"test",roles:["readWrite"]});'
   - psql -c 'create database travis_ci_test;' -U postgres
 
 script: tox -v
