@@ -4,14 +4,6 @@ Cork - Authentication for the Bottle web framework
    :target: http://travis-ci.org/FedericoCeratto/bottle-cork
    :alt: Build status
 
-.. image:: https://coveralls.io/repos/FedericoCeratto/bottle-cork/badge.png?branch=master
-   :target: https://coveralls.io/r/FedericoCeratto/bottle-cork?branch=master
-   :alt: Coverage
-
-.. image:: https://img.shields.io/pypi/dm/bottle-cork.svg?style=plastic
-   :target: https://pypi.python.org/pypi/bottle-cork/
-   :alt: Downloads
-
 .. image:: https://img.shields.io/pypi/v/bottle-cork.svg?style=plastic
    :target: https://pypi.python.org/pypi/bottle-cork/
    :alt: Latest Version
@@ -22,10 +14,9 @@ Cork - Authentication for the Bottle web framework
 
 .. image:: https://badges.debian.net/badges/debian/unstable/python-bottle-cork/version.svg
     :target: https://badges.debian.net/badges/debian/unstable/python-bottle-cork/version.svg https://packages.debian.org/stretch/python-bottle-cork
-    
 
 
-Cork provides a simple set of methods to implement Authentication and Authorization in web applications based on Bottle.
 
-Website and Documentation:
-  http://cork.firelet.net
+Cork provides a simple set of methods to implement Authentication and Authorization in web applications based on Bottle and Flask.
+
+Read the documentation at: https://cork.readthedocs.io/en/latest/
