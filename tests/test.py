@@ -19,12 +19,14 @@ class RoAttrDict(dict):
     """Read-only attribute-accessed dictionary.
     Used to mock beaker's session objects
     """
+
     def __getattr__(self, name):
         return self[name]
 
 
 class MockedAdminCork(Cork):
     """Mocked module where the current user is always 'admin'"""
+
     @property
     def _beaker_session(self):
         return RoAttrDict(username=u'admin')
@@ -36,6 +38,7 @@ class MockedAdminCork(Cork):
 
 class MockedUnauthenticatedCork(Cork):
     """Mocked module where the current user not set"""
+
     @property
     def _beaker_session(self):
         return RoAttrDict()
@@ -48,7 +51,9 @@ class MockedUnauthenticatedCork(Cork):
 @pytest.fixture
 def json_db_dir(tmpdir, templates_dir):
     """Setup test directory with valid JSON files"""
-    tmpdir.join('users.json').write("""{"admin": {"email_addr": null, "desc": null, "role": "admin", "hash": "69f75f38ac3bfd6ac813794f3d8c47acc867adb10b806e8979316ddbf6113999b6052efe4ba95c0fa9f6a568bddf60e8e5572d9254dbf3d533085e9153265623", "creation_date": "2012-04-09 14:22:27.075596"}}""")
+    tmpdir.join('users.json').write(
+        """{"admin": {"email_addr": null, "desc": null, "role": "admin", "hash": "69f75f38ac3bfd6ac813794f3d8c47acc867adb10b806e8979316ddbf6113999b6052efe4ba95c0fa9f6a568bddf60e8e5572d9254dbf3d533085e9153265623", "creation_date": "2012-04-09 14:22:27.075596"}}"""
+    )
     tmpdir.join('roles.json').write("""{"special": 200, "admin": 100, "user": 50}""")
     tmpdir.join('register.json').write("""{}""")
     return tmpdir
@@ -57,8 +62,13 @@ def json_db_dir(tmpdir, templates_dir):
 @pytest.fixture
 def aaa(json_db_dir):
     """Setup a MockedAdminCork instance"""
-    aaa = MockedAdminCork(json_db_dir.strpath, smtp_server='localhost', email_sender='test@localhost',
-                          preferred_hashing_algorithm='PBKDF2sha1', pbkdf2_iterations=100000)
+    aaa = MockedAdminCork(
+        json_db_dir.strpath,
+        smtp_server='localhost',
+        email_sender='test@localhost',
+        preferred_hashing_algorithm='PBKDF2sha1',
+        pbkdf2_iterations=100000,
+    )
     aaa.mailer.use_threads = False
     return aaa
 
@@ -66,7 +76,11 @@ def aaa(json_db_dir):
 @pytest.fixture
 def aaa_unauth(json_db_dir):
     """Setup test directory and a MockedAdminCork instance"""
-    aaa = MockedUnauthenticatedCork(json_db_dir.strpath, preferred_hashing_algorithm='PBKDF2sha1', pbkdf2_iterations=100000)
+    aaa = MockedUnauthenticatedCork(
+        json_db_dir.strpath,
+        preferred_hashing_algorithm='PBKDF2sha1',
+        pbkdf2_iterations=100000,
+    )
     aaa.mailer.use_threads = False
     return aaa
 
@@ -78,12 +92,14 @@ def mock_smtp(monkeypatch):
     monkeypatch.setattr('cork.cork.SMTP', m)
     return m
 
+
 @pytest.fixture(autouse=True)
 def mock_smtp_ssl(monkeypatch):
     m = mock.Mock()
     m.return_value = mock.Mock()
     monkeypatch.setattr('cork.cork.SMTP_SSL', m)
     return m
+
 
 @pytest.fixture
 def mock_send(monkeypatch):
@@ -92,17 +108,23 @@ def mock_send(monkeypatch):
     monkeypatch.setattr(Mailer, '_send', m)
     return m
 
+
 def raises(f, *e):
     def wrapper(*a, **kw):
         return f(*a, **kw)
-    return wrapper
 
+    return wrapper
 
 
 # Tests
 
+
 def test_init(json_db_dir):
-    Cork(json_db_dir.strpath, preferred_hashing_algorithm='PBKDF2sha1', pbkdf2_iterations=100000)
+    Cork(
+        json_db_dir.strpath,
+        preferred_hashing_algorithm='PBKDF2sha1',
+        pbkdf2_iterations=100000,
+    )
 
 
 def test_initialize_storage(json_db_dir):
@@ -114,21 +136,29 @@ def test_initialize_storage(json_db_dir):
     return
     with open("%s/views/registration_email.tpl" % testdir) as f:
         assert f.readlines() == [
-            'Username:{{username}} Email:{{email_addr}} Code:{{registration_code}}']
+            'Username:{{username}} Email:{{email_addr}} Code:{{registration_code}}'
+        ]
     with open("%s/views/password_reset_email.tpl" % testdir) as f:
         assert f.readlines() == [
-            'Username:{{username}} Email:{{email_addr}} Code:{{reset_code}}']
+            'Username:{{username}} Email:{{email_addr}} Code:{{reset_code}}'
+        ]
 
 
 def test_unable_to_save(json_db_dir):
     bogus_dir = '/___inexisting_directory___'
     with pytest.raises(BackendIOException):
-        Cork(bogus_dir, initialize=True, preferred_hashing_algorithm='PBKDF2sha1', pbkdf2_iterations=100000)
+        Cork(
+            bogus_dir,
+            initialize=True,
+            preferred_hashing_algorithm='PBKDF2sha1',
+            pbkdf2_iterations=100000,
+        )
 
 
 def test_loadjson_missing_file(aaa):
     with pytest.raises(BackendIOException):
         aaa._store._loadjson('nonexistent_file', {})
+
 
 def test_loadjson_broken_file(aaa, json_db_dir):
     json_db_dir.join('broken_file.json').write('-----')
@@ -144,11 +174,8 @@ def test_loadjson_unchanged(aaa):
     assert mtimes == aaa._store._mtimes
 
 
-
-
-
-
 # Test password hashing for inexistent algorithms
+
 
 def test_password_hashing_bogus_algo(aaa):
     with pytest.raises(RuntimeError):
@@ -164,6 +191,7 @@ def test_password_hashing_bogus_algo_during_verify(aaa):
 
 # End of password hashing tests
 
+
 @pytest.mark.xfail
 def test_create_empty_role(aaa):
     # TODO: implement empty role check
@@ -177,7 +205,9 @@ def test_authenticated_is_not_anonymous(aaa):
 
 def test_register(aaa, json_db_dir):
     aaa.register(u'foo', u'pwd', u'a@a.a')
-    assert len(aaa._store.pending_registrations) == 1, repr(aaa._store.pending_registrations)
+    assert len(aaa._store.pending_registrations) == 1, repr(
+        aaa._store.pending_registrations
+    )
 
 
 def test_smtp_url_parsing_1(aaa):
@@ -229,8 +259,9 @@ def test_smtp_url_parsing_email_as_username_no_password(aaa):
     # the username contains an at sign '@'
     c = aaa.mailer._parse_smtp_url('ssl://us.er@somewhere.net@foo:443/')
     assert c['proto'] == 'ssl'
-    assert c['user'] == u'us.er@somewhere.net', \
+    assert c['user'] == u'us.er@somewhere.net', (
         "Username is incorrectly parsed as '%s'" % c['user']
+    )
     assert c['pass'] == None
     assert c['fqdn'] == 'foo'
     assert c['port'] == 443
@@ -240,8 +271,9 @@ def test_smtp_url_parsing_email_as_username(aaa):
     # the username contains an at sign '@'
     c = aaa.mailer._parse_smtp_url('ssl://us.er@somewhere.net:pass@foo:443/')
     assert c['proto'] == 'ssl'
-    assert c['user'] == u'us.er@somewhere.net', \
+    assert c['user'] == u'us.er@somewhere.net', (
         "Username is incorrectly parsed as '%s'" % c['user']
+    )
     assert c['pass'] == 'pass'
     assert c['fqdn'] == 'foo'
     assert c['port'] == 443
@@ -251,10 +283,10 @@ def test_smtp_url_parsing_at_sign_in_password(aaa):
     # the password contains at signs '@'
     c = aaa.mailer._parse_smtp_url('ssl://username:pass@w@rd@foo:443/')
     assert c['proto'] == 'ssl'
-    assert c['user'] == 'username', \
-        "Username is incorrectly parsed as '%s'" % c['user']
-    assert c['pass'] == 'pass@w@rd', \
+    assert c['user'] == 'username', "Username is incorrectly parsed as '%s'" % c['user']
+    assert c['pass'] == 'pass@w@rd', (
         "Password is incorrectly parsed as '%s'" % c['pass']
+    )
     assert c['fqdn'] == 'foo'
     assert c['port'] == 443
 
@@ -263,10 +295,12 @@ def test_smtp_url_parsing_email_as_username_2(aaa):
     # both the username and the password contains an at sign '@'
     c = aaa.mailer._parse_smtp_url('ssl://us.er@somewhere.net:pass@word@foo:443/')
     assert c['proto'] == 'ssl'
-    assert c['user'] == u'us.er@somewhere.net', \
+    assert c['user'] == u'us.er@somewhere.net', (
         "Username is incorrectly parsed as '%s'" % c['user']
-    assert c['pass'] == u'pass@word', \
+    )
+    assert c['pass'] == u'pass@word', (
         "Password is incorrectly parsed as '%s'" % c['pass']
+    )
     assert c['fqdn'] == 'foo'
     assert c['port'] == 443
 
@@ -359,17 +393,19 @@ def test_do_not_send_email(aaa):
     aaa.mailer.join()
 
 
-
 def test_purge_expired_registration(aaa, json_db_dir):
     aaa.register(u'foo', u'pwd', u'a@a.a')
-    assert len(aaa._store.pending_registrations) == 1, "The registration should" \
-        " be present"
+    assert len(aaa._store.pending_registrations) == 1, (
+        "The registration should" " be present"
+    )
     aaa._purge_expired_registrations()
-    assert len(aaa._store.pending_registrations) == 1, "The registration should " \
-        "be still there"
+    assert len(aaa._store.pending_registrations) == 1, (
+        "The registration should " "be still there"
+    )
     aaa._purge_expired_registrations(exp_time=0)
-    assert len(aaa._store.pending_registrations) == 0, "The registration should " \
-        "have been removed"
+    assert len(aaa._store.pending_registrations) == 0, (
+        "The registration should " "have been removed"
+    )
 
 
 def test_prevent_double_registration(aaa, json_db_dir):
@@ -378,13 +414,17 @@ def test_prevent_double_registration(aaa, json_db_dir):
 
     # create first registration
     aaa.register(u'user_foo', u'first_pwd', u'a@a.a')
-    assert len(aaa._store.pending_registrations) == 1, repr(aaa._store.pending_registrations)
+    assert len(aaa._store.pending_registrations) == 1, repr(
+        aaa._store.pending_registrations
+    )
     for first_registration_code in aaa._store.pending_registrations:
         break
 
     # create second registration
     aaa.register(u'user_foo', u'second_pwd', u'b@b.b')
-    assert len(aaa._store.pending_registrations) == 2, repr(aaa._store.pending_registrations)
+    assert len(aaa._store.pending_registrations) == 2, repr(
+        aaa._store.pending_registrations
+    )
     registration_codes = list(aaa._store.pending_registrations)
     if first_registration_code == registration_codes[0]:
         second_registration_code = registration_codes[1]
@@ -401,7 +441,9 @@ def test_prevent_double_registration(aaa, json_db_dir):
 
     # After the first registration only one pending registration should be left
     # The registration having 'a@a.a' email address should be gone
-    assert len(aaa._store.pending_registrations) == 1, repr(aaa._store.pending_registrations)
+    assert len(aaa._store.pending_registrations) == 1, repr(
+        aaa._store.pending_registrations
+    )
     for pr_code, pr_data in aaa._store.pending_registrations.items():
         break
     assert pr_data['email_addr'] == u'b@b.b', "Incorrect registration in the datastore"
@@ -409,7 +451,9 @@ def test_prevent_double_registration(aaa, json_db_dir):
     # Logging in using the first login should succeed
     login = aaa.login('user_foo', 'first_pwd')
     assert login == True, "Login must succed"
-    assert len(aaa._store.pending_registrations) == 1, repr(aaa._store.pending_registrations)
+    assert len(aaa._store.pending_registrations) == 1, repr(
+        aaa._store.pending_registrations
+    )
 
     # Run validate_registration with the second registration code
     # The second registration should fail as the user account exists

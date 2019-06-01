@@ -4,8 +4,9 @@ from setuptools import setup
 
 __version__ = '0.12.0a2'
 
-CLASSIFIERS = map(str.strip,
-"""Development Status :: 4 - Beta
+CLASSIFIERS = map(
+    str.strip,
+    """Development Status :: 4 - Beta
 Environment :: Web Environment
 Framework :: Bottle
 Framework :: Flask
@@ -22,7 +23,8 @@ Topic :: Internet :: WWW/HTTP :: WSGI
 Topic :: Security
 Topic :: Software Development :: Libraries :: Python Modules
 Topic :: Software Development :: Libraries :: Python Modules
-""".splitlines())
+""".splitlines(),
+)
 
 setup(
     name="bottle-cork",
@@ -33,14 +35,10 @@ setup(
     license="LGPLv3+",
     url="http://cork.firelet.net/",
     long_description="Cork is a simple Authentication/Authorization library"
-        "for the Bottle and Flask web frameworks.",
+    "for the Bottle and Flask web frameworks.",
     classifiers=CLASSIFIERS,
-    install_requires=[
-        'Bottle',
-    ],
-    extras_require={
-        'scrypt': ["scrypt>=0.6.1"],
-    },
+    install_requires=['Bottle'],
+    extras_require={'scrypt': ["scrypt>=0.6.1"]},
     packages=['cork'],
     platforms=['Linux'],
 )

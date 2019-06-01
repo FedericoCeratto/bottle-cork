@@ -19,7 +19,7 @@ except ImportError:  # pragma: no cover
 
 from .base_backend import BackendIOException
 
-is_py3 = (sys.version_info.major == 3)
+is_py3 = sys.version_info.major == 3
 
 log = getLogger(__name__)
 
@@ -27,8 +27,10 @@ try:
     dict.iteritems
     py23dict = dict
 except AttributeError:
+
     class py23dict(dict):
         iteritems = dict.items
+
 
 class BytesEncoder(json.JSONEncoder):
     def default(self, obj):
@@ -41,8 +43,14 @@ class BytesEncoder(json.JSONEncoder):
 class JsonBackend(object):
     """JSON file-based storage backend."""
 
-    def __init__(self, directory, users_fname='users',
-            roles_fname='roles', pending_reg_fname='register', initialize=False):
+    def __init__(
+        self,
+        directory,
+        users_fname='users',
+        roles_fname='roles',
+        pending_reg_fname='register',
+        initialize=False,
+    ):
         """Data storage class. Handles JSON files
 
         :param users_fname: users file name (without .json)
@@ -106,8 +114,9 @@ class JsonBackend(object):
             dest.update(json_obj)
             self._mtimes[fname] = os.stat(fname).st_mtime
         except Exception as e:
-            raise BackendIOException("Unable to parse JSON data from %s: %s" \
-                % (fname, e))
+            raise BackendIOException(
+                "Unable to parse JSON data from %s: %s" % (fname, e)
+            )
 
     def _savejson(self, fname, obj):
         """Save obj in JSON format in a file in self._directory"""
@@ -118,8 +127,7 @@ class JsonBackend(object):
                 f.flush()
             shutil.move("%s.tmp" % fname, fname)
         except Exception as e:
-            raise BackendIOException("Unable to save JSON file %s: %s" \
-                % (fname, e))
+            raise BackendIOException("Unable to save JSON file %s: %s" % (fname, e))
 
     def save_users(self):
         """Save users in a JSON file"""

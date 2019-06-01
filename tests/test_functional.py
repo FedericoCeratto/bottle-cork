@@ -22,12 +22,14 @@ from conftest import assert_is_redirect
 
 try:
     import pymongo
+
     pymongo_available = True
 except ImportError:
     pymongo_available = False
 
 try:
     import MySQLdb
+
     MySQLdb_available = True
 except ImportError:
     MySQLdb_available = False
@@ -35,9 +37,11 @@ except ImportError:
 
 ### Mocked classes
 
+
 class MockedSession(object):
     """Mock Beaker session
     """
+
     def __init__(self, username=None):
         self.__username = username
         self.__saved = False
@@ -68,12 +72,15 @@ class MockedSession(object):
     def save(self):
         self.__saved = True
 
-#TODO: implement tests around MockedSession __saved
+
+# TODO: implement tests around MockedSession __saved
+
 
 class MockedSessionCork(Cork):
     """Mocked Cork instance where the session is replaced with
     MockedSession
     """
+
     @property
     def _beaker_session(self):
         return self._mocked_beaker_session
@@ -83,10 +90,12 @@ class MockedSessionCork(Cork):
 
 ## Backends
 
+
 def setup_sqlite_db(request):
     # in-memory SQLite DB using the SQLiteBackend backend module.
     b = SQLiteBackend(':memory:', initialize=True)
-    b.connection.executescript("""
+    b.connection.executescript(
+        """
         INSERT INTO users (username, email_addr, desc, role, hash, creation_date) VALUES
         (
             'admin',
@@ -100,14 +109,19 @@ def setup_sqlite_db(request):
         INSERT INTO roles (role, level) VALUES ('admin', 100);
         INSERT INTO roles (role, level) VALUES ('editor', 60);
         INSERT INTO roles (role, level) VALUES ('user', 50);
-    """)
+    """
+    )
     return b
 
 
 def setup_json_db(request, tmpdir):
     # Setup test directory with valid JSON files and return JsonBackend instance
-    tmpdir.join('users.json').write("""{"admin": {"email_addr": "admin@localhost.local", "desc": null, "role": "admin", "hash": "69f75f38ac3bfd6ac813794f3d8c47acc867adb10b806e8979316ddbf6113999b6052efe4ba95c0fa9f6a568bddf60e8e5572d9254dbf3d533085e9153265623", "creation_date": "2012-04-09 14:22:27.075596", "last_login": "2012-10-28 20:50:26.286723"}}""")
-    tmpdir.join('roles.json').write("""{"special": 200, "admin": 100, "user": 50, "editor": 60}""")
+    tmpdir.join('users.json').write(
+        """{"admin": {"email_addr": "admin@localhost.local", "desc": null, "role": "admin", "hash": "69f75f38ac3bfd6ac813794f3d8c47acc867adb10b806e8979316ddbf6113999b6052efe4ba95c0fa9f6a568bddf60e8e5572d9254dbf3d533085e9153265623", "creation_date": "2012-04-09 14:22:27.075596", "last_login": "2012-10-28 20:50:26.286723"}}"""
+    )
+    tmpdir.join('roles.json').write(
+        """{"special": 200, "admin": 100, "user": 50, "editor": 60}"""
+    )
     tmpdir.join('register.json').write("""{}""")
     return JsonBackend(tmpdir)
 
@@ -129,15 +143,17 @@ def setup_sqlalchemy_with_sqlite_in_memory_db(request):
     mb.roles.insert({'role': 'user', 'level': 50})
 
     # Create admin
-    mb.users.insert({
-        "username": "admin",
-        "email_addr": "admin@localhost.local",
-        "desc": "admin test user",
-        "role": "admin",
-        "hash": "cLzRnzbEwehP6ZzTREh3A4MXJyNo+TV8Hs4//EEbPbiDoo+dmNg22f2RJC282aSwgyWv/O6s3h42qrA6iHx8yfw=",
-        "creation_date": "2012-10-28 20:50:26.286723",
-        "last_login": "2012-10-28 20:50:26.286723"
-    })
+    mb.users.insert(
+        {
+            "username": "admin",
+            "email_addr": "admin@localhost.local",
+            "desc": "admin test user",
+            "role": "admin",
+            "hash": "cLzRnzbEwehP6ZzTREh3A4MXJyNo+TV8Hs4//EEbPbiDoo+dmNg22f2RJC282aSwgyWv/O6s3h42qrA6iHx8yfw=",
+            "creation_date": "2012-10-28 20:50:26.286723",
+            "last_login": "2012-10-28 20:50:26.286723",
+        }
+    )
     assert len(mb.roles) == 4
     assert len(mb.users) == 1
 
@@ -149,14 +165,16 @@ def setup_sqlalchemy_with_sqlite_in_memory_db(request):
     request.addfinalizer(fin)
     return mb
 
-    #def purge_test_db(self):
+    # def purge_test_db(self):
     #    # Purge DB
     #    mb = connect_to_test_db()
     #    mb._drop_all_tables()
 
+
 def setup_mongo_db(request):
     # FIXME no last_login?
     t0 = time.time()
+
     def timer(s, max_time=None):
         delta = time.time() - t0
         print("%s %f" % (s, delta))
@@ -173,14 +191,16 @@ def setup_mongo_db(request):
     timer('purge')
 
     # Create admin
-    mb.users._coll.insert({
-        "login": "admin",
-        "email_addr": "admin@localhost.local",
-        "desc": "admin test user",
-        "role": "admin",
-        "hash": "cLzRnzbEwehP6ZzTREh3A4MXJyNo+TV8Hs4//EEbPbiDoo+dmNg22f2RJC282aSwgyWv/O6s3h42qrA6iHx8yfw=",
-        "creation_date": "2012-10-28 20:50:26.286723"
-    })
+    mb.users._coll.insert(
+        {
+            "login": "admin",
+            "email_addr": "admin@localhost.local",
+            "desc": "admin test user",
+            "role": "admin",
+            "hash": "cLzRnzbEwehP6ZzTREh3A4MXJyNo+TV8Hs4//EEbPbiDoo+dmNg22f2RJC282aSwgyWv/O6s3h42qrA6iHx8yfw=",
+            "creation_date": "2012-10-28 20:50:26.286723",
+        }
+    )
     timer('create')
 
     # Create users
@@ -225,15 +245,17 @@ def setup_mysql_db(request):
     mb.roles.insert({'role': 'user', 'level': 50})
 
     # Create admin
-    mb.users.insert({
-        "username": "admin",
-        "email_addr": "admin@localhost.local",
-        "desc": "admin test user",
-        "role": "admin",
-        "hash": "cLzRnzbEwehP6ZzTREh3A4MXJyNo+TV8Hs4//EEbPbiDoo+dmNg22f2RJC282aSwgyWv/O6s3h42qrA6iHx8yfw=",
-        "creation_date": "2012-10-28 20:50:26.286723",
-        "last_login": "2012-10-28 20:50:26.286723"
-    })
+    mb.users.insert(
+        {
+            "username": "admin",
+            "email_addr": "admin@localhost.local",
+            "desc": "admin test user",
+            "role": "admin",
+            "hash": "cLzRnzbEwehP6ZzTREh3A4MXJyNo+TV8Hs4//EEbPbiDoo+dmNg22f2RJC282aSwgyWv/O6s3h42qrA6iHx8yfw=",
+            "creation_date": "2012-10-28 20:50:26.286723",
+            "last_login": "2012-10-28 20:50:26.286723",
+        }
+    )
     assert len(mb.roles) == 4
     assert len(mb.users) == 1
 
@@ -270,15 +292,17 @@ def setup_postgresql_db(request):
     mb.roles.insert({'role': 'user', 'level': 50})
 
     # Create admin
-    mb.users.insert({
-        "username": "admin",
-        "email_addr": "admin@localhost.local",
-        "desc": "admin test user",
-        "role": "admin",
-        "hash": "cLzRnzbEwehP6ZzTREh3A4MXJyNo+TV8Hs4//EEbPbiDoo+dmNg22f2RJC282aSwgyWv/O6s3h42qrA6iHx8yfw=",
-        "creation_date": "2012-10-28 20:50:26.286723",
-        "last_login": "2012-10-28 20:50:26.286723"
-    })
+    mb.users.insert(
+        {
+            "username": "admin",
+            "email_addr": "admin@localhost.local",
+            "desc": "admin test user",
+            "role": "admin",
+            "hash": "cLzRnzbEwehP6ZzTREh3A4MXJyNo+TV8Hs4//EEbPbiDoo+dmNg22f2RJC282aSwgyWv/O6s3h42qrA6iHx8yfw=",
+            "creation_date": "2012-10-28 20:50:26.286723",
+            "last_login": "2012-10-28 20:50:26.286723",
+        }
+    )
     assert len(mb.roles) == 4
     assert len(mb.users) == 1
 
@@ -291,17 +315,12 @@ def setup_postgresql_db(request):
     return mb
 
 
-
 ## General fixtures
 
-@pytest.fixture(params=[
-    'json',
-    'mongodb',
-    'mysql',
-    'postgresql',
-    'sqlalchemy',
-    'sqlite',
-])
+
+@pytest.fixture(
+    params=['json', 'mongodb', 'mysql', 'postgresql', 'sqlalchemy', 'sqlite']
+)
 def backend(tmpdir, request):
     # Create backend instances
     backend_type = request.param
@@ -366,15 +385,19 @@ def aaa_admin(templates_dir, backend):
 
 ## Unauthenticated user
 
+
 def test_unauth_basic(aaa_unauth):
     assert aaa_unauth._beaker_session.get('username', None) == None
+
 
 def test_get_current_user_unauth(aaa_unauth):
     with raises(AAAException):
         aaa_unauth.current_user['username']
 
+
 def test_unauth_is_anonymous(aaa_unauth):
     assert aaa_unauth.user_is_anonymous
+
 
 def test_failing_login_unauth(aaa_unauth):
     login = aaa_unauth.login('phil', 'hunter123')
@@ -384,8 +407,9 @@ def test_failing_login_unauth(aaa_unauth):
 
 ## Logged in as admin
 
+
 def test_mockedadmin(aaa_admin):
-    assert len(aaa_admin._store.users) == 1,  len(aaa_admin._store.users)
+    assert len(aaa_admin._store.users) == 1, len(aaa_admin._store.users)
     assert 'admin' in aaa_admin._store.users, repr(aaa_admin._store.users)
 
 
@@ -393,18 +417,21 @@ def test_password_hashing(aaa_admin):
     shash = aaa_admin._hash('user_foo', 'bogus_pwd')
     assert len(shash) == 88, "hash length should be 88 and is %d" % len(shash)
     assert shash.endswith(b'='), "hash should end with '='"
-    assert aaa_admin._verify_password('user_foo', 'bogus_pwd', shash) == True, \
-        "Hashing verification should succeed"
+    assert (
+        aaa_admin._verify_password('user_foo', 'bogus_pwd', shash) == True
+    ), "Hashing verification should succeed"
 
 
 def test_incorrect_password_hashing(aaa_admin):
     shash = aaa_admin._hash('user_foo', 'bogus_pwd')
     assert len(shash) == 88, "hash length should be 88 and is %d" % len(shash)
     assert shash.endswith(b'='), "hash should end with '='"
-    assert aaa_admin._verify_password('user_foo', '####', shash) == False, \
-        "Hashing verification should fail"
-    assert aaa_admin._verify_password('###', 'bogus_pwd', shash) == False, \
-        "Hashing verification should fail"
+    assert (
+        aaa_admin._verify_password('user_foo', '####', shash) == False
+    ), "Hashing verification should fail"
+    assert (
+        aaa_admin._verify_password('###', 'bogus_pwd', shash) == False
+    ), "Hashing verification should fail"
 
 
 def test_password_hashing_collision(aaa_admin):
@@ -422,16 +449,20 @@ def test_unauth_create_role(aaa_admin):
     with raises(AuthException):
         aaa_admin.create_role('user', 33)
 
+
 def assert_raises(ex, f, *a, **kw):
     with raises(ex):
         f(*a, **kw)
 
+
 def test_create_existing_role(aaa_admin):
     assert_raises(AAAException, aaa_admin.create_role, 'user', 33)
+
 
 def test_access_nonexisting_role(aaa_admin):
     with raises(KeyError):
         aaa_admin._store.roles['NotThere']
+
 
 def test_create_role_with_incorrect_level(aaa_admin):
     with raises(AAAException):
@@ -496,7 +527,10 @@ def disable_os_urandom(monkeypatch):
 
 def test_check_hashing(aaa_admin, disable_os_urandom):
     h1 = aaa_admin._hash(u'user', u'pwd')
-    assert h1 == b'cDk5OTk5OTk5OTk5OTk5OTk5OTk5OTk5OTk5OTk5OTk5ihNBRY2RYEuI8BWPKndJzD0BTxFOV+hv4Ih9WvRk9Dg='
+    assert (
+        h1
+        == b'cDk5OTk5OTk5OTk5OTk5OTk5OTk5OTk5OTk5OTk5OTk5ihNBRY2RYEuI8BWPKndJzD0BTxFOV+hv4Ih9WvRk9Dg='
+    )
 
 
 def test_create_user_check_hashing(aaa_admin, disable_os_urandom):
@@ -506,7 +540,10 @@ def test_create_user_check_hashing(aaa_admin, disable_os_urandom):
     assert 'phil' in aaa_admin._store.users
 
     h = aaa_admin._store.users['phil']['hash'].encode('ascii')
-    assert h == b'cDk5OTk5OTk5OTk5OTk5OTk5OTk5OTk5OTk5OTk5OTk5REycUvi9EWiRY7kAUwU4vnGD84a0hstdqigKOaNmqBM='
+    assert (
+        h
+        == b'cDk5OTk5OTk5OTk5OTk5OTk5OTk5OTk5OTk5OTk5OTk5REycUvi9EWiRY7kAUwU4vnGD84a0hstdqigKOaNmqBM='
+    )
     assert h == aaa_admin._hash(u'phil', u'pwd')
 
 
@@ -526,15 +563,15 @@ def test_delete_user(aaa_admin):
     assert 'admin' not in aaa_admin._store.users
 
 
-
 def test_list_users(aaa_admin):
     users = list(aaa_admin.list_users())
     assert len(users) == 1, "Incorrect. Users are: %s" % repr(aaa_admin._store.users)
 
 
 def test_iteritems_on_users(aaa_admin):
-    expected_dkeys = set(('hash', 'email_addr', 'role', 'creation_date',
-        'desc', 'last_login'))
+    expected_dkeys = set(
+        ('hash', 'email_addr', 'role', 'creation_date', 'desc', 'last_login')
+    )
 
     if isinstance(aaa_admin._store, MongoDBBackend):
         expected_dkeys.discard('last_login')
@@ -586,6 +623,7 @@ def test_create_and_validate_user(aaa_admin):
     assert login == True, "Login must succeed"
     assert aaa_admin._beaker_session['username'] == 'phil'
 
+
 def test_create_and_validate_user_unicode(aaa_admin, backend):
     # FIXME, see #4
     if hasattr(backend, '_engine'):
@@ -602,6 +640,7 @@ def test_create_and_validate_user_unicode(aaa_admin, backend):
     assert login == True, "Login must succeed"
     assert aaa_admin._beaker_session['username'] == u'phil_åöॐ'
 
+
 def test_create_user_login_logout(aaa_admin):
     assert 'phil' not in aaa_admin._store.users
     aaa_admin.create_user('phil', 'user', 'hunter123')
@@ -616,6 +655,7 @@ def test_create_user_login_logout(aaa_admin):
 
     assert aaa_admin._beaker_session.get('username', None) == None
 
+
 def test_modify_user_using_overwrite(aaa_admin):
     aaa_admin.create_user('phil', 'user', 'hunter123')
     assert 'phil' in aaa_admin._store.users
@@ -624,10 +664,13 @@ def test_modify_user_using_overwrite(aaa_admin):
     aaa_admin._store.users['phil'] = u
     assert aaa_admin._store.users['phil']['role'] == 'editor'
 
+
 def test_modify_user(aaa_admin):
     aaa_admin.create_user('phil', 'user', 'hunter123')
     aaa_admin._store.users['phil']['role'] = 'editor'
-    assert aaa_admin._store.users['phil']['role'] == 'editor', aaa_admin._store.users['phil']
+    assert aaa_admin._store.users['phil']['role'] == 'editor', aaa_admin._store.users[
+        'phil'
+    ]
 
 
 def test_modify_user_using_local_change(aaa_admin):
@@ -636,6 +679,7 @@ def test_modify_user_using_local_change(aaa_admin):
     u['role'] = 'editor'
     assert u['role'] == 'editor', repr(u)
     assert aaa_admin._store.users['phil']['role'] == 'editor'
+
 
 def test_write_user_hash_bytes(aaa_admin, backend):
     username = 'huh'
@@ -650,7 +694,7 @@ def test_write_user_hash_bytes(aaa_admin, backend):
         'email_addr': "bar",
         'desc': "foo",
         'creation_date': tstamp,
-        'last_login': tstamp
+        'last_login': tstamp,
     }
 
     if hasattr(backend, '_engine'):
@@ -673,14 +717,13 @@ def test_write_user_hash_unicode(aaa_admin):
         'email_addr': "bar",
         'desc': "foo",
         'creation_date': tstamp,
-        'last_login': tstamp
+        'last_login': tstamp,
     }
 
     if hasattr(backend, '_engine'):
         h_from_db = backend._engine.execute("SELECT * FROM users").fetchall()[1][2]
         print("H %r" % h_from_db)
         assert h_from_db == '1234'
-
 
     fetched_h = aaa_admin._store.users[username]['hash']
     assert fetched_h == u'1234'
@@ -707,6 +750,7 @@ def test_require_missing_parameter(aaa_admin):
 
 def test_require_nonexistent_role(aaa_admin):
     assert_raises(AAAException, aaa_admin.require, role='clown')
+
 
 def test_require_failing_role(aaa_admin):
     # Requesting level >= 100
@@ -745,7 +789,9 @@ def test_update_pwd(aaa_admin):
 
 def test_update_email(aaa_admin):
     aaa_admin.current_user.update(email_addr='foo')
-    assert aaa_admin._store.users['admin']['email_addr'] == 'foo', aaa_admin._store.users['admin']
+    assert (
+        aaa_admin._store.users['admin']['email_addr'] == 'foo'
+    ), aaa_admin._store.users['admin']
 
 
 def test_get_current_user_nonexistent(aaa_admin):
@@ -791,8 +837,12 @@ def test_register_role_too_high(aaa_admin):
 
 def test_register_valid(aaa_admin, templates_dir):
     aaa_admin.mailer.send_email = mock.Mock()
-    aaa_admin.register('foo', 'pwd', 'email@email.org', role='user',
-        email_template='views/registration_email.tpl'
+    aaa_admin.register(
+        'foo',
+        'pwd',
+        'email@email.org',
+        role='user',
+        email_template='views/registration_email.tpl',
     )
     assert aaa_admin.mailer.send_email.called
     r = aaa_admin._store.pending_registrations
@@ -806,10 +856,15 @@ def test_register_valid(aaa_admin, templates_dir):
 def test_validate_registration_no_code(aaa_admin):
     assert_raises(AAAException, aaa_admin.validate_registration, 'not_a_valid_code')
 
+
 def test_validate_registration(aaa_admin, templates_dir):
     aaa_admin.mailer.send_email = mock.Mock()
-    aaa_admin.register('foo', 'pwd', 'email@email.org', role='user',
-        email_template='views/registration_email.tpl'
+    aaa_admin.register(
+        'foo',
+        'pwd',
+        'email@email.org',
+        role='user',
+        email_template='views/registration_email.tpl',
     )
     r = aaa_admin._store.pending_registrations
     reg_code = list(r)[0]
@@ -817,42 +872,49 @@ def test_validate_registration(aaa_admin, templates_dir):
     assert len(aaa_admin._store.users) == 1, "Only the admin user should be present"
     aaa_admin.validate_registration(reg_code)
     assert len(aaa_admin._store.users) == 2, "The new user should be present"
-    assert len(aaa_admin._store.pending_registrations) == 0, \
-        "The registration entry should be removed"
-
+    assert (
+        len(aaa_admin._store.pending_registrations) == 0
+    ), "The registration entry should be removed"
 
 
 def test_send_password_reset_email_no_data(aaa_admin):
     with raises(AAAException):
         aaa_admin.send_password_reset_email()
 
+
 def test_send_password_reset_email_incorrect_data(aaa_admin):
     with raises(AAAException):
         aaa_admin.send_password_reset_email(username='NotThere', email_addr='NoEmail')
+
 
 def test_send_password_reset_email_incorrect_data2(aaa_admin):
     with raises(AAAException):
         # The username is valid but the email address is not matching
         aaa_admin.send_password_reset_email(username='admin', email_addr='NoEmail')
 
+
 def test_send_password_reset_email_only_incorrect_email(aaa_admin):
     with raises(AAAException):
         aaa_admin.send_password_reset_email(email_addr='NoEmail')
+
 
 def test_send_password_reset_email_only_incorrect_username(aaa_admin):
     with raises(AAAException):
         aaa_admin.send_password_reset_email(username='NotThere')
 
+
 def test_send_password_reset_email_only_email(aaa_admin, templates_dir):
     aaa_admin.mailer.send_email = mock.Mock()
-    aaa_admin.send_password_reset_email(email_addr='admin@localhost.local',
-        email_template='views/password_reset_email')
+    aaa_admin.send_password_reset_email(
+        email_addr='admin@localhost.local', email_template='views/password_reset_email'
+    )
+
 
 def test_send_password_reset_email_only_username(aaa_admin, tmpdir, templates_dir):
     aaa_admin.mailer.send_email = mock.Mock()
-    aaa_admin.send_password_reset_email(username='admin',
-        email_template='views/password_reset_email')
-
+    aaa_admin.send_password_reset_email(
+        username='admin', email_template='views/password_reset_email'
+    )
 
 
 def test_perform_password_reset_invalid(aaa_admin):
@@ -911,7 +973,7 @@ def test_perform_password_reset_mangled_email(aaa_admin):
 
 
 def test_set_password_directly(aaa_admin):
-    #assert aaa_admin.login(u'admin', u'newpwd') == False
+    # assert aaa_admin.login(u'admin', u'newpwd') == False
     user = aaa_admin.user(u'admin')
     assert user
     user.update(pwd='newpwd')
@@ -923,4 +985,3 @@ def test_perform_password_reset(aaa_admin):
     aaa_admin.reset_password(token, u'newpassword')
     login = aaa_admin.login(u'admin', u'newpassword')
     assert login == True, "Login must succeed"
-

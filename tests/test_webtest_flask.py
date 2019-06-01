@@ -20,15 +20,16 @@ from cork import FlaskCork
 
 REDIR = 302
 
-class Test(testutils.WebFunctional):
 
+class Test(testutils.WebFunctional):
     def create_app_instance(self):
         """create TestApp instance"""
         assert self._app is None
         import simple_webapp_flask
+
         self._bottle_app = simple_webapp_flask.app
         self._app = TestApp(self._bottle_app)
-        #simple_webapp_flask.flask.session.secret_key = 'bogus'
+        # simple_webapp_flask.flask.session.secret_key = 'bogus'
         simple_webapp_flask.SECRET_KEY = 'bogus'
         print("Test App created")
 
@@ -45,7 +46,7 @@ class Test(testutils.WebFunctional):
         # drop the cookie
         self._app.reset()
 
-        #assert self._app.get('/admin').status != '200 OK'
+        # assert self._app.get('/admin').status != '200 OK'
         os.chdir(self._starting_dir)
 
         self._app.app.options['timeout'] = self._default_timeout
@@ -72,11 +73,10 @@ class Test(testutils.WebFunctional):
         self.create_app_instance()
         self._app.reset()
         print("Reset done")
-        #self._default_timeout = self._app.app.options['timeout']
+        # self._default_timeout = self._app.app.options['timeout']
         self._default_timeout = 30
-        #FIXME: reset
+        # FIXME: reset
         print("Setup completed")
-
 
     def login_as_admin(self):
         """perform log in"""
@@ -96,11 +96,11 @@ class Test(testutils.WebFunctional):
         assert 'session' in self._app.cookies, "Cookie not found"
 
         import bottle
+
         session = bottle.request.environ.get('beaker.session')
         print("Session from func. test", repr(session))
 
         self.assert_200('/login', 'Please insert your credentials')
-
 
         p = self._app.get('/admin')
         assert 'Welcome' in p.body, repr(p)
@@ -110,7 +110,6 @@ class Test(testutils.WebFunctional):
         assert p.body == 'admin', "Sta"
 
         print("Login performed")
-
 
     def test_functional_expiration(self):
         self.login_as_admin()
@@ -125,10 +124,9 @@ class Test(testutils.WebFunctional):
             # change the cookie expiration in order to expire it
             self._app.app.options['timeout'] = 0
 
-            assert self._app.get('/admin').status_int == REDIR, "The cookie should have expired"
-
+            assert (
+                self._app.get('/admin').status_int == REDIR
+            ), "The cookie should have expired"
 
         finally:
             self._bottle_app.permanent_session_lifetime = saved
-
-

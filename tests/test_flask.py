@@ -29,12 +29,14 @@ class RoAttrDict(dict):
     """Read-only attribute-accessed dictionary.
     Used to mock beaker's session objects
     """
+
     def __getattr__(self, name):
         return self[name]
 
 
 class MockedAdminCork(Cork):
     """Mocked module where the current user is always 'admin'"""
+
     @property
     def _beaker_session(self):
         return RoAttrDict(username='admin')
@@ -46,6 +48,7 @@ class MockedAdminCork(Cork):
 
 class MockedUnauthenticatedCork(Cork):
     """Mocked module where the current user not set"""
+
     @property
     def _beaker_session(self):
         return RoAttrDict()
@@ -73,13 +76,17 @@ def setup_dir():
     os.mkdir(testdir)
     os.mkdir(testdir + '/views')
     with open("%s/users.json" % testdir, 'w') as f:
-        f.write("""{"admin": {"email_addr": null, "desc": null, "role": "admin", "hash": "69f75f38ac3bfd6ac813794f3d8c47acc867adb10b806e8979316ddbf6113999b6052efe4ba95c0fa9f6a568bddf60e8e5572d9254dbf3d533085e9153265623", "creation_date": "2012-04-09 14:22:27.075596"}}""")
+        f.write(
+            """{"admin": {"email_addr": null, "desc": null, "role": "admin", "hash": "69f75f38ac3bfd6ac813794f3d8c47acc867adb10b806e8979316ddbf6113999b6052efe4ba95c0fa9f6a568bddf60e8e5572d9254dbf3d533085e9153265623", "creation_date": "2012-04-09 14:22:27.075596"}}"""
+        )
     with open("%s/roles.json" % testdir, 'w') as f:
         f.write("""{"special": 200, "admin": 100, "user": 50}""")
     with open("%s/register.json" % testdir, 'w') as f:
         f.write("""{}""")
     with open("%s/views/registration_email.tpl" % testdir, 'w') as f:
-        f.write("""Username:{{username}} Email:{{email_addr}} Code:{{registration_code}}""")
+        f.write(
+            """Username:{{username}} Email:{{email_addr}} Code:{{registration_code}}"""
+        )
     with open("%s/views/password_reset_email.tpl" % testdir, 'w') as f:
         f.write("""Username:{{username}} Email:{{email_addr}} Code:{{reset_code}}""")
     print("setup done in %s" % testdir)
@@ -90,8 +97,12 @@ def setup_mockedadmin():
     global aaa
     global cookie_name
     setup_dir()
-    aaa = MockedAdminCork(testdir, smtp_server='localhost', email_sender='test@localhost',
-                          preferred_hashing_algorithm='scrypt')
+    aaa = MockedAdminCork(
+        testdir,
+        smtp_server='localhost',
+        email_sender='test@localhost',
+        preferred_hashing_algorithm='scrypt',
+    )
     cookie_name = None
 
 
@@ -130,10 +141,12 @@ def test_initialize_storage():
         assert f.readlines() == ['{}']
     with open("%s/views/registration_email.tpl" % testdir) as f:
         assert f.readlines() == [
-            'Username:{{username}} Email:{{email_addr}} Code:{{registration_code}}']
+            'Username:{{username}} Email:{{email_addr}} Code:{{registration_code}}'
+        ]
     with open("%s/views/password_reset_email.tpl" % testdir) as f:
         assert f.readlines() == [
-            'Username:{{username}} Email:{{email_addr}} Code:{{reset_code}}']
+            'Username:{{username}} Email:{{email_addr}} Code:{{reset_code}}'
+        ]
 
 
 @raises(BackendIOException)
@@ -148,10 +161,12 @@ def test_mockedadmin():
     assert len(aaa._store.users) == 1, repr(aaa._store.users)
     assert 'admin' in aaa._store.users, repr(aaa._store.users)
 
+
 @raises(BackendIOException)
 @with_setup(setup_mockedadmin, teardown_dir)
 def test_loadjson_missing_file():
     aaa._store._loadjson('nonexistent_file', {})
+
 
 @raises(BackendIOException)
 @with_setup(setup_mockedadmin, teardown_dir)
@@ -172,10 +187,12 @@ def test_loadjson_unchanged():
 
 # Test password hashing for inexistent algorithms
 
+
 @raises(RuntimeError)
 @with_setup(setup_mockedadmin, teardown_dir)
 def test_password_hashing_bogus_algo():
     aaa._hash('user_foo', 'bogus_pwd', algo='bogus_algo')
+
 
 @raises(RuntimeError)
 @with_setup(setup_mockedadmin, teardown_dir)
@@ -183,6 +200,7 @@ def test_password_hashing_bogus_algo_during_verify():
     # Incorrect hash type (starts with "X")
     shash = b64encode('X' + 'bogusstring')
     aaa._verify_password('user_foo', 'bogus_pwd', shash)
+
 
 # End of password hashing tests
 
@@ -214,11 +232,13 @@ def test_create_role():
         data = f.read()
         assert 'user33' in data, repr(data)
 
+
 @SkipTest
 @raises(AAAException)
 @with_setup(setup_mockedadmin, teardown_dir)
 def test_create_empty_role():
     aaa.create_role('', 42)
+
 
 @with_setup(setup_mockedadmin, teardown_dir)
 def test_unauth_delete_role():
@@ -255,6 +275,7 @@ def test_list_roles():
 def test_unauth_create_user():
     aaa._store.roles['admin'] = 10  # lower admin level
     assert_raises(AuthException, aaa.create_user, 'phil', 'user', 'hunter123')
+
 
 @with_setup(setup_mockedadmin, teardown_dir)
 def test_create_existing_user():
@@ -489,7 +510,9 @@ def test_register(mocked):
     os.chdir(testdir)
     aaa.register('foo', 'pwd', 'a@a.a')
     os.chdir(old_dir)
-    assert len(aaa._store.pending_registrations) == 1, repr(aaa._store.pending_registrations)
+    assert len(aaa._store.pending_registrations) == 1, repr(
+        aaa._store.pending_registrations
+    )
 
 
 @with_setup(setup_mockedadmin, teardown_dir)
@@ -511,6 +534,7 @@ def test_smtp_url_parsing_2():
     assert c['fqdn'] == 'foo'
     assert c['port'] == 25
 
+
 @with_setup(setup_mockedadmin, teardown_dir)
 def test_smtp_url_parsing_3():
     c = aaa.mailer._parse_smtp_url('foo:443')
@@ -520,6 +544,7 @@ def test_smtp_url_parsing_3():
     assert c['fqdn'] == 'foo'
     assert c['port'] == 443
 
+
 @with_setup(setup_mockedadmin, teardown_dir)
 def test_smtp_url_parsing_4():
     c = aaa.mailer._parse_smtp_url('ssl://user:pass@foo:443/')
@@ -528,6 +553,7 @@ def test_smtp_url_parsing_4():
     assert c['pass'] == 'pass'
     assert c['fqdn'] == 'foo'
     assert c['port'] == 443
+
 
 @with_setup(setup_mockedadmin, teardown_dir)
 def test_smtp_url_parsing_5():
@@ -544,8 +570,9 @@ def test_smtp_url_parsing_email_as_username_no_password():
     # the username contains an at sign '@'
     c = aaa.mailer._parse_smtp_url('ssl://us.er@somewhere.net@foo:443/')
     assert c['proto'] == 'ssl'
-    assert c['user'] == 'us.er@somewhere.net', \
+    assert c['user'] == 'us.er@somewhere.net', (
         "Username is incorrectly parsed as '%s'" % c['user']
+    )
     assert c['pass'] == None
     assert c['fqdn'] == 'foo'
     assert c['port'] == 443
@@ -556,8 +583,9 @@ def test_smtp_url_parsing_email_as_username():
     # the username contains an at sign '@'
     c = aaa.mailer._parse_smtp_url('ssl://us.er@somewhere.net:pass@foo:443/')
     assert c['proto'] == 'ssl'
-    assert c['user'] == 'us.er@somewhere.net', \
+    assert c['user'] == 'us.er@somewhere.net', (
         "Username is incorrectly parsed as '%s'" % c['user']
+    )
     assert c['pass'] == 'pass'
     assert c['fqdn'] == 'foo'
     assert c['port'] == 443
@@ -568,10 +596,10 @@ def test_smtp_url_parsing_at_sign_in_password():
     # the password contains at signs '@'
     c = aaa.mailer._parse_smtp_url('ssl://username:pass@w@rd@foo:443/')
     assert c['proto'] == 'ssl'
-    assert c['user'] == 'username', \
-        "Username is incorrectly parsed as '%s'" % c['user']
-    assert c['pass'] == 'pass@w@rd', \
+    assert c['user'] == 'username', "Username is incorrectly parsed as '%s'" % c['user']
+    assert c['pass'] == 'pass@w@rd', (
         "Password is incorrectly parsed as '%s'" % c['pass']
+    )
     assert c['fqdn'] == 'foo'
     assert c['port'] == 443
 
@@ -581,37 +609,45 @@ def test_smtp_url_parsing_email_as_username_2():
     # both the username and the password contains an at sign '@'
     c = aaa.mailer._parse_smtp_url('ssl://us.er@somewhere.net:pass@word@foo:443/')
     assert c['proto'] == 'ssl'
-    assert c['user'] == 'us.er@somewhere.net', \
+    assert c['user'] == 'us.er@somewhere.net', (
         "Username is incorrectly parsed as '%s'" % c['user']
-    assert c['pass'] == 'pass@word', \
+    )
+    assert c['pass'] == 'pass@word', (
         "Password is incorrectly parsed as '%s'" % c['pass']
+    )
     assert c['fqdn'] == 'foo'
     assert c['port'] == 443
+
 
 @raises(RuntimeError)
 @with_setup(setup_mockedadmin, teardown_dir)
 def test_smtp_url_parsing_incorrect_URL_port():
     c = aaa.mailer._parse_smtp_url(':99999')
 
+
 @raises(RuntimeError)
 @with_setup(setup_mockedadmin, teardown_dir)
 def test_smtp_url_parsing_incorrect_URL_port_len():
     c = aaa.mailer._parse_smtp_url(':123456')
+
 
 @raises(RuntimeError)
 @with_setup(setup_mockedadmin, teardown_dir)
 def test_smtp_url_parsing_incorrect_URL_len():
     c = aaa.mailer._parse_smtp_url('a' * 256)
 
+
 @raises(RuntimeError)
 @with_setup(setup_mockedadmin, teardown_dir)
 def test_smtp_url_parsing_incorrect_URL_syntax():
     c = aaa.mailer._parse_smtp_url('::')
 
+
 @with_setup(setup_mockedadmin, teardown_dir)
 def test_smtp_url_parsing_IPv4():
     c = aaa.mailer._parse_smtp_url('127.0.0.1')
     assert c['fqdn'] == '127.0.0.1'
+
 
 @with_setup(setup_mockedadmin, teardown_dir)
 def test_smtp_url_parsing_IPv6():
@@ -623,7 +659,7 @@ def test_smtp_url_parsing_IPv6():
 @with_setup(setup_mockedadmin, teardown_dir)
 @mock.patch('cork.cork.SMTP')
 def test_send_email_SMTP(SMTP):
-    SMTP.return_value = msession = mock.Mock() # session instance
+    SMTP.return_value = msession = mock.Mock()  # session instance
 
     aaa.mailer.send_email('address', ' sbj', 'text')
     aaa.mailer.join()
@@ -633,11 +669,12 @@ def test_send_email_SMTP(SMTP):
     assert msession.quit.call_count == 1
     assert len(msession.method_calls) == 2
 
+
 # Patch the SMTP_SSL class to prevent network interactions
 @with_setup(setup_mockedadmin, teardown_dir)
 @mock.patch('cork.cork.SMTP_SSL')
 def test_send_email_SMTP_SSL(SMTP_SSL):
-    SMTP_SSL.return_value = msession = mock.Mock() # session instance
+    SMTP_SSL.return_value = msession = mock.Mock()  # session instance
 
     aaa.mailer._conf['proto'] = 'ssl'
     aaa.mailer.send_email('address', ' sbj', 'text')
@@ -648,11 +685,12 @@ def test_send_email_SMTP_SSL(SMTP_SSL):
     assert msession.quit.call_count == 1
     assert len(msession.method_calls) == 2
 
+
 # Patch the SMTP_SSL class to prevent network interactions
 @with_setup(setup_mockedadmin, teardown_dir)
 @mock.patch('cork.cork.SMTP_SSL')
 def test_send_email_SMTP_SSL_with_login(SMTP_SSL):
-    SMTP_SSL.return_value = msession = mock.Mock() # session instance
+    SMTP_SSL.return_value = msession = mock.Mock()  # session instance
 
     aaa.mailer._conf['proto'] = 'ssl'
     aaa.mailer._conf['user'] = 'username'
@@ -665,11 +703,12 @@ def test_send_email_SMTP_SSL_with_login(SMTP_SSL):
     assert msession.quit.call_count == 1
     assert len(msession.method_calls) == 3
 
+
 # Patch the SMTP_SSL class to prevent network interactions
 @with_setup(setup_mockedadmin, teardown_dir)
 @mock.patch('cork.cork.SMTP')
 def test_send_email_SMTP_STARTTLS(SMTP):
-    SMTP.return_value = msession = mock.Mock() # session instance
+    SMTP.return_value = msession = mock.Mock()  # session instance
 
     aaa.mailer._conf['proto'] = 'starttls'
     aaa.mailer.send_email('address', ' sbj', 'text')
@@ -705,7 +744,9 @@ def test_validate_registration(mocked):
     os.chdir(testdir)
     aaa.register('user_foo', 'pwd', 'a@a.a')
     os.chdir(old_dir)
-    assert len(aaa._store.pending_registrations) == 1, repr(aaa._store.pending_registrations)
+    assert len(aaa._store.pending_registrations) == 1, repr(
+        aaa._store.pending_registrations
+    )
     # get the registration code, and run validate_registration
     code = aaa._store.pending_registrations.keys()[0]
     user_data = aaa._store.pending_registrations[code]
@@ -715,7 +756,9 @@ def test_validate_registration(mocked):
     login = aaa.login('user_foo', 'pwd')
     assert login == True, "Login must succeed"
     # The registration should have been removed
-    assert len(aaa._store.pending_registrations) == 0, repr(aaa._store.pending_registrations)
+    assert len(aaa._store.pending_registrations) == 0, repr(
+        aaa._store.pending_registrations
+    )
 
 
 # Patch the mailer _send() method to prevent network interactions
@@ -726,14 +769,17 @@ def test_purge_expired_registration(mocked):
     os.chdir(testdir)
     aaa.register('foo', 'pwd', 'a@a.a')
     os.chdir(old_dir)
-    assert len(aaa._store.pending_registrations) == 1, "The registration should" \
-        " be present"
+    assert len(aaa._store.pending_registrations) == 1, (
+        "The registration should" " be present"
+    )
     aaa._purge_expired_registrations()
-    assert len(aaa._store.pending_registrations) == 1, "The registration should " \
-        "be still there"
+    assert len(aaa._store.pending_registrations) == 1, (
+        "The registration should " "be still there"
+    )
     aaa._purge_expired_registrations(exp_time=0)
-    assert len(aaa._store.pending_registrations) == 0, "The registration should " \
-        "have been removed"
+    assert len(aaa._store.pending_registrations) == 0, (
+        "The registration should " "have been removed"
+    )
 
 
 # Patch the mailer _send() method to prevent network interactions
@@ -747,13 +793,17 @@ def test_prevent_double_registration(mocked):
     old_dir = os.getcwd()
     os.chdir(testdir)
     aaa.register('user_foo', 'first_pwd', 'a@a.a')
-    assert len(aaa._store.pending_registrations) == 1, repr(aaa._store.pending_registrations)
+    assert len(aaa._store.pending_registrations) == 1, repr(
+        aaa._store.pending_registrations
+    )
     first_registration_code = aaa._store.pending_registrations.keys()[0]
 
     # create second registration
     aaa.register('user_foo', 'second_pwd', 'b@b.b')
     os.chdir(old_dir)
-    assert len(aaa._store.pending_registrations) == 2, repr(aaa._store.pending_registrations)
+    assert len(aaa._store.pending_registrations) == 2, repr(
+        aaa._store.pending_registrations
+    )
     registration_codes = aaa._store.pending_registrations.keys()
     if first_registration_code == registration_codes[0]:
         second_registration_code = registration_codes[1]
@@ -770,14 +820,18 @@ def test_prevent_double_registration(mocked):
 
     # After the first registration only one pending registration should be left
     # The registration having 'a@a.a' email address should be gone
-    assert len(aaa._store.pending_registrations) == 1, repr(aaa._store.pending_registrations)
+    assert len(aaa._store.pending_registrations) == 1, repr(
+        aaa._store.pending_registrations
+    )
     pr_code, pr_data = aaa._store.pending_registrations.items()[0]
     assert pr_data['email_addr'] == 'b@b.b', "Incorrect registration in the datastore"
 
     # Logging in using the first login should succeed
     login = aaa.login('user_foo', 'first_pwd')
     assert login == True, "Login must succed"
-    assert len(aaa._store.pending_registrations) == 1, repr(aaa._store.pending_registrations)
+    assert len(aaa._store.pending_registrations) == 1, repr(
+        aaa._store.pending_registrations
+    )
 
     # Run validate_registration with the second registration code
     # The second registration should fail as the user account exists
@@ -830,7 +884,7 @@ def test_send_password_reset_email_by_email_addr(mocked):
     os.chdir(testdir)
     aaa.send_password_reset_email(email_addr='admin@localhost.local')
     os.chdir(old_dir)
-    #TODO: add UT
+    # TODO: add UT
 
 
 @with_setup(setup_mockedadmin, teardown_dir)

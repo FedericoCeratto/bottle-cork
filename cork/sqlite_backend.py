@@ -9,6 +9,7 @@
 
 from . import base_backend
 from logging import getLogger
+
 log = getLogger(__name__)
 
 
@@ -48,9 +49,12 @@ class Table(base_backend.Table):
         return ret.fetchone()[0]
 
     def __contains__(self, key):
-        #FIXME: count()
-        query = "SELECT * FROM %s WHERE %s='%s'" % \
-            (self._table_name, self._key_col, key)
+        # FIXME: count()
+        query = "SELECT * FROM %s WHERE %s='%s'" % (
+            self._table_name,
+            self._key_col,
+            key,
+        )
         row = self._backend.fetch_one(query)
         return row is not None
 
@@ -61,28 +65,35 @@ class Table(base_backend.Table):
         assert not v - cn, repr(v - cn)
         assert not cn - v, repr(cn - v)
 
-        assert set(value) == set(self._column_names[1:]), "%s %s" % \
-            (repr(set(value)), repr(set(self._column_names[1:])))
+        assert set(value) == set(self._column_names[1:]), "%s %s" % (
+            repr(set(value)),
+            repr(set(self._column_names[1:])),
+        )
 
         col_values = [key] + [value[k] for k in self._column_names[1:]]
 
         col_names = ', '.join(self._column_names)
         question_marks = ', '.join('?' for x in col_values)
-        query = "INSERT OR REPLACE INTO %s (%s) VALUES (%s)" % \
-            (self._table_name, col_names, question_marks)
+        query = "INSERT OR REPLACE INTO %s (%s) VALUES (%s)" % (
+            self._table_name,
+            col_names,
+            question_marks,
+        )
 
         ret = self._backend.run_query_using_conversion(query, col_values)
 
-
     def __getitem__(self, key):
-        query = "SELECT * FROM %s WHERE %s='%s'" % \
-            (self._table_name, self._key_col, key)
+        query = "SELECT * FROM %s WHERE %s='%s'" % (
+            self._table_name,
+            self._key_col,
+            key,
+        )
         row = self._backend.fetch_one(query)
         if row is None:
             raise KeyError(key)
 
         return self._row_to_value(key, row)[1]
-        #return dict(zip(self._column_names, row))
+        # return dict(zip(self._column_names, row))
 
     def __iter__(self):
         """Iterate over table index key values"""
@@ -103,10 +114,9 @@ class Table(base_backend.Table):
 
     def pop(self, key):
         d = self.__getitem__(key)
-        query = "DELETE FROM %s WHERE %s='%s'" % \
-            (self._table_name, self._key_col, key)
+        query = "DELETE FROM %s WHERE %s='%s'" % (self._table_name, self._key_col, key)
         self._backend.fetch_one(query)
-        #FIXME: check deletion
+        # FIXME: check deletion
         return d
 
     def insert(self, d):
@@ -144,20 +154,28 @@ class SingleValueTable(Table):
     def __setitem__(self, key, value):
         """Create or update a row"""
         assert not isinstance(value, dict)
-        query = "INSERT OR REPLACE INTO %s (%s, %s) VALUES (?, ?)" % \
-            (self._table_name, self._key_col, self._value_col)
+        query = "INSERT OR REPLACE INTO %s (%s, %s) VALUES (?, ?)" % (
+            self._table_name,
+            self._key_col,
+            self._value_col,
+        )
 
         col_values = (key, value)
         ret = self._backend.run_query_using_conversion(query, col_values)
 
     def __getitem__(self, key):
-        query = "SELECT %s FROM %s WHERE %s='%s'" % \
-            (self._value_col, self._table_name, self._key_col, key)
+        query = "SELECT %s FROM %s WHERE %s='%s'" % (
+            self._value_col,
+            self._table_name,
+            self._key_col,
+            key,
+        )
         row = self._backend.fetch_one(query)
         if row is None:
             raise KeyError(key)
 
         return row[0]
+
 
 class UsersTable(Table):
     def __init__(self, *args, **kwargs):
@@ -168,17 +186,16 @@ class UsersTable(Table):
             ('email_addr', str),
             ('desc', str),
             ('creation_date', str),
-            ('last_login', str)
+            ('last_login', str),
         )
         super(UsersTable, self).__init__(*args, **kwargs)
 
+
 class RolesTable(SingleValueTable):
     def __init__(self, *args, **kwargs):
-        self._columns = (
-            ('role', str),
-            ('level', int)
-        )
+        self._columns = (('role', str), ('level', int))
         super(RolesTable, self).__init__(*args, **kwargs)
+
 
 class PendingRegistrationsTable(Table):
     def __init__(self, *args, **kwargs):
@@ -189,17 +206,20 @@ class PendingRegistrationsTable(Table):
             ('hash', str),
             ('email_addr', str),
             ('desc', str),
-            ('creation_date', str)
+            ('creation_date', str),
         )
         super(PendingRegistrationsTable, self).__init__(*args, **kwargs)
 
 
-
-
 class SQLiteBackend(base_backend.Backend):
-
-    def __init__(self, filename, users_tname='users', roles_tname='roles',
-            pending_reg_tname='register', initialize=False):
+    def __init__(
+        self,
+        filename,
+        users_tname='users',
+        roles_tname='roles',
+        pending_reg_tname='register',
+        initialize=False,
+    ):
 
         self._filename = filename
 
@@ -219,6 +239,7 @@ class SQLiteBackend(base_backend.Backend):
             return self._connection
         except AttributeError:
             import sqlite3
+
             self._connection = sqlite3.connect(self._filename, isolation_level=None)
             return self._connection
 
@@ -237,6 +258,11 @@ class SQLiteBackend(base_backend.Backend):
     def _drop_all_tables(self):
         raise NotImplementedError
 
-    def save_users(self): pass
-    def save_roles(self): pass
-    def save_pending_registrations(self): pass
+    def save_users(self):
+        pass
+
+    def save_roles(self):
+        pass
+
+    def save_pending_registrations(self):
+        pass

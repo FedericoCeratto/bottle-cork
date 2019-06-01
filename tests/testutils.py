@@ -43,20 +43,10 @@ def purge_temp_directory(test_dir):
     shutil.rmtree(test_dir)
 
 
-
-
-
-
-
-
-
-
 REDIR = 302
 
 
-
 class WebFunctional(object):
-
     def __init__(self):
         self._tmpdir = None
         self._app = None
@@ -89,7 +79,7 @@ class WebFunctional(object):
             'hash': cork._hash(username, password),
             'email_addr': username + '@localhost.local',
             'desc': username + ' test user',
-            'creation_date': tstamp
+            'creation_date': tstamp,
         }
         username = password = ''
         cork._store.users[username] = {
@@ -97,7 +87,7 @@ class WebFunctional(object):
             'hash': cork._hash(username, password),
             'email_addr': username + '@localhost.local',
             'desc': username + ' test user',
-            'creation_date': tstamp
+            'creation_date': tstamp,
         }
         cork._store.save_users()
 
@@ -108,11 +98,11 @@ class WebFunctional(object):
         # copy the needed files
         shutil.copytree(
             os.path.join(self._starting_dir, 'tests/example_conf'),
-            os.path.join(self._tmpdir, 'example_conf')
+            os.path.join(self._tmpdir, 'example_conf'),
         )
         shutil.copytree(
             os.path.join(self._starting_dir, 'tests/views'),
-            os.path.join(self._tmpdir, 'views')
+            os.path.join(self._tmpdir, 'views'),
         )
 
         print("Test directory set up")
@@ -120,9 +110,8 @@ class WebFunctional(object):
     def remove_temp_dir(self):
         p = os.path.join(self._tmproot, 'cork_functional_test_wd')
         for f in glob.glob('%s*' % p):
-            #shutil.rmtree(f)
+            # shutil.rmtree(f)
             pass
-
 
     def teardown(self):
         print("Doing teardown")
@@ -137,7 +126,7 @@ class WebFunctional(object):
         # drop the cookie
         self._app.reset()
 
-        #assert self._app.get('/admin').status != '200 OK'
+        # assert self._app.get('/admin').status != '200 OK'
         os.chdir(self._starting_dir)
 
         self._app.app.options['timeout'] = self._default_timeout
@@ -167,16 +156,15 @@ class WebFunctional(object):
         self._default_timeout = self._app.app.options['timeout']
         print("Setup completed")
 
-
-
     # Utility functions
-
 
     def assert_200(self, path, match):
         """Assert that a page returns 200"""
         p = self._app.get(path)
-        assert p.status_int == 200, "Status: %d, Location: %s" % \
-            (p.status_int, p.location)
+        assert p.status_int == 200, "Status: %d, Location: %s" % (
+            p.status_int,
+            p.location,
+        )
 
         if match is not None:
             assert match in p.body, "'%s' not found in body: '%s'" % (match, p.body)
@@ -195,8 +183,11 @@ class WebFunctional(object):
 
         dest = p.location.split(':80/')[-1]
         dest = "/%s" % dest
-        assert dest == redir_page, "%s redirects to %s instead of %s" % \
-            (page, dest, redir_page)
+        assert dest == redir_page, "%s redirects to %s instead of %s" % (
+            page,
+            dest,
+            redir_page,
+        )
 
         return p
 
@@ -216,45 +207,52 @@ class WebFunctional(object):
     def test_login_existing_user_none_password(self):
         p = self._app.post('/login', {'username': 'admin', 'password': None})
         assert p.status_int == REDIR, "Redirect expected"
-        assert p.location == 'http://localhost:80/login', \
+        assert p.location == 'http://localhost:80/login', (
             "Incorrect redirect to %s" % p.location
+        )
 
     def test_login_nonexistent_user_none_password(self):
         p = self._app.post('/login', {'username': 'IAmNotHere', 'password': None})
         assert p.status_int == REDIR, "Redirect expected"
-        assert p.location == 'http://localhost:80/login', \
+        assert p.location == 'http://localhost:80/login', (
             "Incorrect redirect to %s" % p.location
+        )
 
     def test_login_existing_user_empty_password(self):
         p = self._app.post('/login', {'username': 'admin', 'password': ''})
         assert p.status_int == REDIR, "Redirect expected"
-        assert p.location == 'http://localhost:80/login', \
+        assert p.location == 'http://localhost:80/login', (
             "Incorrect redirect to %s" % p.location
+        )
 
     def test_login_nonexistent_user_empty_password(self):
         p = self._app.post('/login', {'username': 'IAmNotHere', 'password': ''})
         assert p.status_int == REDIR, "Redirect expected"
-        assert p.location == 'http://localhost:80/login', \
+        assert p.location == 'http://localhost:80/login', (
             "Incorrect redirect to %s" % p.location
+        )
 
     def test_login_existing_user_wrong_password(self):
         p = self._app.post('/login', {'username': 'admin', 'password': 'BogusPassword'})
         assert p.status_int == REDIR, "Redirect expected"
-        assert p.location == 'http://localhost:80/login', \
+        assert p.location == 'http://localhost:80/login', (
             "Incorrect redirect to %s" % p.location
+        )
 
     def test_functional_login_logout(self):
         # Incorrect login
         p = self._app.post('/login', {'username': 'admin', 'password': 'BogusPassword'})
         assert p.status_int == REDIR
-        assert p.location == 'http://localhost:80/login', \
+        assert p.location == 'http://localhost:80/login', (
             "Incorrect redirect to %s" % p.location
+        )
 
         # log in and get a cookie
         p = self._app.post('/login', {'username': 'admin', 'password': 'admin'})
         assert p.status_int == REDIR
-        assert p.location == 'http://localhost:80/', \
+        assert p.location == 'http://localhost:80/', (
             "Incorrect redirect to %s" % p.location
+        )
 
         self.assert_200('/my_role', 'admin')
 
@@ -277,28 +275,26 @@ class WebFunctional(object):
         # Log in as Admin
         p = self._app.post('/login', {'username': 'admin', 'password': 'admin'})
         assert p.status_int == REDIR
-        assert p.location == 'http://localhost:80/', \
+        assert p.location == 'http://localhost:80/', (
             "Incorrect redirect to %s" % p.location
+        )
 
         self.assert_200('/my_role', 'admin')
 
         username = 'BrandNewUser'
 
         # Delete the user
-        ret = self._app.post('/delete_user', {
-            'username': username,
-        })
+        ret = self._app.post('/delete_user', {'username': username})
 
         # Create new user
         password = '42IsTheAnswer'
-        ret = self._app.post('/create_user', {
-            'username': username,
-            'password': password,
-            'role': 'user'
-        })
+        ret = self._app.post(
+            '/create_user', {'username': username, 'password': password, 'role': 'user'}
+        )
         retj = json.loads(ret.body)
-        assert 'ok' in retj and retj['ok'] == True, "Failed user creation: %s" % \
-            ret.body
+        assert 'ok' in retj and retj['ok'] == True, (
+            "Failed user creation: %s" % ret.body
+        )
 
         # log out
         assert self._app.get('/logout').status_int == REDIR
@@ -307,8 +303,9 @@ class WebFunctional(object):
 
         # Log in as user
         p = self._app.post('/login', {'username': username, 'password': password})
-        assert p.status_int == REDIR and p.location == 'http://localhost:80/', \
-            "Failed user login"
+        assert (
+            p.status_int == REDIR and p.location == 'http://localhost:80/'
+        ), "Failed user login"
 
         # log out
         assert self._app.get('/logout').status_int == REDIR
@@ -317,27 +314,28 @@ class WebFunctional(object):
 
         # Log in as user with empty password
         p = self._app.post('/login', {'username': username, 'password': ''})
-        assert p.status_int == REDIR and p.location == 'http://localhost:80/login', \
-            "User login should fail"
+        assert (
+            p.status_int == REDIR and p.location == 'http://localhost:80/login'
+        ), "User login should fail"
         assert self._app.cookies == {}, "The cookie should not be set"
 
         # Log in as Admin, again
         p = self._app.post('/login', {'username': 'admin', 'password': 'admin'})
         assert p.status_int == REDIR
-        assert p.location == 'http://localhost:80/', \
+        assert p.location == 'http://localhost:80/', (
             "Incorrect redirect to %s" % p.location
+        )
 
         self.assert_200('/my_role', 'admin')
 
         # Delete the user
-        ret = self._app.post('/delete_user', {
-            'username': username,
-        })
+        ret = self._app.post('/delete_user', {'username': username})
         retj = json.loads(ret.body)
-        assert 'ok' in retj and retj['ok'] == True, "Failed user deletion: %s" % \
-            ret.body
+        assert 'ok' in retj and retj['ok'] == True, (
+            "Failed user deletion: %s" % ret.body
+        )
 
-    #def test_functional_user_registration(self):
+    # def test_functional_user_registration(self):
     #    assert self._app.cookies == {}, "The cookie should be not set"
     #
     #    # Register new user
@@ -349,7 +347,5 @@ class WebFunctional(object):
     #        'email_address': 'test@localhost.local'
     #    })
 
-
     def test_functional_expiration(self):
         raise NotImplementedError
-

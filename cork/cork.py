@@ -38,12 +38,14 @@ if sys.version_info[0:3] < (2, 7, 8):
 
 try:
     import scrypt
+
     scrypt_available = True
 except ImportError:  # pragma: no cover
     scrypt_available = False
 
 try:
     import argon2
+
     argon2_available = True
 except ImportError:
     argon2_available = False
@@ -55,18 +57,20 @@ except NameError:
 
 from .backends import JsonBackend
 
-is_py3 = (sys.version_info.major == 3)
+is_py3 = sys.version_info.major == 3
 
 log = getLogger(__name__)
 
 
 class AAAException(Exception):
     """Generic Authentication/Authorization Exception"""
+
     pass
 
 
 class AuthException(AAAException):
     """Authentication Exception: incorrect username/password pair"""
+
     pass
 
 
@@ -77,10 +81,19 @@ class UserExists(AAAException):
 class BaseCork(object):
     """Abstract class"""
 
-    def __init__(self, directory=None, backend=None, email_sender=None,
-                 initialize=False, session_domain=None, smtp_server=None,
-                 smtp_url='localhost', session_key_name=None,
-                 preferred_hashing_algorithm=None, pbkdf2_iterations=None):
+    def __init__(
+        self,
+        directory=None,
+        backend=None,
+        email_sender=None,
+        initialize=False,
+        session_domain=None,
+        smtp_server=None,
+        smtp_url='localhost',
+        session_key_name=None,
+        preferred_hashing_algorithm=None,
+        pbkdf2_iterations=None,
+    ):
         """Auth/Authorization/Accounting class
 
         :param directory: configuration directory
@@ -90,19 +103,24 @@ class BaseCork(object):
         :param roles_fname: roles filename (without .json), defaults to 'roles'
         :type roles_fname: str.
         """
-        if preferred_hashing_algorithm not in ("argon2", "PBKDF2sha1",
-                                               "PBKDF2sha256", "scrypt"):
-            raise Exception("preferred_hashing_algorithm must be 'argon2',"
-                            " 'PBKDF2sha1', 'PBKDF2sha256' or 'scrypt'")
-        elif preferred_hashing_algorithm.startswith("PBKDF2") \
-                and not pbkdf2_iterations:
+        if preferred_hashing_algorithm not in (
+            "argon2",
+            "PBKDF2sha1",
+            "PBKDF2sha256",
+            "scrypt",
+        ):
+            raise Exception(
+                "preferred_hashing_algorithm must be 'argon2',"
+                " 'PBKDF2sha1', 'PBKDF2sha256' or 'scrypt'"
+            )
+        elif preferred_hashing_algorithm.startswith("PBKDF2") and not pbkdf2_iterations:
             raise Exception("pbkdf2_iterations must be set")
         elif preferred_hashing_algorithm == 'scrypt' and not scrypt_available:
-            raise Exception("scrypt.hash required."
-                            " Please install the scrypt library.")
+            raise Exception(
+                "scrypt.hash required." " Please install the scrypt library."
+            )
         elif preferred_hashing_algorithm == 'argon2' and not argon2_available:
-            raise Exception("argon2 required."
-                            " Please install the argon2 library.")
+            raise Exception("argon2 required." " Please install the argon2 library.")
 
         if smtp_server:
             smtp_url = smtp_server
@@ -117,16 +135,17 @@ class BaseCork(object):
         # Setup JsonBackend by default for backward compatibility.
         if backend is None:
             self._store = JsonBackend(
-                directory, users_fname='users',
-                roles_fname='roles', pending_reg_fname='register',
-                initialize=initialize
+                directory,
+                users_fname='users',
+                roles_fname='roles',
+                pending_reg_fname='register',
+                initialize=initialize,
             )
 
         else:
             self._store = backend
 
-    def login(self, username, password, success_redirect=None,
-              fail_redirect=None):
+    def login(self, username, password, success_redirect=None, fail_redirect=None):
         """Check login credentials for an existing user.
         Optionally redirect the user to another page (typically /login)
 
@@ -147,16 +166,11 @@ class BaseCork(object):
             salted_hash = self._store.users[username]['hash']
             if hasattr(salted_hash, 'encode'):
                 salted_hash = salted_hash.encode('ascii')
-            authenticated = self._verify_password(
-                username,
-                password,
-                salted_hash,
-            )
+            authenticated = self._verify_password(username, password, salted_hash)
             if authenticated:
                 # Setup session data
                 self._setup_cookie(username)
-                self._store.users[username]['last_login'] = str(
-                    datetime.utcnow())
+                self._store.users[username]['last_login'] = str(datetime.utcnow())
                 self._store.save_users()
                 if success_redirect:
                     self._redirect(success_redirect)
@@ -184,8 +198,7 @@ class BaseCork(object):
 
         self._redirect(success_redirect)
 
-    def require(self, username=None, role=None, fixed_role=False,
-                fail_redirect=None):
+    def require(self, username=None, role=None, fixed_role=False, fail_redirect=None):
         """Ensure the user is logged in has the required role (or higher).
         Optionally redirect the user to another page (typically /login)
         If both `username` and `role` are specified, both conditions need to be
@@ -210,7 +223,8 @@ class BaseCork(object):
 
         if fixed_role and role is None:
             raise AAAException(
-                """A role must be specified if fixed_role has been set""")
+                """A role must be specified if fixed_role has been set"""
+            )
 
         if role is not None and role not in self._store.roles:
             raise AAAException("Role not found")
@@ -234,8 +248,7 @@ class BaseCork(object):
                 return
 
             if fail_redirect is None:
-                raise AuthException("Unauthorized access: incorrect"
-                                    " username")
+                raise AuthException("Unauthorized access: incorrect" " username")
 
             self._redirect(fail_redirect)
 
@@ -305,8 +318,7 @@ class BaseCork(object):
         for role in sorted(self._store.roles):
             yield (role, self._store.roles[role])
 
-    def create_user(self, username, role, password, email_addr=None,
-                    description=None):
+    def create_user(self, username, role, password, email_addr=None, description=None):
         """Create a new user account.
         This method is available to users with level>=100
 
@@ -324,8 +336,9 @@ class BaseCork(object):
         """
         assert username, "Username must be provided."
         if self.current_user.level < 100:
-            raise AuthException("The current user is not authorized"
-                                " to create users.")
+            raise AuthException(
+                "The current user is not authorized" " to create users."
+            )
 
         if username in self._store.users:
             raise UserExists("User is already existing.")
@@ -340,7 +353,7 @@ class BaseCork(object):
             'email_addr': email_addr,
             'desc': description,
             'creation_date': tstamp,
-            'last_login': tstamp
+            'last_login': tstamp,
         }
         self._store.save_users()
 
@@ -409,10 +422,18 @@ class BaseCork(object):
             return User(username, self)
         return None
 
-    def register(self, username, password, email_addr, role='user',
-                 max_level=50, subject="Signup confirmation",
-                 email_template='views/registration_email.tpl',
-                 description=None, **kwargs):
+    def register(
+        self,
+        username,
+        password,
+        email_addr,
+        role='user',
+        max_level=50,
+        subject="Signup confirmation",
+        email_template='views/registration_email.tpl',
+        description=None,
+        **kwargs
+    ):
         """Register a new user account. An email with a registration validation
         is sent to the user.
         WARNING: this method is available to unauthenticated users
@@ -496,14 +517,18 @@ class BaseCork(object):
             'email_addr': data['email_addr'],
             'desc': data['desc'],
             'creation_date': data['creation_date'],
-            'last_login': str(datetime.utcnow())
+            'last_login': str(datetime.utcnow()),
         }
         self._store.save_users()
 
-    def send_password_reset_email(self, username=None, email_addr=None,
+    def send_password_reset_email(
+        self,
+        username=None,
+        email_addr=None,
         subject="Password reset confirmation",
         email_template='views/password_reset_email',
-        **kwargs):
+        **kwargs
+    ):
         """Email the user with a link to reset his/her password
         If only one parameter is passed, fetch the other from the users
         database. If both are passed they will be matched against the users
@@ -522,8 +547,9 @@ class BaseCork(object):
         """
         if not username:
             if not email_addr:
-                raise AAAException("At least `username` or `email_addr` must"
-                                   " be specified.")
+                raise AAAException(
+                    "At least `username` or `email_addr` must" " be specified."
+                )
 
             # only email_addr is specified: fetch the username
             for k, v in self._store.users.iteritems():
@@ -546,8 +572,7 @@ class BaseCork(object):
                 # both username and email_addr are provided: check them
                 stored_email_addr = self._store.users[username]['email_addr']
                 if email_addr != stored_email_addr:
-                    raise AuthException(
-                        "Username/email address pair not found.")
+                    raise AuthException("Username/email address pair not found.")
 
         # generate a reset_code token
         reset_code = self._reset_code(username, email_addr)
@@ -594,8 +619,9 @@ class BaseCork(object):
             raise AAAException("Nonexistent user.")
         user.update(pwd=password)
 
-    def make_auth_decorator(self, username=None, role=None, fixed_role=False,
-                            fail_redirect='/login'):
+    def make_auth_decorator(
+        self, username=None, role=None, fixed_role=False, fail_redirect='/login'
+    ):
         '''
         Create a decorator to be used for authentication and authorization
 
@@ -606,21 +632,30 @@ class BaseCork(object):
         '''
         session_manager = self
 
-        def auth_require(username=username, role=role, fixed_role=fixed_role,
-                         fail_redirect=fail_redirect):
+        def auth_require(
+            username=username,
+            role=role,
+            fixed_role=fixed_role,
+            fail_redirect=fail_redirect,
+        ):
             def decorator(func):
                 import functools
 
                 @functools.wraps(func)
                 def wrapper(*a, **ka):
                     session_manager.require(
-                        username=username, role=role, fixed_role=fixed_role,
-                        fail_redirect=fail_redirect)
+                        username=username,
+                        role=role,
+                        fixed_role=fixed_role,
+                        fail_redirect=fail_redirect,
+                    )
                     return func(*a, **ka)
-                return wrapper
-            return decorator
-        return(auth_require)
 
+                return wrapper
+
+            return decorator
+
+        return auth_require
 
     ## Private methods
 
@@ -660,8 +695,9 @@ class BaseCork(object):
         :returns: base-64 encoded str.
         """
         if not scrypt_available:
-            raise Exception("scrypt.hash required."
-                            " Please install the scrypt library.")
+            raise Exception(
+                "scrypt.hash required." " Please install the scrypt library."
+            )
 
         if salt is None:
             salt = os.urandom(self.saltlength['scrypt'])
@@ -700,8 +736,9 @@ class BaseCork(object):
         assert isinstance(pwd, bytes)
 
         cleartext = username + b'\0' + pwd
-        h = hashlib.pbkdf2_hmac('sha1', cleartext, salt,
-                                self.pbkdf2_iterations, dklen=32)
+        h = hashlib.pbkdf2_hmac(
+            'sha1', cleartext, salt, self.pbkdf2_iterations, dklen=32
+        )
 
         # 'p' for PBKDF2 with sha1
         hashed = b'p' + salt + h
@@ -726,8 +763,9 @@ class BaseCork(object):
         assert isinstance(pwd, bytes)
 
         cleartext = username + b'\0' + pwd
-        h = hashlib.pbkdf2_hmac('sha256', cleartext, salt,
-                                self.pbkdf2_iterations, dklen=32)
+        h = hashlib.pbkdf2_hmac(
+            'sha256', cleartext, salt, self.pbkdf2_iterations, dklen=32
+        )
 
         # 'k' for PBKDF2 with sha256
         hashed = b'k' + salt + h
@@ -740,14 +778,12 @@ class BaseCork(object):
         :returns: base-64 encoded string.
         """
         if not argon2_available:
-            raise Exception("argon2 required."
-                            " Please install the argon2 library.")
+            raise Exception("argon2 required." " Please install the argon2 library.")
 
         if salt is None:
             salt = os.urandom(self.saltlength['argon2'])
 
-        assert len(salt) == self.saltlength['argon2'], \
-            "Incorrect salt length %s" % salt
+        assert len(salt) == self.saltlength['argon2'], "Incorrect salt length %s" % salt
 
         cleartext = "%s\0%s" % (username, pwd)
 
@@ -772,25 +808,25 @@ class BaseCork(object):
             hash_type = chr(hash_type)
 
         if hash_type == 'p':  # PBKDF2 with sha1
-            saltend = self.saltlength['PBKDF2']+1
+            saltend = self.saltlength['PBKDF2'] + 1
             salt = decoded[1:saltend]
             h = self._hash_pbkdf2_sha1(username, pwd, salt)
             return salted_hash == h
 
         if hash_type == 'k':  # PBKDF2 with sha256
-            saltend = self.saltlength['PBKDF2']+1
+            saltend = self.saltlength['PBKDF2'] + 1
             salt = decoded[1:saltend]
             h = self._hash_pbkdf2_sha256(username, pwd, salt)
             return salted_hash == h
 
         if hash_type == 's':  # scrypt
-            saltend = self.saltlength['scrypt']+1
+            saltend = self.saltlength['scrypt'] + 1
             salt = decoded[1:saltend]
             h = self._hash_scrypt(username, pwd, salt)
             return salted_hash == h
 
         if hash_type == 'a':  # argon2
-            saltend = self.saltlength['argon2']+1
+            saltend = self.saltlength['argon2'] + 1
             salt = decoded[1:saltend]
             h = self._hash_argon2(username, pwd, salt)
             return salted_hash == h
@@ -808,8 +844,7 @@ class BaseCork(object):
             pending = list(pending)
 
         for uuid_code, data in pending:
-            creation = datetime.strptime(data['creation_date'],
-                                         "%Y-%m-%d %H:%M:%S.%f")
+            creation = datetime.strptime(data['creation_date'], "%Y-%m-%d %H:%M:%S.%f")
             now = datetime.utcnow()
             maxdelta = timedelta(hours=exp_time)
             if now - creation > maxdelta:
@@ -827,13 +862,13 @@ class BaseCork(object):
         h = self._hash(username, email_addr)
         t = "%d" % time()
         t = t.encode('utf-8')
-        reset_code = b':'.join((username.encode('utf-8'),
-                                email_addr.encode('utf-8'), t, h))
+        reset_code = b':'.join(
+            (username.encode('utf-8'), email_addr.encode('utf-8'), t, h)
+        )
         return b64encode(reset_code)
 
 
 class User(object):
-
     def __init__(self, username, cork_obj, session=None):
         """Represent an authenticated user, exposing useful attributes:
         username, role, level, description, email_addr, session_creation_time,
@@ -934,6 +969,7 @@ class FlaskCork(BaseCork):
     def _beaker_session(self):
         """Get session"""
         import flask
+
         return flask.session
 
     def _save_session(self):
@@ -941,7 +977,6 @@ class FlaskCork(BaseCork):
 
 
 class Mailer(object):
-
     def __init__(self, sender, smtp_url, join_timeout=5, use_threads=True):
         """Send emails asyncronously
 
@@ -958,7 +993,8 @@ class Mailer(object):
 
     def _parse_smtp_url(self, url):
         """Parse SMTP URL"""
-        match = re.match(r"""
+        match = re.match(
+            r"""
             (                                   # Optional protocol
                 (?P<proto>smtp|starttls|ssl)    # Protocol name
                 ://
@@ -990,7 +1026,10 @@ class Mailer(object):
             )?
             [/]?
             $
-        """, url, re.VERBOSE)
+        """,
+            url,
+            re.VERBOSE,
+        )
 
         if not match:
             raise RuntimeError("SMTP URL seems incorrect")
@@ -1052,8 +1091,7 @@ class Mailer(object):
         :type msg: str.
         """
         proto = self._conf['proto']
-        assert proto in ('smtp', 'starttls', 'ssl'), \
-            "Incorrect protocol: %s" % proto
+        assert proto in ('smtp', 'starttls', 'ssl'), "Incorrect protocol: %s" % proto
 
         try:
             if proto == 'ssl':

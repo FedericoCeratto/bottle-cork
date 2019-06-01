@@ -7,13 +7,15 @@
    :synopsis: MongoDB storage backend.
 """
 from logging import getLogger
+
 log = getLogger(__name__)
 
 from .base_backend import Backend, Table
 
 try:
     import pymongo
-    is_pymongo_2 = (pymongo.version_tuple[0] == 2)
+
+    is_pymongo_2 = pymongo.version_tuple[0] == 2
 except ImportError:  # pragma: no cover
     pass
 
@@ -22,6 +24,7 @@ class MongoTable(Table):
     """Abstract MongoDB Table.
     Allow dictionary-like access.
     """
+
     def __init__(self, name, key_name, collection):
         self._name = name
         self._key_name = key_name
@@ -29,11 +32,7 @@ class MongoTable(Table):
 
     def create_index(self):
         """Create collection index."""
-        self._coll.create_index(
-            self._key_name,
-            drop_dups=True,
-            unique=True,
-        )
+        self._coll.create_index(self._key_name, drop_dups=True, unique=True)
 
     def __len__(self):
         return self._coll.count()
@@ -45,9 +44,9 @@ class MongoTable(Table):
     def __iter__(self):
         """Iter on dictionary keys"""
         if is_pymongo_2:
-            r = self._coll.find(fields=[self._key_name,])
+            r = self._coll.find(fields=[self._key_name])
         else:
-            r = self._coll.find(projection=[self._key_name,])
+            r = self._coll.find(projection=[self._key_name])
 
         return (i[self._key_name] for i in r)
 
@@ -74,6 +73,7 @@ class MongoSingleValueTable(MongoTable):
     """MongoDB table accessible as a simple key -> value dictionary.
     Used to store roles.
     """
+
     # Values are stored in a MongoDB "column" named "val"
     def __init__(self, *args, **kw):
         super(MongoSingleValueTable, self).__init__(*args, **kw)
@@ -94,9 +94,11 @@ class MongoSingleValueTable(MongoTable):
 
         return r['val']
 
+
 class MongoMutableDict(dict):
     """Represent an item from a Table. Acts as a dictionary.
     """
+
     def __init__(self, parent, root_key, d):
         """Create a MongoMutableDict instance.
         :param parent: Table instance
@@ -115,10 +117,10 @@ class MongoMutableDict(dict):
             r = self._parent._coll.update_one(spec, {'$set': {k: v}}, upsert=True)
 
 
-
 class MongoMultiValueTable(MongoTable):
     """MongoDB table accessible as a dictionary.
     """
+
     def __init__(self, *args, **kw):
         super(MongoMultiValueTable, self).__init__(*args, **kw)
 
@@ -132,7 +134,7 @@ class MongoMultiValueTable(MongoTable):
 
         spec = {key_name: key_val}
         if u'_id' in data:
-            del(data[u'_id'])
+            del (data[u'_id'])
 
         if is_pymongo_2:
             self._coll.update(spec, {'$set': data}, upsert=True, w=1)
@@ -148,7 +150,15 @@ class MongoMultiValueTable(MongoTable):
 
 
 class MongoDBBackend(Backend):
-    def __init__(self, db_name='cork', hostname='localhost', port=27017, initialize=False, username=None, password=None):
+    def __init__(
+        self,
+        db_name='cork',
+        hostname='localhost',
+        port=27017,
+        initialize=False,
+        username=None,
+        password=None,
+    ):
         """Initialize MongoDB Backend"""
         connection = pymongo.MongoClient(host=hostname, port=port)
         db = connection[db_name]
@@ -156,9 +166,7 @@ class MongoDBBackend(Backend):
             db.authenticate(username, password)
         self.users = MongoMultiValueTable('users', 'login', db.users)
         self.pending_registrations = MongoMultiValueTable(
-            'pending_registrations',
-            'pending_registration',
-            db.pending_registrations
+            'pending_registrations', 'pending_registration', db.pending_registrations
         )
         self.roles = MongoSingleValueTable('roles', 'role', db.roles)
 

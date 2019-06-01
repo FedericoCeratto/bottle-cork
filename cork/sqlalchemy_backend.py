@@ -13,11 +13,22 @@ from logging import getLogger
 from . import base_backend
 
 log = getLogger(__name__)
-is_py3 = (sys.version_info.major == 3)
+is_py3 = sys.version_info.major == 3
 
 try:
-    from sqlalchemy import create_engine, delete, select, \
-        Column, ForeignKey, Integer, MetaData, String, Table, Unicode
+    from sqlalchemy import (
+        create_engine,
+        delete,
+        select,
+        Column,
+        ForeignKey,
+        Integer,
+        MetaData,
+        String,
+        Table,
+        Unicode,
+    )
+
     sqlalchemy_available = True
 except ImportError:  # pragma: no cover
     sqlalchemy_available = False
@@ -45,8 +56,9 @@ class SqlTable(base_backend.Table):
 
     def _row_to_value(self, row):
         row_key = row[self._key_col]
-        row_value = SqlRowProxy(self, row_key,
-            ((k, row[k]) for k in row.keys() if k != self._key_col.name))
+        row_value = SqlRowProxy(
+            self, row_key, ((k, row[k]) for k in row.keys() if k != self._key_col.name)
+        )
         return row_key, row_value
 
     def __len__(self):
@@ -128,11 +140,16 @@ class SqlSingleValueTable(SqlTable):
         SqlTable.__setitem__(self, key, {self._col_name: value})
 
 
-
 class SqlAlchemyBackend(base_backend.Backend):
-
-    def __init__(self, db_full_url, users_tname='users', roles_tname='roles',
-            pending_reg_tname='register', initialize=False, **kwargs):
+    def __init__(
+        self,
+        db_full_url,
+        users_tname='users',
+        roles_tname='roles',
+        pending_reg_tname='register',
+        initialize=False,
+        **kwargs
+    ):
 
         if not sqlalchemy_available:
             raise RuntimeError("The SQLAlchemy library is not available.")
@@ -157,29 +174,33 @@ class SqlAlchemyBackend(base_backend.Backend):
         else:
             self._engine = create_engine(db_full_url, encoding='utf-8', **kwargs)
 
-
-        self._users = Table(users_tname, self._metadata,
+        self._users = Table(
+            users_tname,
+            self._metadata,
             Column('username', Unicode(128), primary_key=True),
             Column('role', ForeignKey(roles_tname + '.role')),
             Column('hash', String(256), nullable=False),
             Column('email_addr', String(128)),
             Column('desc', String(128)),
             Column('creation_date', String(128), nullable=False),
-            Column('last_login', String(128), nullable=False)
-
+            Column('last_login', String(128), nullable=False),
         )
-        self._roles = Table(roles_tname, self._metadata,
+        self._roles = Table(
+            roles_tname,
+            self._metadata,
             Column('role', String(128), primary_key=True),
-            Column('level', Integer, nullable=False)
+            Column('level', Integer, nullable=False),
         )
-        self._pending_reg = Table(pending_reg_tname, self._metadata,
+        self._pending_reg = Table(
+            pending_reg_tname,
+            self._metadata,
             Column('code', String(128), primary_key=True),
             Column('username', Unicode(128), nullable=False),
             Column('role', ForeignKey(roles_tname + '.role')),
             Column('hash', String(256), nullable=False),
             Column('email_addr', String(128)),
             Column('desc', String(128)),
-            Column('creation_date', String(128), nullable=False)
+            Column('creation_date', String(128), nullable=False),
         )
 
         self.users = SqlTable(self._engine, self._users, 'username')
@@ -190,7 +211,6 @@ class SqlAlchemyBackend(base_backend.Backend):
             self._initialize_storage(db_name)
             log.debug("Tables created")
 
-
     def _initialize_storage(self, db_name):
         self._metadata.create_all(self._engine)
 
@@ -199,6 +219,11 @@ class SqlAlchemyBackend(base_backend.Backend):
             log.info("Dropping table %s" % repr(table.name))
             self._engine.execute(table.delete())
 
-    def save_users(self): pass
-    def save_roles(self): pass
-    def save_pending_registrations(self): pass
+    def save_users(self):
+        pass
+
+    def save_roles(self):
+        pass
+
+    def save_pending_registrations(self):
+        pass

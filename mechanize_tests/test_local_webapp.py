@@ -6,6 +6,7 @@
 import mechanize
 import cookielib
 
+
 class TestUsingMechanize(object):
     def setup(self):
         self.local_url = "http://127.0.0.1:8080%s"
@@ -20,16 +21,16 @@ class TestUsingMechanize(object):
         br.set_handle_referer(True)
         br.set_handle_robots(False)
         # Want debugging messages?
-        #br.set_debug_http(True)
+        # br.set_debug_http(True)
         br.set_debug_redirects(True)
         br.set_debug_responses(True)
 
         self.br = br
 
     def teardown(self):
-        del(self.local_url)
-        del(self.br)
-        del(self.cj)
+        del (self.local_url)
+        del (self.br)
+        del (self.cj)
 
     def openurl(self, path, data=None):
         """Perform GET or POST request"""
@@ -39,7 +40,7 @@ class TestUsingMechanize(object):
         if data is not None:
             # Prepare for POST
             for k, v in data.iteritems():
-                #FIXME: test POST
+                # FIXME: test POST
                 self.br[k] = v
 
         res = self.br.open(self.local_url % path)
@@ -70,10 +71,7 @@ class TestUsingMechanize(object):
         res = self.openurl('/')
         assert not self.cookies
 
-        res = self.submit_form('login', {
-            'username': 'admin',
-            'password': 'admin',
-        })
+        res = self.submit_form('login', {'username': 'admin', 'password': 'admin'})
         assert 'Welcome!' in res.get_data()
 
         assert len(self.cookies) == 1
@@ -81,5 +79,3 @@ class TestUsingMechanize(object):
 
         res = self.openurl('/logout')
         assert not self.cookies
-
-
