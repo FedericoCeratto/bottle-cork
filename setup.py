@@ -2,7 +2,7 @@
 
 from setuptools import setup
 
-__version__ = '0.12.0a2'
+__version__ = "0.12.0a2"
 
 CLASSIFIERS = map(
     str.strip,
@@ -37,8 +37,8 @@ setup(
     long_description="Cork is a simple Authentication/Authorization library"
     "for the Bottle and Flask web frameworks.",
     classifiers=CLASSIFIERS,
-    install_requires=['Bottle'],
-    extras_require={'scrypt': ["scrypt>=0.6.1"]},
-    packages=['cork'],
-    platforms=['Linux'],
+    install_requires=["Bottle"],
+    extras_require={"scrypt": ["scrypt>=0.6.1"]},
+    packages=["cork"],
+    platforms=["Linux"],
 )

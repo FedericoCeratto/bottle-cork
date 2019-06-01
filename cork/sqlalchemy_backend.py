@@ -144,9 +144,9 @@ class SqlAlchemyBackend(base_backend.Backend):
     def __init__(
         self,
         db_full_url,
-        users_tname='users',
-        roles_tname='roles',
-        pending_reg_tname='register',
+        users_tname="users",
+        roles_tname="roles",
+        pending_reg_tname="register",
         initialize=False,
         **kwargs
     ):
@@ -157,55 +157,55 @@ class SqlAlchemyBackend(base_backend.Backend):
         self._metadata = MetaData()
         if initialize:
             # Create new database if needed.
-            db_url, db_name = db_full_url.rsplit('/', 1)
-            if is_py3 and db_url.startswith('mysql'):
+            db_url, db_name = db_full_url.rsplit("/", 1)
+            if is_py3 and db_url.startswith("mysql"):
                 print("WARNING: MySQL is not supported under Python3")
 
-            self._engine = create_engine(db_url, encoding='utf-8', **kwargs)
+            self._engine = create_engine(db_url, encoding="utf-8", **kwargs)
             try:
                 self._engine.execute("CREATE DATABASE %s" % db_name)
             except Exception as e:
                 log.info("Failed DB creation: %s" % e)
 
             # SQLite in-memory database URL: "sqlite://:memory:"
-            if db_name != ':memory:' and not db_url.startswith('postgresql'):
+            if db_name != ":memory:" and not db_url.startswith("postgresql"):
                 self._engine.execute("USE %s" % db_name)
 
         else:
-            self._engine = create_engine(db_full_url, encoding='utf-8', **kwargs)
+            self._engine = create_engine(db_full_url, encoding="utf-8", **kwargs)
 
         self._users = Table(
             users_tname,
             self._metadata,
-            Column('username', Unicode(128), primary_key=True),
-            Column('role', ForeignKey(roles_tname + '.role')),
-            Column('hash', String(256), nullable=False),
-            Column('email_addr', String(128)),
-            Column('desc', String(128)),
-            Column('creation_date', String(128), nullable=False),
-            Column('last_login', String(128), nullable=False),
+            Column("username", Unicode(128), primary_key=True),
+            Column("role", ForeignKey(roles_tname + ".role")),
+            Column("hash", String(256), nullable=False),
+            Column("email_addr", String(128)),
+            Column("desc", String(128)),
+            Column("creation_date", String(128), nullable=False),
+            Column("last_login", String(128), nullable=False),
         )
         self._roles = Table(
             roles_tname,
             self._metadata,
-            Column('role', String(128), primary_key=True),
-            Column('level', Integer, nullable=False),
+            Column("role", String(128), primary_key=True),
+            Column("level", Integer, nullable=False),
         )
         self._pending_reg = Table(
             pending_reg_tname,
             self._metadata,
-            Column('code', String(128), primary_key=True),
-            Column('username', Unicode(128), nullable=False),
-            Column('role', ForeignKey(roles_tname + '.role')),
-            Column('hash', String(256), nullable=False),
-            Column('email_addr', String(128)),
-            Column('desc', String(128)),
-            Column('creation_date', String(128), nullable=False),
+            Column("code", String(128), primary_key=True),
+            Column("username", Unicode(128), nullable=False),
+            Column("role", ForeignKey(roles_tname + ".role")),
+            Column("hash", String(256), nullable=False),
+            Column("email_addr", String(128)),
+            Column("desc", String(128)),
+            Column("creation_date", String(128), nullable=False),
         )
 
-        self.users = SqlTable(self._engine, self._users, 'username')
-        self.roles = SqlSingleValueTable(self._engine, self._roles, 'role', 'level')
-        self.pending_registrations = SqlTable(self._engine, self._pending_reg, 'code')
+        self.users = SqlTable(self._engine, self._users, "username")
+        self.roles = SqlSingleValueTable(self._engine, self._roles, "role", "level")
+        self.pending_registrations = SqlTable(self._engine, self._pending_reg, "code")
 
         if initialize:
             self._initialize_storage(db_name)

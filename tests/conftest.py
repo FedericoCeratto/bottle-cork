@@ -15,17 +15,17 @@ def chdir_to_tmpdir(tmpdir):
 @pytest.fixture
 def templates_dir(tmpdir, chdir_to_tmpdir):
     # Setup email templates
-    tmpdir.mkdir('views')
-    tmpdir.join('views/registration_email.tpl').write(
+    tmpdir.mkdir("views")
+    tmpdir.join("views/registration_email.tpl").write(
         """Username:{{username}} Email:{{email_addr}} Code:{{registration_code}}"""
     )
-    tmpdir.join('views/password_reset_email.tpl').write(
+    tmpdir.join("views/password_reset_email.tpl").write(
         """Username:{{username}} Email:{{email_addr}} Code:{{reset_code}}"""
     )
-    assert tmpdir.join('views/password_reset_email.tpl').exists()
-    tmpdir.mkdir('examples')
-    tmpdir.mkdir('examples/views')
-    tmpdir.join('examples/views/password_reset_email.tpl').write(
+    assert tmpdir.join("views/password_reset_email.tpl").exists()
+    tmpdir.mkdir("examples")
+    tmpdir.mkdir("examples/views")
+    tmpdir.join("examples/views/password_reset_email.tpl").write(
         """Hello {{username}},<br/>
 You are receiving this email because you requested a password reset on Cork Demo Webapp.<br/>
 <br/>
@@ -41,16 +41,16 @@ If you wish to complete the password reset please click on:<br/>
 def mytmpdir(tmpdir):
     """Setup tmp directory with test files
     """
-    tmpdir.mkdir('views')
-    tmpdir.join('users.json').write(
+    tmpdir.mkdir("views")
+    tmpdir.join("users.json").write(
         """{"admin": {"email_addr": null, "desc": null, "role": "admin", "hash": "69f75f38ac3bfd6ac813794f3d8c47acc867adb10b806e8979316ddbf6113999b6052efe4ba95c0fa9f6a568bddf60e8e5572d9254dbf3d533085e9153265623", "creation_date": "2012-04-09 14:22:27.075596"}}"""
     )
-    tmpdir.join('roles.json').write("""{"special": 200, "admin": 100, "user": 50}""")
-    tmpdir.join('register.json').write("""{}""")
-    tmpdir.join('registration_email.tpl').write(
+    tmpdir.join("roles.json").write("""{"special": 200, "admin": 100, "user": 50}""")
+    tmpdir.join("register.json").write("""{}""")
+    tmpdir.join("registration_email.tpl").write(
         """Username:{{username}} Email:{{email_addr}} Code:{{registration_code}}"""
     )
-    tmpdir.join('password_reset_email.tpl').write(
+    tmpdir.join("password_reset_email.tpl").write(
         """Username:{{username}} Email:{{email_addr}} Code:{{reset_code}}"""
     )
     return tmpdir
@@ -68,7 +68,7 @@ def assert_is_redirect(e, path):
     assert e.status_code == 302, (
         "HTTPResponse status should be 302 but is '%s'" % e.status
     )
-    redir_location = e.headers['Location'].rsplit('/', 1)[1]
+    redir_location = e.headers["Location"].rsplit("/", 1)[1]
     assert redir_location == path, "Redirected to %s instead of %s" % (
         redir_location,
         path,

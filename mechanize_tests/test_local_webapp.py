@@ -34,8 +34,8 @@ class TestUsingMechanize(object):
 
     def openurl(self, path, data=None):
         """Perform GET or POST request"""
-        if path in ('', None):
-            path = '/'
+        if path in ("", None):
+            path = "/"
 
         if data is not None:
             # Prepare for POST
@@ -68,14 +68,14 @@ class TestUsingMechanize(object):
 
         assert not self.cookies
 
-        res = self.openurl('/')
+        res = self.openurl("/")
         assert not self.cookies
 
-        res = self.submit_form('login', {'username': 'admin', 'password': 'admin'})
-        assert 'Welcome!' in res.get_data()
+        res = self.submit_form("login", {"username": "admin", "password": "admin"})
+        assert "Welcome!" in res.get_data()
 
         assert len(self.cookies) == 1
-        assert self.cookies[0].name == 'beaker.session.id'
+        assert self.cookies[0].name == "beaker.session.id"
 
-        res = self.openurl('/logout')
+        res = self.openurl("/logout")
         assert not self.cookies

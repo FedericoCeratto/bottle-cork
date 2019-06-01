@@ -46,9 +46,9 @@ class JsonBackend(object):
     def __init__(
         self,
         directory,
-        users_fname='users',
-        roles_fname='roles',
-        pending_reg_fname='register',
+        users_fname="users",
+        roles_fname="roles",
+        pending_reg_fname="register",
         initialize=False,
     ):
         """Data storage class. Handles JSON files
@@ -122,7 +122,7 @@ class JsonBackend(object):
         """Save obj in JSON format in a file in self._directory"""
         fname = "%s/%s.json" % (self._directory, fname)
         try:
-            with open("%s.tmp" % fname, 'w') as f:
+            with open("%s.tmp" % fname, "w") as f:
                 json.dump(obj, f, cls=BytesEncoder)
                 f.flush()
             shutil.move("%s.tmp" % fname, fname)

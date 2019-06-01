@@ -72,8 +72,8 @@ class Table(base_backend.Table):
 
         col_values = [key] + [value[k] for k in self._column_names[1:]]
 
-        col_names = ', '.join(self._column_names)
-        question_marks = ', '.join('?' for x in col_values)
+        col_names = ", ".join(self._column_names)
+        question_marks = ", ".join("?" for x in col_values)
         query = "INSERT OR REPLACE INTO %s (%s) VALUES (%s)" % (
             self._table_name,
             col_names,
@@ -130,18 +130,18 @@ class Table(base_backend.Table):
         cc = []
         for col_name, col_type in self._columns:
             if col_type == int:
-                col_type = 'INTEGER'
+                col_type = "INTEGER"
             elif col_type == str:
-                col_type = 'TEXT'
+                col_type = "TEXT"
 
             if col_name == self._key_col:
-                extras = 'PRIMARY KEY ASC'
+                extras = "PRIMARY KEY ASC"
             else:
-                extras = ''
+                extras = ""
 
             cc.append("%s %s %s" % (col_name, col_type, extras))
 
-        cc = ','.join(cc)
+        cc = ",".join(cc)
         query = "CREATE TABLE %s (%s)" % (self._table_name, cc)
         self._backend.run_query(query)
 
@@ -180,33 +180,33 @@ class SingleValueTable(Table):
 class UsersTable(Table):
     def __init__(self, *args, **kwargs):
         self._columns = (
-            ('username', str),
-            ('role', str),
-            ('hash', str),
-            ('email_addr', str),
-            ('desc', str),
-            ('creation_date', str),
-            ('last_login', str),
+            ("username", str),
+            ("role", str),
+            ("hash", str),
+            ("email_addr", str),
+            ("desc", str),
+            ("creation_date", str),
+            ("last_login", str),
         )
         super(UsersTable, self).__init__(*args, **kwargs)
 
 
 class RolesTable(SingleValueTable):
     def __init__(self, *args, **kwargs):
-        self._columns = (('role', str), ('level', int))
+        self._columns = (("role", str), ("level", int))
         super(RolesTable, self).__init__(*args, **kwargs)
 
 
 class PendingRegistrationsTable(Table):
     def __init__(self, *args, **kwargs):
         self._columns = (
-            ('code', str),
-            ('username', str),
-            ('role', str),
-            ('hash', str),
-            ('email_addr', str),
-            ('desc', str),
-            ('creation_date', str),
+            ("code", str),
+            ("username", str),
+            ("role", str),
+            ("hash", str),
+            ("email_addr", str),
+            ("desc", str),
+            ("creation_date", str),
         )
         super(PendingRegistrationsTable, self).__init__(*args, **kwargs)
 
@@ -215,9 +215,9 @@ class SQLiteBackend(base_backend.Backend):
     def __init__(
         self,
         filename,
-        users_tname='users',
-        roles_tname='roles',
-        pending_reg_tname='register',
+        users_tname="users",
+        roles_tname="roles",
+        pending_reg_tname="register",
         initialize=False,
     ):
 
