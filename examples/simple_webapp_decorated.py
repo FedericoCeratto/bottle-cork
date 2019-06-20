@@ -197,7 +197,7 @@ def delete_user():
 @bottle.post('/create_role')
 def create_role():
     try:
-        aaa.create_role(post_get('role'), post_get('level'))
+        aaa.create_role(post_get('role'), int(post_get('level')))
         return dict(ok=True, msg='')
     except Exception, e:
         return dict(ok=False, msg=e.message)
