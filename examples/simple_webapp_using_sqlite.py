@@ -162,6 +162,7 @@ def admin():
 def create_user():
     try:
         aaa.create_user(postd().username, postd().role, postd().password)
+        b.connection.commit()
         return dict(ok=True, msg='')
     except Exception, e:
         return dict(ok=False, msg=e.message)
@@ -171,6 +172,7 @@ def create_user():
 def delete_user():
     try:
         aaa.delete_user(post_get('username'))
+        b.connection.commit()
         return dict(ok=True, msg='')
     except Exception, e:
         print repr(e)
@@ -181,6 +183,7 @@ def delete_user():
 def create_role():
     try:
         aaa.create_role(post_get('role'), post_get('level'))
+        b.connection.commit()
         return dict(ok=True, msg='')
     except Exception, e:
         return dict(ok=False, msg=e.message)
@@ -190,6 +193,7 @@ def create_role():
 def delete_role():
     try:
         aaa.delete_role(post_get('role'))
+        b.connection.commit()
         return dict(ok=True, msg='')
     except Exception, e:
         return dict(ok=False, msg=e.message)
