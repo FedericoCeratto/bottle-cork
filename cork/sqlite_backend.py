@@ -50,12 +50,12 @@ class Table(base_backend.Table):
 
     def __contains__(self, key):
         # FIXME: count()
-        query = "SELECT * FROM %s WHERE %s='%s'" % (
+        query = "SELECT * FROM %s WHERE %s=?" % (
             self._table_name,
             self._key_col,
-            key,
         )
-        row = self._backend.fetch_one(query)
+        args = (key,)
+        row = self._backend.fetch_one(query, args)
         return row is not None
 
     def __setitem__(self, key, value):
@@ -83,12 +83,12 @@ class Table(base_backend.Table):
         ret = self._backend.run_query_using_conversion(query, col_values)
 
     def __getitem__(self, key):
-        query = "SELECT * FROM %s WHERE %s='%s'" % (
+        query = "SELECT * FROM %s WHERE %s=?" % (
             self._table_name,
             self._key_col,
-            key,
         )
-        row = self._backend.fetch_one(query)
+        args = (key,)
+        row = self._backend.fetch_one(query, args)
         if row is None:
             raise KeyError(key)
 
@@ -114,8 +114,9 @@ class Table(base_backend.Table):
 
     def pop(self, key):
         d = self.__getitem__(key)
-        query = "DELETE FROM %s WHERE %s='%s'" % (self._table_name, self._key_col, key)
-        self._backend.fetch_one(query)
+        query = "DELETE FROM %s WHERE %s=?" % (self._table_name, self._key_col)
+        args = (key,)
+        self._backend.fetch_one(query, args)
         # FIXME: check deletion
         return d
 
@@ -164,13 +165,13 @@ class SingleValueTable(Table):
         ret = self._backend.run_query_using_conversion(query, col_values)
 
     def __getitem__(self, key):
-        query = "SELECT %s FROM %s WHERE %s='%s'" % (
+        query = "SELECT %s FROM %s WHERE %s=?" % (
             self._value_col,
             self._table_name,
             self._key_col,
-            key,
         )
-        row = self._backend.fetch_one(query)
+        args = (key,)
+        row = self._backend.fetch_one(query, args)
         if row is None:
             raise KeyError(key)
 
@@ -220,7 +221,6 @@ class SQLiteBackend(base_backend.Backend):
         pending_reg_tname="register",
         initialize=False,
     ):
-
         self._filename = filename
 
         self.users = UsersTable(self, users_tname)
@@ -243,14 +243,14 @@ class SQLiteBackend(base_backend.Backend):
             self._connection = sqlite3.connect(self._filename, isolation_level=None)
             return self._connection
 
-    def run_query(self, query):
-        return self._connection.execute(query)
+    def run_query(self, query, *args):
+        return self._connection.execute(query, *args)
 
     def run_query_using_conversion(self, query, args):
         return self._connection.execute(query, args)
 
-    def fetch_one(self, query):
-        return self._connection.execute(query).fetchone()
+    def fetch_one(self, query, *args):
+        return self._connection.execute(query, *args).fetchone()
 
     def _initialize_storage(self, db_name):
         raise NotImplementedError
